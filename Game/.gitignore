@@ -1,0 +1,15 @@
+# Ignore node_modules
+node_modules/
+
+# Ignore build files
+dist/
+temp_game/
+
+# Logs, system files, etc.
+*.log
+.DS_Store
+
+# Ignore env config
+.env
+
+
