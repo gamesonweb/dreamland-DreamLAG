@@ -1,5 +1,6 @@
 import { Mesh, MeshBuilder, ParseNullTerminatedString, Scene, SceneLoader, Vector3 } from "@babylonjs/core";
 
+
 export class Environment {
     private _scene: Scene;
     public island: Mesh;
@@ -15,5 +16,14 @@ export class Environment {
 
     public async loadIsland() {
         var islandResult = SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene);
+        // const importedMeshes = (await islandResult).meshes;
+
+        // importedMeshes.forEach(mesh => {
+        //     //const mesh2 = mesh as Mesh;
+        //     if(mesh instanceof Mesh){
+        //         mesh.createBVH();
+        //     }
+            
+        // })
     }
 }

@@ -3,7 +3,8 @@ import { ArcRotateCamera, Mesh, Quaternion, Ray,
      UniversalCamera, Vector3 } from "@babylonjs/core";
 
 export class Player extends TransformNode {
-    public camera: UniversalCamera;
+    //public camera: UniversalCamera;
+    public camera: ArcRotateCamera;
     public scene: Scene;
     private _input;
 
@@ -53,7 +54,7 @@ export class Player extends TransformNode {
         this._health = 100;  // Initialisation de la santé du joueur
     }
 
-    private _setupPlayerCamera(): UniversalCamera {
+    private _setupPlayerCamera(): ArcRotateCamera {
         // Racine de la caméra qui suit le joueur
         this._camRoot = new TransformNode("root");
         this._camRoot.position = new Vector3(0, 0, 0);
@@ -66,10 +67,12 @@ export class Player extends TransformNode {
         this._yTilt.parent = this._camRoot;
 
         // Création de la caméra qui regarde vers la racine
-        this.camera = new UniversalCamera("cam", new Vector3(0, 0, -30), this.scene);
-        this.camera.lockedTarget = this._camRoot.position;
-        this.camera.fov = 0.47350045992678597;
-        this.camera.parent = this._yTilt;
+        //this.camera = new UniversalCamera("cam", new Vector3(0, 0, -30), this.scene);
+        this.camera = new ArcRotateCamera("playerCamera", Math.PI / 2, Math.PI / 3, 20, new Vector3(0,0,0), this._scene);
+        
+        //this.camera.lockedTarget = this._camRoot.position;
+        //this.camera.fov = 0.47350045992678597;
+        //this.camera.parent = this._yTilt;
 
         this.scene.activeCamera = this.camera;
         return this.camera;
@@ -114,6 +117,7 @@ export class Player extends TransformNode {
 
     private _updateCamera(): void {
         let centerPlayer = this.mesh.position.y + 2;
+        this.camera.setTarget(this.mesh.position);
         this._camRoot.position = Vector3.Lerp(this._camRoot.position, new Vector3(this.mesh.position.x, centerPlayer, this.mesh.position.z), 0.4);
     }
 
@@ -169,7 +173,7 @@ export class Player extends TransformNode {
         this._updateGroundDetection();
     }
 
-    public activatePlayerCamera(): UniversalCamera {
+    public activatePlayerCamera(): ArcRotateCamera{
         this.scene.registerBeforeRender(() => {
             this._beforeRenderUpdate();
             this._updateCamera();
@@ -182,8 +186,9 @@ export class Player extends TransformNode {
         let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
 
         let predicate = function (mesh) {
-            if(mesh.name === "InvisibleGround") return false;
-            return mesh.isPickable && mesh.isEnabled();
+            if(mesh.name === "InvisibleGround") return mesh.isPickable && mesh.isEnabled();
+            //return false;
+            
         }
         let pick = this.scene.pickWithRay(ray, predicate);
 
@@ -226,6 +231,7 @@ export class Player extends TransformNode {
         if (this._gravity.y < -Player.JUMP_FORCE) {
             this._gravity.y = -Player.JUMP_FORCE;
         }
+
         this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
 
         // if (this._isGrounded()) {

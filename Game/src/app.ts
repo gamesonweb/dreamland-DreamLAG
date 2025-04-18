@@ -22,6 +22,7 @@ class App {
     private _environment: Environment;
     private _player: Player;
     private _input: PlayerInput;
+    private _mobs: Monster[];
 
     public assets: any; // Specify more precise typing for `assets`
     private _playerCamera: ArcRotateCamera; // Player camera
@@ -175,14 +176,19 @@ class App {
 
         const monster1 = new Monster(scene, new Vector3(5, 0, 0), 100, 20);
         const monster2 = new Monster(scene, new Vector3(-5, 0, 0), 100, 20);
-        const enemies = [monster1, monster2];
+        this._mobs = [monster1, monster2];
 
-        // Update enemies every frame
-        scene.registerBeforeRender(() => {
-            enemies.forEach(monster => {
-                monster.update([this._player]);
-            });
-        });
+
+        //À améliorer
+        // // Update enemies every frame
+        // scene.registerBeforeRender(() => {
+        //     this._mobs.forEach(monster => {
+        //         monster.update([this._player]);
+        //     });
+        // });
+        this._mobs.forEach(mob => {
+            mob.activateMonster([this._player]);
+        })
     }
 
     private async _setUpGame() {
@@ -262,6 +268,9 @@ class App {
         await scene.whenReadyAsync();
         scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
         this._player.mesh.position.y = 75;
+        this._mobs.forEach(mob => {
+            mob.mesh.position.y = 75;
+        })
 
         // Switch scene and set state
         this._scene.dispose();
@@ -290,12 +299,15 @@ class App {
         this._playerCamera = new ArcRotateCamera("playerCamera", Math.PI / 2, Math.PI / 3, 20, this._player.mesh.position, scene);
         this._playerCamera.setTarget(this._player.mesh.position);
         this._currentCamera = this._playerCamera;
-        scene.activeCamera = this._playerCamera;
+        //scene.activeCamera = this._playerCamera;
+        var camera = this._player.activatePlayerCamera();
+        camera.attachControl(this._canvas, true);
+        scene.activeCamera = camera;
 
         // Scene camera (overview of the entire scene)
-        this._sceneCamera = new ArcRotateCamera("sceneCamera", Math.PI, Math.PI / 2, 50, new Vector3(0, 0, 0), scene);
-        this._sceneCamera.setTarget(Vector3.Zero());
-        this._sceneCamera.position = new Vector3(0, 50, 0);
+        // this._sceneCamera = new ArcRotateCamera("sceneCamera", Math.PI, Math.PI / 2, 50, new Vector3(0, 0, 0), scene);
+        // this._sceneCamera.setTarget(Vector3.Zero());
+        // this._sceneCamera.position = new Vector3(0, 50, 0);
     }
 
     // Function to switch to the player camera
