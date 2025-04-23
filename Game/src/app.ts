@@ -195,6 +195,7 @@ class App {
         let scene = new Scene(this._engine);
         this._gamescene = scene;
 
+        
         //--CREATE ENVIRONMENT--
         const environment = new Environment(scene);
         this._environment = environment; //class variable for App
@@ -264,6 +265,7 @@ class App {
 
         // Initialize the game
         await this._initializeGameAsync(scene);
+        //this._gamescene.createOrUpdateSelectionOctree();
 
         await scene.whenReadyAsync();
         scene.getMeshByName("outer").position = new Vector3(0, 3, 0);

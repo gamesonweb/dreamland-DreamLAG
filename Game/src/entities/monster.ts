@@ -47,7 +47,7 @@ export class Monster {
 
         // Zone invisible utilisée pour détecter le joueur
         this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
-        this.detectionZone.isVisible = false;
+        this.detectionZone.isVisible = true;
     }
 
 
@@ -167,7 +167,7 @@ export class Monster {
         // Recherche d'un joueur dans la portée
         for (const t of targets) {
             const distance = Vector3.Distance(this.mesh.position, t.mesh.position);
-            if (distance <= 15 && t.isAlive()) {
+            if (distance <= 50 && t.isAlive()) {
                 this.target = t;
                 break;
             }
