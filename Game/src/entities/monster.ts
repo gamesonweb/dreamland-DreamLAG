@@ -83,7 +83,7 @@ export class Monster {
                 //     this._jumpCount = 1;
                 //     this._grounded = true;
                 // } else{
-                console.log("Grounded!");
+                //console.log("Grounded!");
                     this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Monster.GRAVITY));
                     this._grounded = false;
                 // }
@@ -99,7 +99,7 @@ export class Monster {
                 this._gravity.y = Monster.MAX_GRAVITY_Y;
             }
             
-            console.log(this._gravity);
+            //console.log(this._gravity);
             this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
     
             // if (this._isGrounded()) {

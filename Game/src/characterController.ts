@@ -188,6 +188,7 @@ export class Player extends TransformNode {
         }
     }
 
+
     private _beforeRenderUpdate(): void {
         this._updateFromControls();
         this._updateGroundDetection();
@@ -202,7 +203,7 @@ export class Player extends TransformNode {
     }
 
     private _hasFrontAnObstacle(){
-        return (!this._frontRaycast(0, 0.5).equals(Vector3.Zero()));
+        return (!this._frontRaycast(0, 2).equals(Vector3.Zero()));
     }
 
     /**

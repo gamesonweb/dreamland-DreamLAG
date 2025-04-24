@@ -1,10 +1,13 @@
 import { AbstractMesh, Mesh, MeshBuilder, ParseNullTerminatedString, Scene, SceneLoader, Vector3 } from "@babylonjs/core";
+import { QuestCharacter } from "./questCharacter";
+import { Player } from "./characterController";
 
 
 export class Environment {
     private _scene: Scene;
     private _islandMesh: AbstractMesh;
     public island: Mesh;
+    public questCharacter: QuestCharacter;
 
     constructor(scene: Scene) {
         this._scene = scene;
@@ -16,17 +19,25 @@ export class Environment {
         ground.scaling = new Vector3(1,.02,1);
     }
 
-    public async loadIsland() {
+    public async loadIsland(player:Player) {
 
 
-        SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene)//.then((result) => {
+        SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene).then((result) => {
 
-        //     const geoMeshes = result.meshes.filter(m =>
-        //         m instanceof Mesh &&
-        //         m.geometry !== null &&          // a geometry
-        //         m.subMeshes !== undefined &&     // a subMeshes array
-        //         m.subMeshes.length > 0           // non vide
-        //     ) as Mesh[];
+            const geoMeshes = result.meshes.filter(m =>
+                m instanceof Mesh &&
+                m.geometry !== null &&          // a geometry
+                m.subMeshes !== undefined &&     // a subMeshes array
+                m.subMeshes.length > 0           // non vide
+            ) as Mesh[];
+
+            geoMeshes.forEach((mesh) => {
+                if(mesh.name === "QuestCharacter"){
+                    console.log("character Found!!");
+                    this.questCharacter = new QuestCharacter(mesh, this._scene, player);
+                    this.questCharacter.activateQuestCharacter();
+                }
+            })    
 
         //     geoMeshes.forEach(abstractMesh => {
         //         console.log("Subdivision Of Island");
@@ -74,6 +85,6 @@ export class Environment {
         //     }
             
 
-        // })
+        })
     }
 }

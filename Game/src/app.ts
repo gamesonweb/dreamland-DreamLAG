@@ -191,16 +191,32 @@ class App {
         })
     }
 
+
     private async _setUpGame() {
         let scene = new Scene(this._engine);
         this._gamescene = scene;
 
         
         //--CREATE ENVIRONMENT--
+        const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
+        const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
+        light.diffuse = new Color3(0.086, 0.109, 0.153);
+        light.intensity = 35;
+        light.radius = 1;
+
         const environment = new Environment(scene);
         this._environment = environment; //class variable for App
-        await this._environment.loadIsland(); //environment
+        const shadowGenerator = new ShadowGenerator(1024, light);
+        shadowGenerator.darkness = 0.4
+
+        // INPUT
+        this._input = new PlayerInput(scene);
+        
         await this._loadCharacterAssets(scene); //character
+        await this._loadEntities(scene, shadowGenerator);
+        await this._environment.loadIsland(this._player); //environment
+        
+
     }
 
     private async _goToStart() {
@@ -242,9 +258,6 @@ class App {
         let scene = this._gamescene;
         scene.clearColor = new Color4(0.01568627450980392, 0.01568627450980392, 0.20392156862745098);
 
-        // INPUT
-        this._input = new PlayerInput(scene);
-
         // GUI
         const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         scene.detachControl();
@@ -283,16 +296,16 @@ class App {
     }
 
     private async _initializeGameAsync(scene: Scene): Promise<void> {
-        const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
-        const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
-        light.diffuse = new Color3(0.086, 0.109, 0.153);
-        light.intensity = 35;
-        light.radius = 1;
+        // const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
+        // const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
+        // light.diffuse = new Color3(0.086, 0.109, 0.153);
+        // light.intensity = 35;
+        // light.radius = 1;
 
-        const shadowGenerator = new ShadowGenerator(1024, light);
-        shadowGenerator.darkness = 0.4;
+        // const shadowGenerator = new ShadowGenerator(1024, light);
+        // shadowGenerator.darkness = 0.4;
 
-        await this._loadEntities(scene, shadowGenerator);
+        // await this._loadEntities(scene, shadowGenerator);
         this._setupCameras(scene);
     }
 

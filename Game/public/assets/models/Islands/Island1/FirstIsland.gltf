@@ -18,7 +18,8 @@
 				1,
 				2,
 				3,
-				4
+				4,
+				5
 			]
 		}
 	],
@@ -93,6 +94,20 @@
 				-94.65945434570312,
 				34.05043029785156,
 				-35.704833984375
+			]
+		},
+		{
+			"mesh":4,
+			"name":"QuestCharacter",
+			"scale":[
+				1,
+				2,
+				1
+			],
+			"translation":[
+				-177.171875,
+				37.20270919799805,
+				-49.51565933227539
 			]
 		}
 	],
@@ -251,6 +266,30 @@
 					"mode":4
 				}
 			]
+		},
+		{
+			"name":"QuestCharacter",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":16,
+						"NORMAL":17,
+						"TEXCOORD_0":18
+					},
+					"extensions":{
+						"KHR_draco_mesh_compression":{
+							"bufferView":4,
+							"attributes":{
+								"POSITION":0,
+								"NORMAL":1,
+								"TEXCOORD_0":2
+							}
+						}
+					},
+					"indices":19,
+					"mode":4
+				}
+			]
 		}
 	],
 	"textures":[
@@ -317,7 +356,7 @@
 		},
 		{
 			"componentType":5126,
-			"count":227044,
+			"count":228109,
 			"max":[
 				194.31227111816406,
 				53.513648986816406,
@@ -332,12 +371,12 @@
 		},
 		{
 			"componentType":5126,
-			"count":227044,
+			"count":228109,
 			"type":"VEC3"
 		},
 		{
 			"componentType":5126,
-			"count":227044,
+			"count":228109,
 			"type":"VEC2"
 		},
 		{
@@ -404,6 +443,36 @@
 			"componentType":5123,
 			"count":174,
 			"type":"SCALAR"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"max":[
+				1,
+				1,
+				1
+			],
+			"min":[
+				-1,
+				-1,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"type":"VEC2"
+		},
+		{
+			"componentType":5123,
+			"count":36,
+			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
@@ -414,18 +483,23 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":1045118,
+			"byteLength":1052699,
 			"byteOffset":13640
 		},
 		{
 			"buffer":0,
 			"byteLength":166,
-			"byteOffset":1058760
+			"byteOffset":1066340
 		},
 		{
 			"buffer":0,
 			"byteLength":655,
-			"byteOffset":1058928
+			"byteOffset":1066508
+		},
+		{
+			"buffer":0,
+			"byteLength":264,
+			"byteOffset":1067164
 		}
 	],
 	"samplers":[
@@ -436,7 +510,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":1059584,
+			"byteLength":1067428,
 			"uri":"FirstIsland.bin"
 		}
 	]
