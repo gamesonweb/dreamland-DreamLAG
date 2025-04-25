@@ -1,5 +1,5 @@
 import { ArcRotateCamera, Axis, Mesh, Quaternion, Ray,
-    Scene, ShadowGenerator, TransformNode,
+    Scene, ShadowGenerator, Tools, TransformNode,
      UniversalCamera, Vector3 } from "@babylonjs/core";
 
 export class Player extends TransformNode {
@@ -75,6 +75,13 @@ export class Player extends TransformNode {
         //this.camera.parent = this._yTilt;
 
         this.scene.activeCamera = this.camera;
+        this.camera
+        this.camera.lowerRadiusLimit = 5;
+        this.camera.upperRadiusLimit = 20;
+        // 2. Angle vertical min / max (beta en radians)
+        this.camera.lowerBetaLimit = Tools.ToRadians(30);  // Empêche de trop regarder d'en haut
+        this.camera.upperBetaLimit = Tools.ToRadians(85); 
+
         return this.camera;
     }
 
@@ -153,7 +160,8 @@ export class Player extends TransformNode {
 
         this._moveDirection = this._moveDirection.scale(this._inputAmt * Player.PLAYER_SPEED);
         
-        let angle = Math.atan2(move.x, move.z);
+        if(!move.equals(Vector3.Zero())){
+            let angle = Math.atan2(move.x, move.z);
         const targetQuat = Quaternion.FromEulerAngles(0, angle, 0);
 
         this.mesh.rotationQuaternion = Quaternion.Slerp(
@@ -161,6 +169,8 @@ export class Player extends TransformNode {
             targetQuat, 
             10 * this._deltaTime
           )
+        }
+        
 
         let input = new Vector3(this._input.horizontalAxis, 0, this._input.verticalAxis);
         // if (input.length() !== 0) {

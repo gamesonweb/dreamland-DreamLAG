@@ -1,7 +1,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator } from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
@@ -311,13 +311,18 @@ class App {
 
     private _setupCameras(scene: Scene) {
         // Player camera (follows the player)
-        this._playerCamera = new ArcRotateCamera("playerCamera", Math.PI / 2, Math.PI / 3, 20, this._player.mesh.position, scene);
-        this._playerCamera.setTarget(this._player.mesh.position);
-        this._currentCamera = this._playerCamera;
+        // this._playerCamera = new ArcRotateCamera("playerCamera", Math.PI / 2, Math.PI / 3, 20, this._player.mesh.position, scene);
+        // this._playerCamera.setTarget(this._player.mesh.position);
+
+        
+
+        
         //scene.activeCamera = this._playerCamera;
         var camera = this._player.activatePlayerCamera();
         camera.attachControl(this._canvas, true);
         scene.activeCamera = camera;
+
+        
 
         // Scene camera (overview of the entire scene)
         // this._sceneCamera = new ArcRotateCamera("sceneCamera", Math.PI, Math.PI / 2, 50, new Vector3(0, 0, 0), scene);
