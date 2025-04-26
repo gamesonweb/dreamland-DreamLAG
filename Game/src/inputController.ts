@@ -10,6 +10,7 @@ export class PlayerInput {
     public horizontalAxis:number;
     public dashing:boolean = false;
     public jumpKeyDown:boolean = false;
+    public resumeDialog: boolean = false;
 
     constructor(scene: Scene) {
         scene.actionManager = new ActionManager(scene);
@@ -61,8 +62,10 @@ export class PlayerInput {
 
         if(this.inputMap[" "]){
             this.jumpKeyDown = true;
+            this.resumeDialog = true;
         }else{
             this.jumpKeyDown = false;
+            this.resumeDialog = false;
         }
     }
 }

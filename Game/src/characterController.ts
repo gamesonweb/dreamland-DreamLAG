@@ -329,6 +329,10 @@ export class Player extends TransformNode {
 
     }
 
+    public wantsResumeDialogue(){
+        return this._input.resumeDialog;
+    }
+
     set health(value: number) {
         this._health = value;
     }
