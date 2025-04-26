@@ -35,7 +35,7 @@ export class Environment {
                 if(mesh.name === "QuestCharacter"){
                     console.log("character Found!!");
                     this.questCharacter = new QuestCharacter(mesh, this._scene, player);
-                    this.questCharacter.activateQuestCharacter();
+                    this.questCharacter.activateCharacter();
                 }
             })    
 

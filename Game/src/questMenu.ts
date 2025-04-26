@@ -1,5 +1,6 @@
 import { Scene } from "@babylonjs/core";
 import * as GUI from "@babylonjs/gui";
+import { Player } from "./characterController";
 
 export class Quest {
     constructor(public title: string) {} // Pour l'instant, juste un titre
@@ -8,11 +9,15 @@ export class Quest {
 export class QuestMenu {
     private _ui: GUI.AdvancedDynamicTexture;
     private _questWindow: GUI.Rectangle;
+    private _closeButton: GUI.Button;
     private _questListPanel: GUI.StackPanel;
+
     private _quests: Quest[] = [];
 
-    constructor(scene: Scene) {
+
+    constructor() {
         this._ui = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
 
         // Fenêtre principale
         this._questWindow = new GUI.Rectangle();
@@ -33,6 +38,24 @@ export class QuestMenu {
         scrollViewer.thumbLength = 0.2; // taille du "pouce" de scroll
         scrollViewer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
         this._questWindow.addControl(scrollViewer);
+
+         // === Ajout du bouton "croix" ===
+         this._closeButton = GUI.Button.CreateSimpleButton("closeButton", "X");
+         this._closeButton.width = "40px";
+         this._closeButton.height = "40px";
+         this._closeButton.color = "white";
+         this._closeButton.background = "red";
+
+        this._closeButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        this._closeButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._closeButton.top = "10px";
+        this._closeButton.left = "-10px";
+
+        this._questWindow.addControl(this._closeButton);
+
+        this._closeButton.onPointerUpObservable.add(() => {
+            this.toggleQuestWindow();  // ou this._menu.isVisible = false;
+        });
 
         // Panel qui contiendra les quêtes
         this._questListPanel = new GUI.StackPanel();
@@ -61,6 +84,7 @@ export class QuestMenu {
 
     // Montrer ou cacher la fenêtre
     public toggleQuestWindow() {
+        if(this._questWindow.isVisible) Player.controlsLocked = false;
         this._questWindow.isVisible = !this._questWindow.isVisible;
     }
 }

@@ -1,6 +1,6 @@
 import { ArcRotateCamera, Axis, Mesh, Quaternion, Ray,
     Scene, ShadowGenerator, Tools, TransformNode,
-     UniversalCamera, Vector3 } from "@babylonjs/core";
+    Vector3 } from "@babylonjs/core";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -26,6 +26,8 @@ export class Player extends TransformNode {
     public mesh: Mesh; // Outer collisionbox of the player
     private _deltaTime: number = 0;
     private _health: number;
+
+    public static controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
     private static readonly PLAYER_SPEED: number = 0.45;
@@ -200,7 +202,7 @@ export class Player extends TransformNode {
 
 
     private _beforeRenderUpdate(): void {
-        this._updateFromControls();
+        if(!Player.controlsLocked) this._updateFromControls();
         this._updateGroundDetection();
     }
 
@@ -306,7 +308,7 @@ export class Player extends TransformNode {
             this._dashPressed = false;
         }
 
-        if (this._input.jumpKeyDown && this._jumpCount > 0) {
+        if (this._input.jumpKeyDown && this._jumpCount > 0 && !Player.controlsLocked) {
             this._gravity.y = Player.JUMP_FORCE;
             this._jumpCount--;
         }
