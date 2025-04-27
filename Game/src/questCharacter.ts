@@ -4,11 +4,9 @@ import { Player } from "./characterController";
 import { Character } from "./interactiveCharacter";
 
 
-export class QuestCharacter extends Character{
+export class QuestCharacter extends Character<QuestMenu>{
     
 
-    private _questMenu: QuestMenu;
-    private _displayQuests: Boolean;
 
     private _isTalking:Boolean = false;
 
@@ -16,17 +14,13 @@ export class QuestCharacter extends Character{
     // private _gui3dManager: GUI.GUI3DManager;
 
     
-    constructor(mesh:Mesh, scene:Scene, player:Player){
-        super(mesh, scene, player, "Merlin");
+    constructor(mesh:Mesh, scene:Scene, player:Player, quests: Quest[]){
+        super(mesh, scene, player, "Merlin", new QuestMenu(quests));
 
-        this._questMenu = new QuestMenu();
-        this._displayQuests = false;
-        for(let i=0; i<30; i++){
-            const quest = new Quest("Quête " + i);
-            this._questMenu.addQuest(quest);
-        }
-
-        super.setDialogueEndFunction(() => this._questMenu.toggleQuestWindow());
+        // for(let i=0; i<30; i++){
+        //     const quest = new Quest("Quête " + i);
+        //     this.characterMenu.addQuest(quest);
+        // }
 
         //this._gui3dManager = new GUI.GUI3DManager(this.scene);
 

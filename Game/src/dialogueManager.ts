@@ -6,8 +6,7 @@ import { Player } from "./characterController";
 export class DialogueManager {
     private _currentLineIndex = 0;
     private _currentDialogue: Dialogue | null = null;
-    private _onDialogueEnd: (() => void) | null = null;
-    public dialogueActivated: Boolean = false;
+    public isDialogueActivated: Boolean = false;
 
     private canAdvance = true;
 
@@ -16,12 +15,10 @@ export class DialogueManager {
     constructor(private dialogBox: GUI.Rectangle, private dialogText: GUI.TextBlock) {}
 
 
-    startDialogue(dialogue: Dialogue, onDialogueEnd: (() => void)) {
-        Player.controlsLocked = true;
+    startDialogue(dialogue: Dialogue) {
         this._currentDialogue = dialogue;
         this._currentLineIndex = 0;
-        this.dialogueActivated = true;
-        this._onDialogueEnd = onDialogueEnd;
+        this.isDialogueActivated = true;
         this.showCurrentLine();
     }
 
@@ -33,7 +30,7 @@ export class DialogueManager {
 
             let i=0;
             const interval = setInterval(() => {
-                if(this.dialogueActivated && i<line.length && this._currentLineIndex == index){
+                if(this.isDialogueActivated && i<line.length && this._currentLineIndex == index){
                     this.dialogText.text += line.charAt(i);
                     i++;
                 }
@@ -66,8 +63,6 @@ export class DialogueManager {
         this.dialogBox.isVisible = false;
         this._currentDialogue = null;
         this._currentLineIndex = 0;
-        this.dialogueActivated = false;
-        if(this._onDialogueEnd) this._onDialogueEnd();
-        else Player.controlsLocked = false;
+        this.isDialogueActivated = false;
     }
 }

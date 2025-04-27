@@ -1,4 +1,4 @@
-import { Scene, ActionManager, ExecuteCodeAction, Scalar } from "@babylonjs/core";
+import { Scene, ActionManager, ExecuteCodeAction, Scalar, PointerEventTypes } from "@babylonjs/core";
 
 
 export class PlayerInput {
@@ -12,6 +12,8 @@ export class PlayerInput {
     public jumpKeyDown:boolean = false;
     public resumeDialog: boolean = false;
 
+    public onAttack: ((pickInfo?: any) => void) | null = null;
+
     constructor(scene: Scene) {
         scene.actionManager = new ActionManager(scene);
     
@@ -22,6 +24,15 @@ export class PlayerInput {
         scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
             this.inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
         }));
+
+        scene.onPointerObservable.add((pi) => {
+            if (
+              pi.type === PointerEventTypes.POINTERDOWN &&
+              pi.event.button === 0 // clic gauche
+            ) {
+              this.onAttack?.(pi.pickInfo);
+            }
+          });
     
         scene.onBeforeRenderObservable.add(() => {
             this._updateFromKeyboard();
@@ -68,4 +79,5 @@ export class PlayerInput {
             this.resumeDialog = false;
         }
     }
+
 }

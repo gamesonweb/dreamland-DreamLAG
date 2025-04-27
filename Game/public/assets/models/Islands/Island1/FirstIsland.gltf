@@ -19,7 +19,9 @@
 				2,
 				3,
 				4,
-				5
+				5,
+				6,
+				7
 			]
 		}
 	],
@@ -108,6 +110,34 @@
 				-177.171875,
 				37.20270919799805,
 				-49.51565933227539
+			]
+		},
+		{
+			"mesh":5,
+			"name":"Area1",
+			"scale":[
+				25.74102783203125,
+				1.246307611465454,
+				41.04483413696289
+			],
+			"translation":[
+				29.526512145996094,
+				34.32609558105469,
+				-57.287872314453125
+			]
+		},
+		{
+			"mesh":6,
+			"name":"Area2",
+			"scale":[
+				25.74102783203125,
+				1.246307611465454,
+				41.04483413696289
+			],
+			"translation":[
+				-110.47732543945312,
+				34.70180892944336,
+				-57.287872314453125
 			]
 		}
 	],
@@ -279,6 +309,54 @@
 					"extensions":{
 						"KHR_draco_mesh_compression":{
 							"bufferView":4,
+							"attributes":{
+								"POSITION":0,
+								"NORMAL":1,
+								"TEXCOORD_0":2
+							}
+						}
+					},
+					"indices":19,
+					"mode":4
+				}
+			]
+		},
+		{
+			"name":"Area1",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":20,
+						"NORMAL":21,
+						"TEXCOORD_0":22
+					},
+					"extensions":{
+						"KHR_draco_mesh_compression":{
+							"bufferView":5,
+							"attributes":{
+								"POSITION":0,
+								"NORMAL":1,
+								"TEXCOORD_0":2
+							}
+						}
+					},
+					"indices":19,
+					"mode":4
+				}
+			]
+		},
+		{
+			"name":"Area2",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":23,
+						"NORMAL":24,
+						"TEXCOORD_0":25
+					},
+					"extensions":{
+						"KHR_draco_mesh_compression":{
+							"bufferView":6,
 							"attributes":{
 								"POSITION":0,
 								"NORMAL":1,
@@ -473,6 +551,56 @@
 			"componentType":5123,
 			"count":36,
 			"type":"SCALAR"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"max":[
+				1,
+				1,
+				1
+			],
+			"min":[
+				-1,
+				-1,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"type":"VEC2"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"max":[
+				1,
+				1,
+				1
+			],
+			"min":[
+				-1,
+				-1,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":24,
+			"type":"VEC2"
 		}
 	],
 	"bufferViews":[
@@ -500,6 +628,16 @@
 			"buffer":0,
 			"byteLength":264,
 			"byteOffset":1067164
+		},
+		{
+			"buffer":0,
+			"byteLength":264,
+			"byteOffset":1067428
+		},
+		{
+			"buffer":0,
+			"byteLength":264,
+			"byteOffset":1067692
 		}
 	],
 	"samplers":[
@@ -510,7 +648,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":1067428,
+			"byteLength":1067956,
 			"uri":"FirstIsland.bin"
 		}
 	]

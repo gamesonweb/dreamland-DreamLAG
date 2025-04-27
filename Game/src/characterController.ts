@@ -1,6 +1,7 @@
-import { ArcRotateCamera, Axis, Mesh, Quaternion, Ray,
+import { ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
     Scene, ShadowGenerator, Tools, TransformNode,
     Vector3 } from "@babylonjs/core";
+import { Monster } from "./entities/monster";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -26,8 +27,9 @@ export class Player extends TransformNode {
     public mesh: Mesh; // Outer collisionbox of the player
     private _deltaTime: number = 0;
     private _health: number;
+    private _damage: number = 10;
 
-    public static controlsLocked:Boolean = false;
+    private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
     private static readonly PLAYER_SPEED: number = 0.45;
@@ -50,6 +52,10 @@ export class Player extends TransformNode {
 
         // Ajout des inputs pour la caméra (souris par exemple)
         this._setupCameraInputs();
+
+        this._input.onAttack = (pickInfo?: PickingInfo) => {
+            if (pickInfo) { this._attack(pickInfo); }
+          };
 
         // Position initiale
         this.mesh.position = position;
@@ -202,7 +208,7 @@ export class Player extends TransformNode {
 
 
     private _beforeRenderUpdate(): void {
-        if(!Player.controlsLocked) this._updateFromControls();
+        if(!this._controlsLocked) this._updateFromControls();
         this._updateGroundDetection();
     }
 
@@ -308,7 +314,7 @@ export class Player extends TransformNode {
             this._dashPressed = false;
         }
 
-        if (this._input.jumpKeyDown && this._jumpCount > 0 && !Player.controlsLocked) {
+        if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked) {
             this._gravity.y = Player.JUMP_FORCE;
             this._jumpCount--;
         }
@@ -331,13 +337,37 @@ export class Player extends TransformNode {
 
     }
 
+    
+
     public wantsResumeDialogue(){
         return this._input.resumeDialog;
+    }
+
+    public lockControls(){
+        this._moveDirection = Vector3.Zero();
+        this._controlsLocked = true;
+    }
+
+    public unlockControls(){
+        this._controlsLocked = false;
     }
 
     set health(value: number) {
         this._health = value;
     }
+
+    private _attack(pickInfo: PickingInfo) {
+        // pickInfo vient de onPointerObservable
+        console.log(pickInfo.pickedMesh?.name);
+        console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
+        if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
+          const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
+          console.log(monster);
+          
+          if(monster) monster.takeDamage(this._damage);
+        }
+      }
+
 
     takeDamage(amount: number) {
         this._health -= amount;

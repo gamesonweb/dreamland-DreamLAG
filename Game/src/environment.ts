@@ -1,16 +1,23 @@
 import { AbstractMesh, Mesh, MeshBuilder, ParseNullTerminatedString, Scene, SceneLoader, Vector3 } from "@babylonjs/core";
 import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
+import { Area, AreaAsset, MonsterArea } from "./area";
+import { Quest } from "./questMenu";
 
 
 export class Environment {
     private _scene: Scene;
+    private _player:Player;
+
     private _islandMesh: AbstractMesh;
     public island: Mesh;
     public questCharacter: QuestCharacter;
 
-    constructor(scene: Scene) {
+    constructor(scene: Scene, player:Player) {
         this._scene = scene;
+
+        this._player = player;
+
         this._islandMesh = null;
     }
 
@@ -19,7 +26,7 @@ export class Environment {
         ground.scaling = new Vector3(1,.02,1);
     }
 
-    public async loadIsland(player:Player) {
+    public async loadIsland() {
 
 
         SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene).then((result) => {
@@ -31,13 +38,29 @@ export class Environment {
                 m.subMeshes.length > 0           // non vide
             ) as Mesh[];
 
+            let questCharacterMesh:Mesh = null;
+
             geoMeshes.forEach((mesh) => {
                 if(mesh.name === "QuestCharacter"){
                     console.log("character Found!!");
-                    this.questCharacter = new QuestCharacter(mesh, this._scene, player);
-                    this.questCharacter.activateCharacter();
+                    questCharacterMesh = mesh;
+                    // this.questCharacter = new QuestCharacter(mesh, this._scene, player);
+                    // this.questCharacter.activateCharacter();
                 }
-            })    
+
+                if(mesh.name.includes("Area")){
+                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:2, 1:3}));
+                } 
+            })   
+            let questsIslands1 = [];
+            let i=0;
+            for(const area of AreaAsset.getIslandAreas("Island1")){
+                questsIslands1.push(new Quest("Quest" + i, [area]));
+                i++;
+            }
+
+            this.questCharacter = new QuestCharacter(questCharacterMesh, this._scene, this._player, questsIslands1);
+            this.questCharacter.activateCharacter();
 
         //     geoMeshes.forEach(abstractMesh => {
         //         console.log("Subdivision Of Island");

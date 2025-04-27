@@ -12,7 +12,7 @@ export class Monster {
     target: Player | null;
     lastAttackTime: number; // Dernier moment où le monstre a attaqué
     attackCooldown: number; // Temps entre deux attaques
-    mesh: Mesh; // Mesh du monstre
+    public mesh: Mesh; // Mesh du monstre
     detectionZone: Mesh; // Zone de détection autour du monstre
 
     private _deltaTime: number = 0;
@@ -43,6 +43,11 @@ export class Monster {
         this.mesh.checkCollisions = true;
         this.mesh.ellipsoid       = new Vector3(1.5, 1.5, 1.5);  // rayon de ta sphère
         this.mesh.ellipsoidOffset = new Vector3(0, 1.5, 0); // pour que l’ellipsoïde soit alignée à la base
+        this.mesh.isPickable = true;
+        this.mesh.metadata = {
+            isMonster: true,
+            monsterInstance: this
+        }
 
 
         // Zone invisible utilisée pour détecter le joueur

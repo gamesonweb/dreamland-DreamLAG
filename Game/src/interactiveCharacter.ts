@@ -1,11 +1,12 @@
-import { Mesh, Scene, Vector3 } from "@babylonjs/core";
+import { BiPlanarBlock, Mesh, Scene, Vector3 } from "@babylonjs/core";
 import { Player } from "./characterController";
 import * as GUI from "@babylonjs/gui"
 import { DialogueManager } from "./dialogueManager";
 import { DialogueAssets, Dialogues, dialoguesAssets } from "./dialogue";
+import { Menu } from "./questMenu";
 
 
-export class Character{
+export class Character<T extends Menu>{
     private _mesh: Mesh;
     public scene:Scene;
 
@@ -19,23 +20,26 @@ export class Character{
     private _dialogueManager: DialogueManager;
     private _dialogueState: number;
     private _dialogues: Dialogues;
-    private _onDialogueEnd:(() => void) | null;
+
+    private _isInteracting:Boolean = false;
+    //private _onDialogueEnd:(() => void) | null;
+    protected characterMenu:T|null;
 
     // private _button3D: Button3D;
     // private _gui3dManager: GUI.GUI3DManager;
 
     private player:Player;
     
-    private static readonly MIN_DIST_INTERACTION: number = 50;
-    private static readonly TEXTSPEED = 40; //en ms
+    private static readonly MIN_DIST_INTERACTION: number = 200;
 
-    constructor(mesh:Mesh, scene:Scene, player:Player, characterName:string, onDialogueEnd?: (() => void)){
+    constructor(mesh:Mesh, scene:Scene, player:Player, characterName:string, characterMenu?:T){
         this._mesh = mesh;
         this.scene = scene;
         this.player = player;
         this._characterName = characterName;
         this._dialogues = dialoguesAssets[this._characterName];
-        this._onDialogueEnd = onDialogueEnd;
+        //this._onDialogueEnd = onDialogueEnd;
+        this.characterMenu = characterMenu;
 
         this._setUpTalkButton();
         this._setUpBoxDialogue();
@@ -126,8 +130,7 @@ export class Character{
     }
 
     private _updateTalkButton(){
-        if(this._isPlayerNear() && !this._dialogueManager.dialogueActivated){
-            console.log("Bouton Visibke!");
+        if(this._isPlayerNear() && !this._dialogueManager.isDialogueActivated && !this._isInteracting){
             this._talkButton.isVisible=true;
             // this._button3D.isVisible = true;
         }
@@ -138,9 +141,17 @@ export class Character{
     }
 
     private _updateDialogueBox(){
-        if(this.player.wantsResumeDialogue()){
+        if(this.player.wantsResumeDialogue()&&this._dialogueManager.isDialogueActivated){
             this._dialogueManager.nextLine();
-        }       
+            if(!this._dialogueManager.isDialogueActivated && this.characterMenu){ //Si le dialogue vient d'être terminé
+                if(!this.characterMenu.isWindowRecentlyClosed()) this.characterMenu.showWindow();
+            }
+        } 
+
+        if(this.characterMenu.isWindowRecentlyClosed()&&this._isInteracting){
+            this.player.unlockControls();
+            this._isInteracting=false;
+        }      
     }
 
     public activateCharacter(){
@@ -151,39 +162,8 @@ export class Character{
     }
 
     private _startDialogue(){
-        this._dialogueManager.startDialogue(this._dialogues[this._dialogueState], this._onDialogueEnd);
+        this.player.lockControls();
+        this._isInteracting = true;
+        this._dialogueManager.startDialogue(this._dialogues[this._dialogueState]);
     }
-
-    public setDialogueEndFunction(onDialogueEnd:(() => void)){
-        this._onDialogueEnd = onDialogueEnd;
-    }
-
-    // private _showMessage(message: string) {
-    //     this._dialogBox.isVisible = true;
-    //     let i=0
-    //     const interval = setInterval(() => {
-    //         if(this._isTalking && i < message.length){
-    //             this._dialogText.text += message.charAt(i);
-    //             i++;
-    //         }
-    //         else{
-    //             clearInterval(interval);
-    //         }
-    //     }, Character.TEXTSPEED);
-    // }
-
-
-    // public activateQuestCharacter(){
-    //     this.scene.beforeCameraRender(() => {
-    //         this._updatethis.talkButton();
-    //     });
-    // }
-
-    // private _checkDistance(){
-
-    // }
-    
-    // private _updatethis.talkButton(){
-    //     if
-    // }
 }
