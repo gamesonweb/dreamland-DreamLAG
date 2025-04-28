@@ -31,13 +31,13 @@ export class Quest {
     // }
 }
 
-export interface Menu{
+export interface CharacterMenu{
     showWindow();
     closeWindow();
     isWindowRecentlyClosed();
 }
 
-export class QuestMenu implements Menu{
+export class QuestMenu implements CharacterMenu{
     private _ui: GUI.AdvancedDynamicTexture;
     private _questWindow: GUI.Rectangle;
     private _closeButton: GUI.Button;

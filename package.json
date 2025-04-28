@@ -1,0 +1,19 @@
+{
+  "name": "dreamlag",
+  "version": "1.0.0",
+  "description": "Écrire les détails sur le jeu",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adri-LEY/DreamLAG.git"
+  },
+  "author": "Adri-LEY",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Adri-LEY/DreamLAG/issues"
+  },
+  "homepage": "https://github.com/Adri-LEY/DreamLAG#readme"
+}

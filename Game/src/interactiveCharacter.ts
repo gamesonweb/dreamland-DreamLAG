@@ -3,10 +3,10 @@ import { Player } from "./characterController";
 import * as GUI from "@babylonjs/gui"
 import { DialogueManager } from "./dialogueManager";
 import { DialogueAssets, Dialogues, dialoguesAssets } from "./dialogue";
-import { Menu } from "./questMenu";
+import { CharacterMenu } from "./questMenu";
 
 
-export class Character<T extends Menu>{
+export class Character<T extends CharacterMenu>{
     private _mesh: Mesh;
     public scene:Scene;
 
