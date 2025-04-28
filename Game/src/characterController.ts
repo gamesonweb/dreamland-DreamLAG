@@ -2,6 +2,8 @@ import { ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
     Scene, ShadowGenerator, Tools, TransformNode,
     Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
+import {App} from "./app";
+import {createDeathAnimation} from "./entities/animation";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -18,7 +20,6 @@ export class Player extends TransformNode {
     private _inputAmt: number;
     private _gravity: Vector3 = new Vector3();
     private _grounded: boolean;
-    private _lastGroundPos: Vector3;
     private _jumpCount: number;
     private _dashPressed: boolean = false;
     private _canDash: boolean = true;
@@ -230,7 +231,7 @@ export class Player extends TransformNode {
      * @param length longueur du rayon
      */
     private _frontRaycast(forwardOffset: number, length: number): Vector3 {
-        const origin = this.mesh.position.add(this.mesh.getDirection(Axis.Z).scale(forwardOffset)).add(new Vector3(0, 0.7, 0));;
+        const origin = this.mesh.position.add(this.mesh.getDirection(Axis.Z).scale(forwardOffset)).add(new Vector3(0, 0.7, 0));
         // 2) Direction : vers l’avant local (axe Z)
         const direction = this.mesh.getDirection(Axis.Z).normalize();
         // 3) Création du rayon
@@ -372,7 +373,10 @@ export class Player extends TransformNode {
     takeDamage(amount: number) {
         this._health -= amount;
         console.log(`Player takes ${amount} damage. Remaining health: ${this._health}`);
-        if (this._health <= 0) this.die();
+        if (this._health <= 0) {
+            this.die();
+            App.goToLose();
+        }
     }
 
     isAlive(): boolean {
@@ -381,6 +385,18 @@ export class Player extends TransformNode {
 
     die() {
         console.log("Player has died.");
-        this.mesh.dispose();
+        this.playDeathAnimation();
+    }
+
+    /**
+     * Animation de mort, avec suppression du mesh à la fin.
+     */
+    playDeathAnimation(): void {
+        const anim = createDeathAnimation(this.mesh);
+        this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
+        setTimeout(() => {
+            this.mesh.dispose();
+            console.log("Player is dead.");
+        }, 1000); // délai pour laisser l’animation jouer
     }
 }
