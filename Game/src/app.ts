@@ -12,25 +12,24 @@ import { MemoryMenu } from "./memoryMenu";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
-class App {
+export class App {
     private _scene: Scene;
     private _canvas: HTMLCanvasElement;
     private _engine: Engine;
-
     private _state: number;
+
     private _gamescene: Scene;
     private _cutScene: Scene;
-
     private _environment: Environment;
+
     private _player: Player;
     private _input: PlayerInput;
     private _mobs: Monster[];
-
     public assets: any; // Specify more precise typing for `assets`
+
     private _playerCamera: ArcRotateCamera; // Player camera
     private _sceneCamera: ArcRotateCamera;  // Scene camera
     private _currentCamera: ArcRotateCamera; // To track the active camera
-
     constructor() {
         // Create the canvas HTML element and attach it to the webpage
         this._canvas = document.createElement("canvas");
@@ -58,7 +57,13 @@ class App {
         this._main();
     }
 
-    private async _goToLose(): Promise<void> {
+    static goToLose() {
+        new App()._goToLose().then();
+        console.log("Game Over. Player has lost.");
+        window.location.reload();
+    }
+
+    public async _goToLose(): Promise<void> {
         this._engine.displayLoadingUI();
 
         //--SCENE SETUP--
@@ -199,7 +204,7 @@ class App {
         this._gamescene = scene;
 
         AreaAsset.areas = {};
-        
+
         //--CREATE ENVIRONMENT--
         const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
         const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
@@ -212,7 +217,7 @@ class App {
 
         const shadowGenerator = new ShadowGenerator(1024, light);
         shadowGenerator.darkness = 0.4
-        
+
         await this._loadCharacterAssets(scene); //character
         await this._loadEntities(scene, shadowGenerator);
 
@@ -220,9 +225,8 @@ class App {
         this._environment = environment; //class variable for App
 
         const memoryMenu = new MemoryMenu(this._scene, this._player);
-        
         await this._environment.loadIsland(); //environment
-        
+
 
     }
 
@@ -321,15 +325,15 @@ class App {
         // this._playerCamera = new ArcRotateCamera("playerCamera", Math.PI / 2, Math.PI / 3, 20, this._player.mesh.position, scene);
         // this._playerCamera.setTarget(this._player.mesh.position);
 
-        
 
-        
+
+
         //scene.activeCamera = this._playerCamera;
         var camera = this._player.activatePlayerCamera();
         camera.attachControl(this._canvas, true);
         scene.activeCamera = camera;
 
-        
+
 
         // Scene camera (overview of the entire scene)
         // this._sceneCamera = new ArcRotateCamera("sceneCamera", Math.PI, Math.PI / 2, 50, new Vector3(0, 0, 0), scene);

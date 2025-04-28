@@ -53,6 +53,8 @@ export class Monster {
         // Zone invisible utilisée pour détecter le joueur
         this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
         this.detectionZone.isVisible = true;
+
+        this._moveDirection = position;
     }
 
 
@@ -123,11 +125,48 @@ export class Monster {
     //     this._updateGroundDetection();
     // }
 
-    public activateMonster(target: Player[]): void{
-        this.scene.registerBeforeRender(() =>{
-            this.update(target);
+    public activateMonster(players: Player[]): void {
+        this.scene.registerBeforeRender(() => {
+            if (this.state === "dead") return;
+
+            this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
             this._updateGroundDetection();
-        })
+
+            if (!this.target) {
+                // Chercher le joueur le plus proche
+                let closestPlayer: Player | null = null;
+                let minDist = Infinity;
+                for (const player of players) {
+                    const dist = Vector3.Distance(this.mesh.position, player.mesh.position);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestPlayer = player;
+                    }
+                }
+                if (closestPlayer && minDist < 20) { // si joueur détecté dans un rayon de 20 unités
+                    this.target = closestPlayer;
+                    this.state = "pursuing";
+                }
+            }
+
+            if (this.target) {
+                const distance = Vector3.Distance(this.mesh.position, this.target.mesh.position);
+
+                if (distance < 4) { // Distance d'attaque
+                    this.state = "attacking";
+                    this.attack();
+                } else {
+                    this.state = "pursuing";
+                    this.moveTowards(this.target.mesh.position);
+                }
+            }
+        });
+    }
+
+    private moveTowards(targetPosition: Vector3): void {
+        const direction = targetPosition.subtract(this.mesh.position).normalize();
+        const moveSpeed = 2; // unités par seconde
+        this._moveDirection = direction.scale(moveSpeed * this._deltaTime);
     }
 
     /**
@@ -214,6 +253,7 @@ export class Monster {
 
         if (this.target && this.target.isAlive()) {
             this.target.takeDamage(this.damage);
+            console.log("The monster is attacking the player.");
             this.playAttackAnimation();
         }
     }
