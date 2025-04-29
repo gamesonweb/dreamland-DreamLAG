@@ -31,8 +31,8 @@ export class Memory{
         this._advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
         this._memoryWindow = new GUI.Rectangle();
-        this._memoryWindow.widthInPixels = 1000;
-        this._memoryWindow.heightInPixels = 800;
+        this._memoryWindow.width = "70%";
+        this._memoryWindow.height = "80%";
         this._memoryWindow.thickness = 5;
         this._memoryWindow.background = "black";
         this._memoryWindow.isVisible = false;
@@ -65,8 +65,8 @@ export class Memory{
 
     private _displayPuzzlePiece(pieceUrl: string){
         const piece = new GUI.Image("piece", pieceUrl);
-        piece.width="800px"
-        piece.height = "800px";
+        piece.width="60%"
+        piece.height = "100%";
         piece.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
         piece.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
 

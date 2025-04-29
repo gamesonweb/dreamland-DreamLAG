@@ -65,8 +65,8 @@ export class MemoryMenu{
     private _setUpMenuWindow() {
         // 1) Fenêtre principale
         this._menuWindow = new GUI.Rectangle();
-        this._menuWindow.widthInPixels = 800;
-        this._menuWindow.heightInPixels = 500;
+        this._menuWindow.width= "800px";
+        this._menuWindow.height = "500px";
         this._menuWindow.thickness = 5;
         this._menuWindow.background = "black";
         this._menuWindow.isVisible = false;
