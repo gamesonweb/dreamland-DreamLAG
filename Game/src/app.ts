@@ -9,6 +9,7 @@ import { PlayerInput } from "./inputController";
 import { Monster } from "./entities/monster";
 import { AreaAsset } from "./area";
 import { MemoryMenu } from "./memoryMenu";
+import { Memory, MemoryAsset } from "./memory";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
@@ -203,7 +204,9 @@ export class App {
         let scene = new Scene(this._engine);
         this._gamescene = scene;
 
+        await MemoryAsset.init();
         AreaAsset.areas = {};
+        
 
         //--CREATE ENVIRONMENT--
         const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
@@ -223,6 +226,7 @@ export class App {
 
         const environment = new Environment(scene, this._player);
         this._environment = environment; //class variable for App
+
 
         const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment

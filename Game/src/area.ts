@@ -1,6 +1,7 @@
 import { Mesh, Scene, Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import { Player } from "./characterController";
+import { Quest } from "./questMenu";
 
 export class Area{
     protected _scene:Scene;
@@ -10,6 +11,7 @@ export class Area{
     protected _areaMesh: Mesh;
 
     protected _areaCompleted = false;
+    private _relatedQuest:Quest|null;
 
     protected _min:Vector3;
     protected _max:Vector3;
@@ -17,7 +19,7 @@ export class Area{
     protected static readonly AREA_MINIMUM_ACTIVATED_ALTITUDE = 10;
     protected static readonly MINIMAL_DISTANCE_RENDER = 50;
 
-    constructor(scene:Scene, player:Player, mesh: Mesh, areaName:string){
+    constructor(scene:Scene, player:Player, mesh: Mesh, areaName:string, quest?:Quest){
         this._scene=scene;
 
         this._player = player;
@@ -30,6 +32,18 @@ export class Area{
         const bbox = this._areaMesh.getBoundingInfo().boundingBox;
         this._min = bbox.minimumWorld;
         this._max = bbox.maximumWorld;
+
+        this._relatedQuest = quest;
+    }
+
+    protected _setAreaCompleted(){
+        this._areaCompleted = true;
+        console.log("TERMINATED, quest : " + this._relatedQuest);
+        if(this._relatedQuest) this._relatedQuest.setQuestCompleted();
+    }
+
+    public setRelatedQuest(quest:Quest){
+        this._relatedQuest = quest;
     }
 
     public activateArea(): void{
@@ -48,11 +62,15 @@ export class MonsterArea extends Area{
     private _currentMonsters: Monster[] = [];
     private _playerInArea:boolean = false;
 
+    private _beforeRenderCallback: () => void;
+
+
     constructor(scene:Scene, player:Player, mesh:Mesh, areaName:string, monstersInfo: {[round:number]: number}){
         super(scene, player, mesh, areaName);
         this._nbOfMonstersPerRound = monstersInfo;
 
         this._lastRound =  Math.max(...Object.keys(this._nbOfMonstersPerRound).map(Number));
+
     }
 
     private _isPlayerNear(){
@@ -117,7 +135,8 @@ export class MonsterArea extends Area{
                 
             }
             else if(this._currentMonsters.length === 0 && this._stateRound > this._lastRound){
-                this._areaCompleted = true;
+                this._setAreaCompleted();
+                this._stopUpdate();
             }
             else {
                 this._playerInArea = true;
@@ -127,17 +146,24 @@ export class MonsterArea extends Area{
         else this.resetArea();
     }
 
-    private _renderBeforeUpdate(){
-        this._scene.registerBeforeRender(async() => {
-            if(this._isPlayerNear()){
-                await this._updateArea();
-            }
-        })
+    private _stopUpdate() {
+        if (this._beforeRenderCallback) {
+          this._scene.unregisterBeforeRender(this._beforeRenderCallback);
+          // Si vous voulez pouvoir la ré-utiliser plus tard, vous pouvez la nuller
+          this._beforeRenderCallback = undefined;
+        }
     }
 
     public activateArea(): void {
         super.activateArea();
-        this._renderBeforeUpdate();
+        
+        this._beforeRenderCallback = async () => {
+            if (this._isPlayerNear()) {
+              await this._updateArea();
+            }
+          };
+          // 2) l’enregistrer
+          this._scene.registerBeforeRender(this._beforeRenderCallback);
     }
 
     public resetArea(){

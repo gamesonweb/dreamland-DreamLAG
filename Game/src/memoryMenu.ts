@@ -1,7 +1,7 @@
 import { Scene } from "@babylonjs/core";
 import * as GUI from "@babylonjs/gui";
 import { Player } from "./characterController";
-import { Memory } from "./memory";
+import { Memory, MemoryAsset, MemoryPiece } from "./memory";
 
 
 
@@ -91,7 +91,7 @@ export class MemoryMenu{
         scrollViewer.addControl(stackPanel);
     
         // 4) Ajouter les boutons dans des lignes de 2 boutons
-        for (let i = 0; i < 10; i += 2) {
+        for (let i = 0; i < MemoryAsset.memories.length; i += 2) {
             const rowGrid = new GUI.Grid();
             rowGrid.width = "100%";
             rowGrid.heightInPixels = 250;
@@ -99,18 +99,22 @@ export class MemoryMenu{
             rowGrid.addColumnDefinition(0.5);
     
             // Premier bouton
-            const mem1 = new Memory("memo" + i, "assets/images/Puzzle1");
-            mem1.unlockPiece("piece1.png");
-            mem1.unlockPiece("piece2.png");
-            mem1.unlockPiece("piece6.png");
-            const button1 = this._createMemoryButton(mem1);
+            const mem = MemoryAsset.memories[i];
+            mem.init();
+            const piece1 = new MemoryPiece("piece1", "memo" + (i+1), "assets/images/Puzzle1");
+            const piece2 = new MemoryPiece("piece2", "memo" + (i+1), "assets/images/Puzzle1");
+            const piece3 = new MemoryPiece("piece3", "memo" + (i+1), "assets/images/Puzzle1");
+            mem.unlockPiece(piece1);
+            mem.unlockPiece(piece2);
+            mem.unlockPiece(piece3);
+            const button1 = this._createMemoryButton(mem);
             button1.onPointerClickObservable.add(() => {
-                mem1.showWindow();
+                mem.showWindow();
             })
             rowGrid.addControl(button1, 0, 0);
     
             // Deuxième bouton (s'il existe)
-            if (i + 1 < 10) {
+            if (i + 1 < MemoryAsset.memories.length) {
                 const mem2 = new Memory("memo" + (i + 1), "assets/images/Puzzle1");
                 const button2 = this._createMemoryButton(mem2);
                 button2.onPointerClickObservable.add(() => {
@@ -152,10 +156,6 @@ export class MemoryMenu{
     
         return button;
     }
-    
-    
-    
-    
 
     private toggleMenu(){
         this._menuWindow.isVisible = !this._menuWindow.isVisible;

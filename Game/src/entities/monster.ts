@@ -127,38 +127,41 @@ export class Monster {
 
     public activateMonster(players: Player[]): void {
         this.scene.registerBeforeRender(() => {
-            if (this.state === "dead") return;
+            if (this.state !== "dead"){;
+                this.update(players);
 
-            this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
-            this._updateGroundDetection();
+                this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
+                this._updateGroundDetection();
 
-            if (!this.target) {
-                // Chercher le joueur le plus proche
-                let closestPlayer: Player | null = null;
-                let minDist = Infinity;
-                for (const player of players) {
-                    const dist = Vector3.Distance(this.mesh.position, player.mesh.position);
-                    if (dist < minDist) {
-                        minDist = dist;
-                        closestPlayer = player;
+                if (!this.target) {
+                    // Chercher le joueur le plus proche
+                    let closestPlayer: Player | null = null;
+                    let minDist = Infinity;
+                    for (const player of players) {
+                        const dist = Vector3.Distance(this.mesh.position, player.mesh.position);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closestPlayer = player;
+                        }
+                    }
+                    if (closestPlayer && minDist < 20) { // si joueur détecté dans un rayon de 20 unités
+                        this.target = closestPlayer;
+                        this.state = "pursuing";
                     }
                 }
-                if (closestPlayer && minDist < 20) { // si joueur détecté dans un rayon de 20 unités
-                    this.target = closestPlayer;
-                    this.state = "pursuing";
-                }
-            }
 
-            if (this.target) {
-                const distance = Vector3.Distance(this.mesh.position, this.target.mesh.position);
+                if (this.target) {
+                    const distance = Vector3.Distance(this.mesh.position, this.target.mesh.position);
 
-                if (distance < 4) { // Distance d'attaque
-                    this.state = "attacking";
-                    this.attack();
-                } else {
-                    this.state = "pursuing";
-                    this.moveTowards(this.target.mesh.position);
+                    if (distance < 4) { // Distance d'attaque
+                        this.state = "attacking";
+                        this.attack();
+                    } else {
+                        this.state = "pursuing";
+                        this.moveTowards(this.target.mesh.position);
+                    }
                 }
+    
             }
         });
     }

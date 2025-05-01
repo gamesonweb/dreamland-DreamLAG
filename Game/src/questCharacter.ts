@@ -15,7 +15,7 @@ export class QuestCharacter extends Character<QuestMenu>{
 
     
     constructor(mesh:Mesh, scene:Scene, player:Player, quests: Quest[]){
-        super(mesh, scene, player, "Merlin", new QuestMenu(quests));
+        super(mesh, scene, player, "Merlin", new QuestMenu(quests, player));
 
         // for(let i=0; i<30; i++){
         //     const quest = new Quest("Quête " + i);

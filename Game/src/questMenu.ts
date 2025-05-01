@@ -1,34 +1,73 @@
-import { Scene } from "@babylonjs/core";
+import { Observable, Scene } from "@babylonjs/core";
 import * as GUI from "@babylonjs/gui";
 import { Player } from "./characterController";
 import { Area } from "./area";
+import { MemoryPiece } from "./memory";
 
 export class Quest {
     public title:string
-    private _questAccepted=false;
-    private _isCompleted=false;
+    private _questAccepted:boolean=false;
+    private _isCompleted:boolean=false;
+    private _isRewardClaimed:boolean = false;
+    private _reward:MemoryPiece=null;
+    public onStateChange = new Observable<Quest>();
 
     private _involvedAreas:Area[]|null=[];
 
-    constructor(title: string, areas?:Area[]) {
+    constructor(title: string, reward: MemoryPiece, areas?:Area[]) {
         this.title = title;
+
+        this._reward = reward;
 
         this._involvedAreas = areas;
 
+        this._linkToAreas();
+
+        
+
     } // Pour l'instant, juste un titre
+
+    private _linkToAreas(){
+        for(const area of this._involvedAreas){
+            area.setRelatedQuest(this);
+        }
+    }
 
     public acceptQuest(){
         this._questAccepted=true;
+        this.onStateChange.notifyObservers(this);
         if(this._involvedAreas){
             for(const area of this._involvedAreas){
                 area.activateArea();
             }
         }
     }
+    
 
-    // public _updateAchievement(){
+    public setQuestCompleted(){
+        console.log("NOTIFICATION");
+        this._isCompleted = true;
+        this.onStateChange.notifyObservers(this);
+    }
 
-    // }
+    public claimReward(player:Player) {
+        player.claimReward(this._reward);
+        this._isRewardClaimed = true;
+        this.onStateChange.notifyObservers(this);
+    }
+
+    public get isAccepted() {
+        return this._questAccepted;
+    }
+
+    public get isCompleted() { 
+        return this._isCompleted; 
+    }
+
+    public get isRewardClaimed() { 
+        return /* à renseigner */ false;
+    }
+
 }
 
 export interface CharacterMenu{
@@ -45,13 +84,24 @@ export class QuestMenu implements CharacterMenu{
 
     private _quests: Quest[] = [];
 
+    private _player:Player;
+
     private _isWindowRecentlyClosed: boolean = false;
 
+    private _uiMap = new Map<Quest, {
+        container: GUI.Rectangle,
+        acceptBtn?: GUI.Button,
+        statusText?: GUI.TextBlock,
+        rewardBtn?: GUI.Button
+    }>();
 
-    constructor(quests: Quest[]) {
+
+    constructor(quests: Quest[], player:Player) {
         this._ui = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
         this._quests = quests;
+
+        this._player = player;
 
         // Fenêtre principale
         this._questWindow = new GUI.Rectangle();
@@ -109,11 +159,14 @@ export class QuestMenu implements CharacterMenu{
     private _setUpUIQuests(){
         for(const quest of this._quests){
             this._createUiQuest(quest);
+
+            quest.onStateChange.add(() => this._updateQuestUI(quest));
         }
     }
 
     private _createUiQuest(quest:Quest){
         const questContainer = new GUI.Rectangle();
+        questContainer.width = "100%"
         questContainer.height = "100px"; // un peu plus grand pour inclure padding + bordure
         questContainer.thickness = 2;   // bordure de 2px
         questContainer.color = "white"; // couleur de la bordure
@@ -143,6 +196,68 @@ export class QuestMenu implements CharacterMenu{
         questContainer.addControl(questLabel); 
         questContainer.addControl(acceptButton);
         this._questListPanel.addControl(questContainer); // on ajoute le rectangle à la liste
+        this._uiMap.set(quest, { container: questContainer, acceptBtn : acceptButton });
+    }
+
+     /** Reconstruit l’UI d’une quête après changement d’état */
+     private _updateQuestUI(quest: Quest) {
+        const ui = this._uiMap.get(quest);
+        
+        if (!ui) return;
+
+        // 1) On retire les anciens contrôles s'ils existent
+        if (ui.acceptBtn) {
+            ui.container.removeControl(ui.acceptBtn);
+            ui.acceptBtn = undefined;
+        }
+        if (ui.statusText) {
+            ui.container.removeControl(ui.statusText);
+            ui.statusText = undefined;
+        }
+        if (ui.rewardBtn) {
+            ui.container.removeControl(ui.rewardBtn);
+            ui.rewardBtn = undefined;
+        }
+
+        if (quest.isAccepted && !quest.isCompleted) {
+            // statut "En cours"
+            const status = new GUI.TextBlock();
+            status.resizeToFit = true;
+            status.text = "En cours";
+            status.color = "yellow";
+            status.fontSize = 18;
+            status.paddingLeft = "10px";
+            status.horizontalAlignment=GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            status.verticalAlignment=GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            // status.left                  = "160px"; // largeur du bouton (150px) + 10px de marge
+            ui.container.addControl(status);
+            ui.statusText = status;
+            return;
+        }
+
+        if (quest.isCompleted && !quest.isRewardClaimed) {
+            // bouton Récupérer récompense
+            const rewardBtn = GUI.Button.CreateSimpleButton("rewardBtn", "Récupérer récompense");
+            rewardBtn.width = "200px";
+            rewardBtn.height = "50px";
+            rewardBtn.color = "white";
+            rewardBtn.background = "blue";
+            rewardBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            rewardBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            rewardBtn.onPointerClickObservable.add(() => {
+                quest.claimReward(this._player);
+                // on peut directement supprimer la quête
+                this._questListPanel.removeControl(ui.container);
+                this._uiMap.delete(quest);
+            });
+            ui.container.addControl(rewardBtn);
+            ui.rewardBtn = rewardBtn;
+            return;
+        }
+
+        // si récompense déjà prise, on supprime la quête (sécurité)
+        this._questListPanel.removeControl(ui.container);
+        this._uiMap.delete(quest);
     }
 
     // Ajouter une quête

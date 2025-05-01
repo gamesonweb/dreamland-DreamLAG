@@ -4,6 +4,7 @@ import { ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
 import { Monster } from "./entities/monster";
 import {App} from "./app";
 import {createDeathAnimation} from "./entities/animation";
+import { Memory, MemoryAsset, MemoryPiece } from "./memory";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -29,6 +30,7 @@ export class Player extends TransformNode {
     private _deltaTime: number = 0;
     private _health: number;
     private _damage: number = 10;
+    private _memories:Memory[];
 
     private _controlsLocked:Boolean = false;
 
@@ -351,6 +353,12 @@ export class Player extends TransformNode {
 
     public unlockControls(){
         this._controlsLocked = false;
+    }
+
+    public claimReward(piece:MemoryPiece){
+        const memo = MemoryAsset.memories.find(memo => memo.name === piece.memoryName)
+        if(memo) memo.unlockPiece(piece);
+        else console.log("Error, piece does not exist : PieceName = " + piece.name +", memoryName = " + piece.memoryName + ", memories = " + MemoryAsset.memories.length);
     }
 
     set health(value: number) {

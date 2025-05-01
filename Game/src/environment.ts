@@ -3,6 +3,7 @@ import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
 import { Area, AreaAsset, MonsterArea } from "./area";
 import { Quest } from "./questMenu";
+import { MemoryPiece } from "./memory";
 
 
 export class Environment {
@@ -49,13 +50,14 @@ export class Environment {
                 }
 
                 if(mesh.name.includes("Area")){
-                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:2, 1:3}));
+                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
                 } 
             })   
             let questsIslands1 = [];
             let i=0;
             for(const area of AreaAsset.getIslandAreas("Island1")){
-                questsIslands1.push(new Quest("Quest" + i, [area]));
+                const pieceNumber = i+5
+                questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1"), [area]));
                 i++;
             }
 
