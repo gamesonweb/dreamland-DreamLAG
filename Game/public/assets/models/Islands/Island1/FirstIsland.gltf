@@ -270,7 +270,7 @@
 			]
 		},
 		{
-			"name":"Plane",
+			"name":"WaterMesh",
 			"primitives":[
 				{
 					"attributes":{
