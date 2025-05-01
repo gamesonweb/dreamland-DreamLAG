@@ -78,7 +78,8 @@ export class Character<T extends CharacterMenu>{
         this._talkButton.width        = "150px";
         this._talkButton.height       = "40px";
         this._talkButton.color        = "white";
-        this._talkButton.background   = "green";
+        this._talkButton.cornerRadius = 10;
+        this._talkButton.background   = "black";
         this._talkButton.isVisible    = false;     
         
         //Texte du bouton
@@ -86,6 +87,8 @@ export class Character<T extends CharacterMenu>{
         this._talkButton.verticalAlignment   = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;           
         this._talkButton.top                 = "-50px";
         this._advancedTexture.addControl(this._talkButton);
+
+        this._talkButton.linkWithMesh(this._mesh);
 
         
         this._talkButton.onPointerUpObservable.add(() => {

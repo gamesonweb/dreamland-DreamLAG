@@ -101,9 +101,9 @@ export class MemoryMenu{
             // Premier bouton
             const mem = MemoryAsset.memories[i];
             mem.init();
-            const piece1 = new MemoryPiece("piece1", "memo" + (i+1), "assets/images/Puzzle1");
-            const piece2 = new MemoryPiece("piece2", "memo" + (i+1), "assets/images/Puzzle1");
-            const piece3 = new MemoryPiece("piece3", "memo" + (i+1), "assets/images/Puzzle1");
+            const piece1 = new MemoryPiece("piece1", "memo" + (i+1), "assets/images/Puzzle1/piece1.png");
+            const piece2 = new MemoryPiece("piece2", "memo" + (i+1), "assets/images/Puzzle1/piece2.png");
+            const piece3 = new MemoryPiece("piece3", "memo" + (i+1), "assets/images/Puzzle1/piece3.png");
             mem.unlockPiece(piece1);
             mem.unlockPiece(piece2);
             mem.unlockPiece(piece3);

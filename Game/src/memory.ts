@@ -1,33 +1,97 @@
+import { Mesh, MeshBuilder, Scene, StandardMaterial, Texture, Vector3 } from "@babylonjs/core";
 import * as GUI from "@babylonjs/gui";
+import { Player } from "./characterController";
 
 export class MemoryPiece{
     private _name:string;
     private _memoryName:string;
-    private _puzzleUrl:string;
+    private _url:string;
 
-    constructor(name:string, memoryName:string, puzzleUrl:string){
+    private _scene:Scene;
+    private _mesh:Mesh|null;
+    private _advancedTexture: GUI.AdvancedDynamicTexture|null;
+    private _claimButton:GUI.Button|null;
+    private _player:Player;
+    private static readonly INTERACTION_MIN_DIST = 20;
+
+    constructor(name:string, memoryName:string, url:string, mesh?:Mesh, scene?:Scene, player?:Player){
         this._name = name;
         this._memoryName = memoryName;
-        this._puzzleUrl = puzzleUrl;
-    }
+        this._url = url;
 
+        //Pour les pièces de puzzle à récupérer directement en explorant l'environnement.
+        
+
+        if(mesh && scene && player){
+        
+            this._setUpMeshhPiece(mesh, scene, player);
+
+            this._rederBeforeUpdate();
+            
+        }
+        else{
+            if(mesh && scene && !player) console.log("Error parameters MemoryPiece");
+            if(mesh && !scene && player) console.log("Error parameters MemoryPiece");
+            if(!mesh && scene && player) console.log("Error parameters MemoryPiece");
+            if(!mesh && scene && !player) console.log("Error parameters MemoryPiece");
+            if(!mesh && !scene && player) console.log("Error parameters MemoryPiece");
+            if(mesh && !scene && !player) console.log("Error parameters MemoryPiece");
+        }
+        
+    }
     
 
-    // private async _isUrlValid(puzzleUrl:string){
-    //     const fs = require('fs/promises');
 
-    //     async function checkPath(chemin) {
-    //     try {
-    //         await fs.access(chemin);
-    //         console.log('Fichier trouvé');
-    //     } catch (err) {
-    //         console.log('Fichier non trouvé');
-    //     }
-    //     }
+    private _setUpMeshhPiece(mesh:Mesh, scene:Scene, player:Player){
+        this._player = player;
+        this._scene = scene;
 
-    //     await checkPath(puzzleUrl);
+        console.log("Mesh = " + mesh);
+        const puzzleMaterial = new StandardMaterial("puzzleMat", scene);
+        puzzleMaterial.diffuseTexture = new Texture(this.url, scene);
+        puzzleMaterial.diffuseTexture.hasAlpha = true;
+        puzzleMaterial.useAlphaFromDiffuseTexture = true;
+        puzzleMaterial.backFaceCulling = false; // optionnel : montre les 2 faces
+        puzzleMaterial.transparencyMode = StandardMaterial.MATERIAL_ALPHABLEND;
+        mesh.material = puzzleMaterial;            
 
-    // }
+        this._mesh = mesh;
+        // 1. Crée une texture GUI attachée au mesh
+        this._advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        // 2. Crée un bouton
+        this._claimButton = GUI.Button.CreateSimpleButton("claim", "Récupérer!");
+        this._claimButton.width = "150px";
+        this._claimButton.height = "60px";
+        this._claimButton.color = "white";
+        this._claimButton.cornerRadius = 10;
+        this._claimButton.background = "black";
+        this._claimButton.isVisible = false;
+
+        // 3. Ajoute le bouton à la texture GUI
+        this._advancedTexture.addControl(this._claimButton);
+
+        this._claimButton.linkWithMesh(this._mesh); // Le mesh que tu veux suivre
+        this._claimButton.linkOffsetY = -50; // Décalage vers le haut en pixels (optionnel)
+
+        this._claimButton.onPointerUpObservable.add(() => {
+            this._player.claimReward(this);
+            this._mesh.dispose();
+        })
+        
+    }
+
+    private _updatecClaimButton(){
+        const dist = Vector3.Distance(this._player.mesh.getAbsolutePosition(), this._mesh.getAbsolutePosition());
+        if(dist<MemoryPiece.INTERACTION_MIN_DIST) this._claimButton.isVisible = true;
+        else this._claimButton.isVisible = false;
+    }
+
+    private _rederBeforeUpdate(){
+        this._scene.registerBeforeRender(() => {
+            this._updatecClaimButton()
+        });
+    }
 
     public get name(){
         return this._name;
@@ -38,7 +102,7 @@ export class MemoryPiece{
     }
 
     public get url(){
-        return this._puzzleUrl+"/"+this.name+".png";
+        return this._url  //+"/"+this.name+".png";
     }
 }
 
@@ -79,7 +143,7 @@ export class Memory{
     }
 
     private _isPieceAlreadyUnlocked(piece:MemoryPiece){
-        const seeingPiece = this._unlockedPieces.find(tempPiece => tempPiece === piece);
+        const seeingPiece = this._unlockedPieces.find(tempPiece => tempPiece === piece || tempPiece.url === piece.url);
         if(seeingPiece) return true;
         else return false;
     }    
@@ -144,7 +208,6 @@ export class Memory{
         }
 
         if(piece.memoryName === this.name){
-            console.log("OK PUZZLE AND PIECE : " + piece.url)
             this._unlockedPieces.push(piece);
             this._createPieceUi(piece);
             this._checkMemoryAchieved();

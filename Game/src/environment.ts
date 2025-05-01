@@ -43,7 +43,6 @@ export class Environment {
 
             geoMeshes.forEach((mesh) => {
                 if(mesh.name === "QuestCharacter"){
-                    console.log("character Found!!");
                     questCharacterMesh = mesh;
                     // this.questCharacter = new QuestCharacter(mesh, this._scene, player);
                     // this.questCharacter.activateCharacter();
@@ -52,14 +51,21 @@ export class Environment {
                 if(mesh.name.includes("Area")){
                     AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
                 } 
+
+                if(mesh.name === "puzzleTest"){
+                    new MemoryPiece("piece9", "memo1", "assets/images/Puzzle1/piece9.png", mesh, this._scene, this._player);
+                }
+                
             })   
             let questsIslands1 = [];
             let i=0;
             for(const area of AreaAsset.getIslandAreas("Island1")){
                 const pieceNumber = i+5
-                questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1"), [area]));
+                questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1/piece" + pieceNumber +".png"), [area]));
                 i++;
             }
+
+            
 
             this.questCharacter = new QuestCharacter(questCharacterMesh, this._scene, this._player, questsIslands1);
             this.questCharacter.activateCharacter();
