@@ -226,7 +226,6 @@ export class App {
 
         const shadowGenerator = new ShadowGenerator(1024, light);
         shadowGenerator.darkness = 0.4
-        shadowGenerator.dispose(); // Si vous utilisez un ShadowGenerator
 
         await this._loadCharacterAssets(scene); //character
         await this._loadEntities(scene, shadowGenerator);

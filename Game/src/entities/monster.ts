@@ -77,7 +77,7 @@ export class Monster {
         }
     
     private _isGrounded() {
-        return !this._floorRaycast(0, 0,1).equals(Vector3.Zero());
+        return !this._floorRaycast(0, 0,1.5).equals(Vector3.Zero());
     }
 
 

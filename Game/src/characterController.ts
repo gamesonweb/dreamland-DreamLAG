@@ -43,13 +43,10 @@ export class Player extends TransformNode {
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
     private static readonly PLAYER_SPEED: number = 0.45;
     private static readonly GRAVITY: number = -2.5;
-    private static readonly JUMP_FORCE: number = 0.25;
+    private static readonly JUMP_FORCE: number = 0.80;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
     public dashTime: number = 0;
-
-    private _groundCheckInterval: number = 3; // Vérifier tous les 3 frames
-    private _groundCheckCounter: number = 0;
 
     constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
         super("player", scene);
@@ -290,7 +287,8 @@ export class Player extends TransformNode {
         let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
 
         let predicate = function (mesh) {
-            if(mesh.name.includes("Island")) return mesh.isPickable && mesh.isEnabled();
+            //if(mesh.name === "InvisibleGround") 
+            return mesh.isPickable && mesh.isEnabled();
 
 
             //return false;
@@ -306,7 +304,7 @@ export class Player extends TransformNode {
     }
 
     private _isGrounded() {
-        const result = this._floorRaycast(0, 0, 1);
+        const result = this._floorRaycast(0, 0, 1.5);
         if(!result.equals(Vector3.Zero())){
             if(!this._input.jumpKeyDown) this.mesh.position.y = result.y + 0.1;
             return true;
@@ -317,39 +315,37 @@ export class Player extends TransformNode {
     }
 
     private _updateGroundDetection() {
-        this._groundCheckCounter++;
-        if(this._groundCheckCounter>=this._groundCheckInterval){
-            if (!this._isGrounded()) {
-                // if (this._checkSlope() && this._gravity.y <= 0*/) {
-                //     this._gravity.y = 0;
-                //     this._jumpCount = 1;
-                //     this._grounded = true;
-                // } else{
-                    this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
-                    this._grounded = false;
-                // }
-            }
-            else{
-                this._gravity.y = 0;
-                this._grounded = true;
-                this._jumpCount = 1;
-                this._canDash = true;
-                this.dashTime = 0;
-                this._dashPressed = false;
-            }
-            this._groundCheckCounter = 0;
-            
-    
-            // if (this._isGrounded()) {
+        if (!this._isGrounded()) {
+            // if (this._checkSlope() && this._gravity.y <= 0*/) {
             //     this._gravity.y = 0;
-            //     this._grounded = true;
             //     this._jumpCount = 1;
-            //     this._canDash = true;
-            //     this.dashTime = 0;
-            //     this._dashPressed = false;
+            //     this._grounded = true;
+            // } else{
+                this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
+                this._grounded = false;
             // }
         }
-        // else{
+        else{
+            this._gravity.y = 0;
+            this._grounded = true;
+            this._jumpCount = 1;
+            this._canDash = true;
+            this.dashTime = 0;
+            this._dashPressed = false;
+        }
+
+        if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked) {
+            this._gravity.y = Player.JUMP_FORCE;
+            this._jumpCount--;
+        }
+
+        if (this._gravity.y < -Player.JUMP_FORCE) {
+            this._gravity.y = -Player.JUMP_FORCE;
+        }
+
+        this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
+
+        // if (this._isGrounded()) {
         //     this._gravity.y = 0;
         //     this._grounded = true;
         //     this._jumpCount = 1;
@@ -357,19 +353,6 @@ export class Player extends TransformNode {
         //     this.dashTime = 0;
         //     this._dashPressed = false;
         // }
-
-        if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked) {
-            this._gravity.y = Player.JUMP_FORCE;
-            this._jumpCount--;
-        }
-
-        if (this._gravity.y < -Player.JUMP_FORCE*this._groundCheckInterval/2) {
-            this._gravity.y = -Player.JUMP_FORCE*this._groundCheckInterval/2;
-        }
-
-        this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
-        //this._groundCheckCounter = 0;
-        
     }
 
 

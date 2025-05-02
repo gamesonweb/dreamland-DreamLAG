@@ -44,7 +44,7 @@
 		},
 		{
 			"mesh":0,
-			"name":"baseIsland",
+			"name":"Cone.001",
 			"rotation":[
 				-0.9997798204421997,
 				0,
@@ -64,7 +64,7 @@
 		},
 		{
 			"mesh":1,
-			"name":"terrainIsland",
+			"name":"Cube.002",
 			"translation":[
 				-112.07180786132812,
 				35.16423797607422,
@@ -220,7 +220,7 @@
 	],
 	"meshes":[
 		{
-			"name":"baseIsland",
+			"name":"Cone.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -245,7 +245,7 @@
 			]
 		},
 		{
-			"name":"terrainIsland",
+			"name":"Cube.002",
 			"primitives":[
 				{
 					"attributes":{
@@ -479,32 +479,32 @@
 		},
 		{
 			"componentType":5126,
-			"count":206841,
+			"count":228109,
 			"max":[
-				194.2238006591797,
-				53.602630615234375,
-				208.23699951171875
+				194.31227111816406,
+				53.513648986816406,
+				208.145263671875
 			],
 			"min":[
-				-238.12112426757812,
-				-74.5833969116211,
-				-226.0885009765625
+				-238.0803680419922,
+				-74.48370361328125,
+				-225.9781951904297
 			],
 			"type":"VEC3"
 		},
 		{
 			"componentType":5126,
-			"count":206841,
+			"count":228109,
 			"type":"VEC3"
 		},
 		{
 			"componentType":5126,
-			"count":206841,
+			"count":228109,
 			"type":"VEC2"
 		},
 		{
 			"componentType":5125,
-			"count":868578,
+			"count":884736,
 			"type":"SCALAR"
 		},
 		{
@@ -681,38 +681,38 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":889507,
+			"byteLength":1052699,
 			"byteOffset":13640
 		},
 		{
 			"buffer":0,
 			"byteLength":166,
-			"byteOffset":903148
+			"byteOffset":1066340
 		},
 		{
 			"buffer":0,
 			"byteLength":655,
-			"byteOffset":903316
+			"byteOffset":1066508
 		},
 		{
 			"buffer":0,
 			"byteLength":264,
-			"byteOffset":903972
+			"byteOffset":1067164
 		},
 		{
 			"buffer":0,
 			"byteLength":264,
-			"byteOffset":904236
+			"byteOffset":1067428
 		},
 		{
 			"buffer":0,
 			"byteLength":264,
-			"byteOffset":904500
+			"byteOffset":1067692
 		},
 		{
 			"buffer":0,
 			"byteLength":166,
-			"byteOffset":904764
+			"byteOffset":1067956
 		}
 	],
 	"samplers":[
@@ -723,7 +723,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":904932,
+			"byteLength":1068124,
 			"uri":"FirstIsland.bin"
 		}
 	]
