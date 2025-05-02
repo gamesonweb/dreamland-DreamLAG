@@ -58,7 +58,7 @@ export class Monster {
     }
 
 
-    private _floorRaycast(offsetx: number, offsetz: number, raycastlen: number): Vector3 {
+    protected _floorRaycast(offsetx: number, offsetz: number, raycastlen: number): Vector3 {
             let raycastFloorPos = new Vector3(this.mesh.position.x + offsetx, this.mesh.position.y, this.mesh.position.z + offsetz);
             let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
     
@@ -76,7 +76,7 @@ export class Monster {
             }
         }
     
-    private _isGrounded() {
+    protected _isGrounded() {
         return !this._floorRaycast(0, 0,1).equals(Vector3.Zero());
     }
 

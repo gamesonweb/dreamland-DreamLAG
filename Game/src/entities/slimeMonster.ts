@@ -1,4 +1,4 @@
-import { Scene, Vector3, Mesh, AnimationGroup, SceneLoader } from "@babylonjs/core";
+import {Scene, Vector3, Mesh, AnimationGroup, SceneLoader, Ray, MeshBuilder} from "@babylonjs/core";
 import { Monster } from "./monster";
 import {
     createSlimeIdleAnimation,
@@ -21,14 +21,18 @@ export class SlimeMonster extends Monster {
         this.mesh.dispose();
 
         // Charger le modèle GLB du slime
-        // Charger le modèle GLB du slime
         SceneLoader.ImportMeshAsync("", "assets/monsters/", "slime.glb", scene).then((result) => {
             const slimeMesh = result.meshes[0] as Mesh;
             slimeMesh.name = "SlimeBoss";
-            slimeMesh.position = position.clone();
-            slimeMesh.scaling = new Vector3(0.5, 0.5, 0.5); // Réduit la taille du slime
-            slimeMesh.position.y = 78; // Positionne le slime à la même hauteur que le joueur
-            slimeMesh.scalingDeterminant = 0.03;
+            slimeMesh.scaling = new Vector3(0.5, 0.5, 0.5);
+            slimeMesh.scalingDeterminant = 0.04;
+
+            // Raycast pour poser le slime sur le sol
+            if (this._isGrounded) {
+                slimeMesh.position = this._floorRaycast(0,0,1);
+            } else {
+                slimeMesh.position = position.clone();
+            }
 
             slimeMesh.checkCollisions = true;
             slimeMesh.ellipsoid = new Vector3(1.5, 1.5, 1.5);
@@ -39,11 +43,18 @@ export class SlimeMonster extends Monster {
             };
 
             this.mesh = slimeMesh;
+            this.mesh.position = position.clone();
             this.animationGroups = result.animationGroups;
+
+            // Crée une détection propre à la position réelle
+            this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
+            this.detectionZone.isVisible = false;
+            this.detectionZone.position = this.mesh.position.clone();
 
             this.playIdleAnimation();
         });
     }
+
 
     public playIdleAnimation(): void {
         const idleAnim = this.animationGroups.find(a => a.name.toLowerCase().includes("idle"));

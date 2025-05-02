@@ -189,8 +189,8 @@ export class App {
     private async _loadEntities(scene: Scene, shadowGenerator: ShadowGenerator): Promise<void> {
         this._player = new Player(this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
-        const slime1 = new SlimeMonster(scene, new Vector3(5, 0, 0));
-        const slime2 = new SlimeMonster(scene, new Vector3(-5, 0, 0));
+        const slime1 = new SlimeMonster(scene, new Vector3(5, 5, 0));
+        const slime2 = new SlimeMonster(scene, new Vector3(-5, 5, 0));
         this._mobs = [slime1, slime2];
 
         this._mobs.forEach(mob => {
@@ -219,7 +219,6 @@ export class App {
 
         const shadowGenerator = new ShadowGenerator(1024, light);
         shadowGenerator.darkness = 0.4
-        shadowGenerator.dispose(); // Si vous utilisez un ShadowGenerator
 
         await this._loadCharacterAssets(scene); //character
         await this._loadEntities(scene, shadowGenerator);
