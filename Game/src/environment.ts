@@ -64,6 +64,8 @@ export class Environment {
                     // this.questCharacter.activateCharacter();
                 }
 
+                if(mesh.name.includes("Arbre")) mesh.isPickable = false;
+
                 if(mesh.name.includes("Area")){
                     AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
                 } 

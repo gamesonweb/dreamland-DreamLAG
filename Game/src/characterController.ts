@@ -51,7 +51,7 @@ export class Player extends TransformNode {
     private _memoryMenu:MemoryMenu;
     private _memoryMenuKeyPressed:boolean = false;
 
-    private _groundCheckInterval: number = 3; // Vérifier tous les 3 frames
+    private _groundCheckInterval: number = 2; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
 
     constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {

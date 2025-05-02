@@ -215,7 +215,7 @@ export class App {
         // INPUT
         this._input = new PlayerInput(scene);
 
-        const shadowGenerator = new ShadowGenerator(1024, light);
+        const shadowGenerator:ShadowGenerator=new ShadowGenerator(1024, light);
         shadowGenerator.darkness = 0.4
 
         await this._loadCharacterAssets(scene); //character
