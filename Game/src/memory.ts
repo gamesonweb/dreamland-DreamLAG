@@ -1,4 +1,4 @@
-import { Mesh, MeshBuilder, Scene, StandardMaterial, Texture, Vector3 } from "@babylonjs/core";
+import { Mesh, MeshBuilder, Nullable, Observable, Observer, Scene, StandardMaterial, Texture, Vector3 } from "@babylonjs/core";
 import * as GUI from "@babylonjs/gui";
 import { Player } from "./characterController";
 
@@ -11,7 +11,11 @@ export class MemoryPiece{
     private _mesh:Mesh|null;
     private _advancedTexture: GUI.AdvancedDynamicTexture|null;
     private _claimButton:GUI.Button|null;
+
     private _player:Player;
+
+    private _renderObserver:Nullable<Observer<Scene>> = null;
+
     private static readonly INTERACTION_MIN_DIST = 20;
 
     constructor(name:string, memoryName:string, url:string, mesh?:Mesh, scene?:Scene, player?:Player){
@@ -60,7 +64,7 @@ export class MemoryPiece{
         this._advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
         // 2. Crée un bouton
-        this._claimButton = GUI.Button.CreateSimpleButton("claim", "Récupérer!");
+        this._claimButton = GUI.Button.CreateSimpleButton("claim", "Récupérer! (E)");
         this._claimButton.width = "150px";
         this._claimButton.height = "60px";
         this._claimButton.color = "white";
@@ -81,15 +85,29 @@ export class MemoryPiece{
         
     }
 
-    private _updatecClaimButton(){
+    private _updateClaimButton(){
         const dist = Vector3.Distance(this._player.mesh.getAbsolutePosition(), this._mesh.getAbsolutePosition());
-        if(dist<MemoryPiece.INTERACTION_MIN_DIST) this._claimButton.isVisible = true;
+        if(dist<MemoryPiece.INTERACTION_MIN_DIST){
+            this._claimButton.isVisible = true;
+            if(this._player.input.interactKeyDown) {
+                this._player.claimReward(this);
+                this._stopRenderLoop();
+                if(this._mesh) this._mesh.dispose();
+                if(this._advancedTexture) this._advancedTexture.dispose();
+            }    
+        } 
         else this._claimButton.isVisible = false;
+    }
+
+    private _stopRenderLoop(){
+        this._renderObserver = this._scene.onBeforeRenderObservable.add(() => {
+            this._updateClaimButton();
+        });
     }
 
     private _rederBeforeUpdate(){
         this._scene.registerBeforeRender(() => {
-            this._updatecClaimButton()
+            this._updateClaimButton()
         });
     }
 

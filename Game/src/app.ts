@@ -2,7 +2,7 @@ import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
 import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Button, Control, TextBlock } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
 import { PlayerInput } from "./inputController";
@@ -28,6 +28,9 @@ export class App {
     private _mobs: Monster[];
     public assets: any; // Specify more precise typing for `assets`
 
+    public lastTime = performance.now();
+    public fpsDisplay:TextBlock;
+
     private _playerCamera: ArcRotateCamera; // Player camera
     private _sceneCamera: ArcRotateCamera;  // Scene camera
     private _currentCamera: ArcRotateCamera; // To track the active camera
@@ -45,7 +48,7 @@ export class App {
 
         // Hide/show the Inspector with Shift+Ctrl+Alt+I
         window.addEventListener("keydown", (ev) => {
-            if (ev.shiftKey && ev.ctrlKey && ev.altKey && (ev.key === "I" || ev.key === "i")) {
+            if (ev.shiftKey && ev.ctrlKey && ev.altKey && (ev.key === "I" || ev.key === "i")&&!this._player.areControlsLocked) {
                 if (this._scene.debugLayer.isVisible()) {
                     this._scene.debugLayer.hide();
                 } else {
@@ -53,6 +56,9 @@ export class App {
                 }
             }
         });
+        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        
 
         // Start the game
         this._main();
@@ -228,7 +234,7 @@ export class App {
         this._environment = environment; //class variable for App
 
 
-        const memoryMenu = new MemoryMenu(this._scene, this._player);
+        //const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment
 
 
@@ -273,6 +279,11 @@ export class App {
         let scene = this._gamescene;
         scene.clearColor = new Color4(0.01568627450980392, 0.01568627450980392, 0.20392156862745098);
 
+        
+
+        
+        
+
         // GUI
         const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         scene.detachControl();
@@ -290,6 +301,21 @@ export class App {
             this._goToLose();
             scene.detachControl(); // Observables disabled
         });
+
+
+        //Pour afficher les fps
+        this.fpsDisplay = new TextBlock();
+        this.fpsDisplay.text = "FPS: 0";
+        this.fpsDisplay.color = "black";
+        this.fpsDisplay.fontSize = 24;
+        this.fpsDisplay.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.fpsDisplay.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        this.fpsDisplay.paddingLeft = "10px";
+        this.fpsDisplay.paddingTop = "10px";
+        this.fpsDisplay.isVisible = true;
+        playerUI.addControl(this.fpsDisplay);
+
+        let fps = 0;
 
         // Initialize the game
         await this._initializeGameAsync(scene);
@@ -334,7 +360,41 @@ export class App {
 
         //scene.activeCamera = this._playerCamera;
         var camera = this._player.activatePlayerCamera();
-        camera.attachControl(this._canvas, true);
+        this._canvas = this._scene.getEngine().getRenderingCanvas();
+        if (this._canvas) {
+            this._canvas.addEventListener("pointerdown", (event) => {
+                if(!this._player.areControlsLocked){
+                    console.log(!this._player.areControlsLocked)
+                    console.log("Pointer locked");
+                    event.preventDefault(); // Empêche le comportement par défaut
+                    event.stopPropagation(); // Empêche l'événement de se propager à la scène
+                    this._canvas.requestPointerLock();
+                }
+            });
+
+            this._canvas.addEventListener("pointermove", (evt) => {
+                if (document.pointerLockElement === this._canvas) {
+                    const sensitivity = 0.002;
+                    camera.alpha -= evt.movementX * sensitivity;
+                    camera.beta -= evt.movementY * sensitivity;
+                    camera.beta = Math.max(0.1, Math.min(Math.PI - 0.1, camera.beta));
+                }
+            });
+
+            this._canvas.addEventListener("blur", () => {
+                console.log("Le canvas a perdu le focus.");
+            });
+
+            document.addEventListener("pointerlockchange", () => {
+                if (document.pointerLockElement !== this._canvas) {
+                    // Le pointeur a été déverrouillé (par exemple, en appuyant sur Échap)
+                    // Tu peux ici implémenter une pause du jeu ou afficher un menu.
+                    console.log("Pointeur déverrouillé.");
+                }
+            });
+        }
+
+        //camera.attachControl(this._canvas, true);
         scene.activeCamera = camera;
 
 
@@ -371,6 +431,12 @@ export class App {
                     break;
                 case State.GAME:
                     this._scene.render();
+                    const currentTime = performance.now();
+                    const deltaTime = currentTime - this.lastTime;
+                    const fps = Math.round(1000 / deltaTime);
+                    this.lastTime = currentTime;
+                
+                    this.fpsDisplay.text = `FPS: ${fps}`;
                     break;
                 case State.LOSE:
                     this._scene.render();

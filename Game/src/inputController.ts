@@ -11,8 +11,11 @@ export class PlayerInput {
     public dashing:boolean = false;
     public jumpKeyDown:boolean = false;
     public resumeDialog: boolean = false;
+    public interactKeyDown:boolean = false;
+    public memoryKeyDown:boolean = false;
 
-    public onAttack: ((pickInfo?: any) => void) | null = null;
+    public onAttack: (() => void) | null = null;
+    public controlsLocked:boolean = false;
 
     constructor(scene: Scene) {
         scene.actionManager = new ActionManager(scene);
@@ -27,11 +30,15 @@ export class PlayerInput {
 
         scene.onPointerObservable.add((pi) => {
             if (
-              pi.type === PointerEventTypes.POINTERDOWN &&
-              pi.event.button === 0 // clic gauche
+              //pi.type === PointerEventTypes.POINTERDOWN &&
+              pi.event.button === 0 &&
+              !this.controlsLocked
+
             ) {
-              this.onAttack?.(pi.pickInfo);
+              this.onAttack?.();
             }
+            // else if(this.controlsLocked && pi.event.button === 0) this.resumeDialog=true;
+            // else this.resumeDialog=false;
           });
     
         scene.onBeforeRenderObservable.add(() => {
@@ -40,11 +47,11 @@ export class PlayerInput {
     }
 
     private _updateFromKeyboard(): void {
-        if (this.inputMap["w"]) {
+        if (this.inputMap["w"]||this.inputMap["W"]) {
             this.vertical = Scalar.Lerp(this.vertical, 1, 0.2);
             this.verticalAxis = 1;
     
-        } else if (this.inputMap["s"]) {
+        } else if (this.inputMap["s"]||this.inputMap["S"]) {
             this.vertical = Scalar.Lerp(this.vertical, -1, 0.2);
             this.verticalAxis = -1;
         } else {
@@ -52,11 +59,11 @@ export class PlayerInput {
             this.verticalAxis = 0;
         }
     
-        if (this.inputMap["a"]) {
+        if (this.inputMap["a"]||this.inputMap["A"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, -1, 0.2);
             this.horizontalAxis = -1;
     
-        } else if (this.inputMap["d"]) {
+        } else if (this.inputMap["d"]||this.inputMap["D"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, 1, 0.2);
             this.horizontalAxis = 1;
         }
@@ -78,6 +85,16 @@ export class PlayerInput {
             this.jumpKeyDown = false;
             this.resumeDialog = false;
         }
+
+        if(this.inputMap["e"] || this.inputMap["E"]){
+            this.interactKeyDown = true;
+        }
+        else this.interactKeyDown = false;
+
+        if(this.inputMap["m"] || this.inputMap["M"]){
+            this.memoryKeyDown = true;
+        }
+        else this.memoryKeyDown = false;
     }
 
 }
