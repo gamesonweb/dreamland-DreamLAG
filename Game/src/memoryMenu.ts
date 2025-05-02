@@ -29,7 +29,7 @@ export class MemoryMenu{
     
         // On crée un conteneur
         this._buttonMenu = new GUI.Rectangle();
-        this._buttonMenu.width = "70px"; // un peu plus large pour le texte
+        this._buttonMenu.width = "85px"; // un peu plus large pour le texte
         this._buttonMenu.height = "80px";
         this._buttonMenu.thickness = 0;
         this._buttonMenu.background = "transparent";
@@ -44,8 +44,8 @@ export class MemoryMenu{
         image.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
         this._buttonMenu.addControl(image);
     
-        const textButton = new GUI.TextBlock("memoText", "Memories");
-        textButton.fontSize = 15;
+        const textButton = new GUI.TextBlock("memoText", "Memories(M)");
+        textButton.fontSize = 13;
         textButton.color = "white";
         textButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
         textButton.height = "40px";
@@ -101,9 +101,9 @@ export class MemoryMenu{
             // Premier bouton
             const mem = MemoryAsset.memories[i];
             mem.init();
-            const piece1 = new MemoryPiece("piece1", "memo" + (i+1), "assets/images/Puzzle1");
-            const piece2 = new MemoryPiece("piece2", "memo" + (i+1), "assets/images/Puzzle1");
-            const piece3 = new MemoryPiece("piece3", "memo" + (i+1), "assets/images/Puzzle1");
+            const piece1 = new MemoryPiece("piece1", "memo" + (i+1), "assets/images/Puzzle1/piece1.png");
+            const piece2 = new MemoryPiece("piece2", "memo" + (i+1), "assets/images/Puzzle1/piece2.png");
+            const piece3 = new MemoryPiece("piece3", "memo" + (i+1), "assets/images/Puzzle1/piece3.png");
             mem.unlockPiece(piece1);
             mem.unlockPiece(piece2);
             mem.unlockPiece(piece3);
@@ -157,8 +157,16 @@ export class MemoryMenu{
         return button;
     }
 
-    private toggleMenu(){
-        this._menuWindow.isVisible = !this._menuWindow.isVisible;
+    public toggleMenu(){
+        if(this._menuWindow.isVisible){
+            this._menuWindow.isVisible = false;
+            this.player.unlockControls()
+        }
+        else{
+            this._menuWindow.isVisible = true;
+            this.player.lockControls()
+        }
+        
     }
     
 }

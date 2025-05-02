@@ -30,7 +30,7 @@ export class Character<T extends CharacterMenu>{
 
     private player:Player;
     
-    private static readonly MIN_DIST_INTERACTION: number = 200;
+    private static readonly MIN_DIST_INTERACTION: number = 15;
 
     constructor(mesh:Mesh, scene:Scene, player:Player, characterName:string, characterMenu?:T){
         this._mesh = mesh;
@@ -78,7 +78,8 @@ export class Character<T extends CharacterMenu>{
         this._talkButton.width        = "150px";
         this._talkButton.height       = "40px";
         this._talkButton.color        = "white";
-        this._talkButton.background   = "green";
+        this._talkButton.cornerRadius = 10;
+        this._talkButton.background   = "black";
         this._talkButton.isVisible    = false;     
         
         //Texte du bouton
@@ -87,9 +88,11 @@ export class Character<T extends CharacterMenu>{
         this._talkButton.top                 = "-50px";
         this._advancedTexture.addControl(this._talkButton);
 
+        this._talkButton.linkWithMesh(this._mesh);
+
         
         this._talkButton.onPointerUpObservable.add(() => {
-            this._talkButton.isVisible = false;
+            this.startInteraction();
             this._startDialogue();
         });
     }
@@ -119,6 +122,15 @@ export class Character<T extends CharacterMenu>{
         this._dialogText.textWrapping = true;
 
         this._dialogBox.addControl(this._dialogText);
+
+        this._dialogBox.onPointerUpObservable.add(() => {
+            if (this._dialogueManager.isDialogueActivated) {
+                this._dialogueManager.nextLine();
+                if (!this._dialogueManager.isDialogueActivated && this.characterMenu) { // Si le dialogue vient d'être terminé
+                    if (!this.characterMenu.isWindowRecentlyClosed()) this.characterMenu.showWindow();
+                }
+            }
+        });
 
     }
 
@@ -158,11 +170,25 @@ export class Character<T extends CharacterMenu>{
         this.scene.registerBeforeRender(() => {
             this._updateTalkButton();
             this._updateDialogueBox();
+
+            
+            if (this.player.input.interactKeyDown && this._isPlayerNear() && !this._dialogueManager.isDialogueActivated && !this._isInteracting) {
+                this.startInteraction();
+
+                this.player.input.interactKeyDown = false;
+            }
         })
     }
 
+    public startInteraction(): void {
+        if (this._isPlayerNear() && !this._dialogueManager.isDialogueActivated && !this._isInteracting) {
+            this._talkButton.isVisible = false;
+            this.player.lockControls();
+            this._startDialogue();
+        }
+    }
+
     private _startDialogue(){
-        this.player.lockControls();
         this._isInteracting = true;
         this._dialogueManager.startDialogue(this._dialogues[this._dialogueState]);
     }

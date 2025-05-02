@@ -21,7 +21,8 @@
 				4,
 				5,
 				6,
-				7
+				7,
+				8
 			]
 		}
 	],
@@ -43,7 +44,7 @@
 		},
 		{
 			"mesh":0,
-			"name":"Cone.001",
+			"name":"baseIsland",
 			"rotation":[
 				-0.9997798204421997,
 				0,
@@ -63,7 +64,7 @@
 		},
 		{
 			"mesh":1,
-			"name":"Cube.002",
+			"name":"terrainIsland",
 			"translation":[
 				-112.07180786132812,
 				35.16423797607422,
@@ -139,6 +140,26 @@
 				34.70180892944336,
 				-57.287872314453125
 			]
+		},
+		{
+			"mesh":7,
+			"name":"puzzleTest",
+			"rotation":[
+				0,
+				0,
+				-0.7071068286895752,
+				0.7071068286895752
+			],
+			"scale":[
+				3.011547565460205,
+				3.011547565460205,
+				3.011547565460205
+			],
+			"translation":[
+				-60.587135314941406,
+				40.01637649536133,
+				-35.704833984375
+			]
 		}
 	],
 	"cameras":[
@@ -199,7 +220,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Cone.001",
+			"name":"baseIsland",
 			"primitives":[
 				{
 					"attributes":{
@@ -224,7 +245,7 @@
 			]
 		},
 		{
-			"name":"Cube.002",
+			"name":"terrainIsland",
 			"primitives":[
 				{
 					"attributes":{
@@ -249,7 +270,7 @@
 			]
 		},
 		{
-			"name":"Plane",
+			"name":"WaterMesh",
 			"primitives":[
 				{
 					"attributes":{
@@ -368,6 +389,30 @@
 					"mode":4
 				}
 			]
+		},
+		{
+			"name":"puzzleTest",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":26,
+						"NORMAL":27,
+						"TEXCOORD_0":28
+					},
+					"extensions":{
+						"KHR_draco_mesh_compression":{
+							"bufferView":7,
+							"attributes":{
+								"POSITION":0,
+								"NORMAL":1,
+								"TEXCOORD_0":2
+							}
+						}
+					},
+					"indices":11,
+					"mode":4
+				}
+			]
 		}
 	],
 	"textures":[
@@ -434,32 +479,32 @@
 		},
 		{
 			"componentType":5126,
-			"count":228109,
+			"count":206841,
 			"max":[
-				194.31227111816406,
-				53.513648986816406,
-				208.145263671875
+				194.2238006591797,
+				53.602630615234375,
+				208.23699951171875
 			],
 			"min":[
-				-238.0803680419922,
-				-74.48370361328125,
-				-225.9781951904297
+				-238.12112426757812,
+				-74.5833969116211,
+				-226.0885009765625
 			],
 			"type":"VEC3"
 		},
 		{
 			"componentType":5126,
-			"count":228109,
+			"count":206841,
 			"type":"VEC3"
 		},
 		{
 			"componentType":5126,
-			"count":228109,
+			"count":206841,
 			"type":"VEC2"
 		},
 		{
 			"componentType":5125,
-			"count":884736,
+			"count":868578,
 			"type":"SCALAR"
 		},
 		{
@@ -601,6 +646,31 @@
 			"componentType":5126,
 			"count":24,
 			"type":"VEC2"
+		},
+		{
+			"componentType":5126,
+			"count":4,
+			"max":[
+				1,
+				0,
+				1
+			],
+			"min":[
+				-1,
+				0,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":4,
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":4,
+			"type":"VEC2"
 		}
 	],
 	"bufferViews":[
@@ -611,33 +681,38 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":1052699,
+			"byteLength":889507,
 			"byteOffset":13640
 		},
 		{
 			"buffer":0,
 			"byteLength":166,
-			"byteOffset":1066340
+			"byteOffset":903148
 		},
 		{
 			"buffer":0,
 			"byteLength":655,
-			"byteOffset":1066508
+			"byteOffset":903316
 		},
 		{
 			"buffer":0,
 			"byteLength":264,
-			"byteOffset":1067164
+			"byteOffset":903972
 		},
 		{
 			"buffer":0,
 			"byteLength":264,
-			"byteOffset":1067428
+			"byteOffset":904236
 		},
 		{
 			"buffer":0,
 			"byteLength":264,
-			"byteOffset":1067692
+			"byteOffset":904500
+		},
+		{
+			"buffer":0,
+			"byteLength":166,
+			"byteOffset":904764
 		}
 	],
 	"samplers":[
@@ -648,7 +723,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":1067956,
+			"byteLength":904932,
 			"uri":"FirstIsland.bin"
 		}
 	]

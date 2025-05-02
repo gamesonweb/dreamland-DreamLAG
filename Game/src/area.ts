@@ -47,6 +47,7 @@ export class Area{
     }
 
     public activateArea(): void{
+        //temporaire
         this._areaMesh.isVisible = true;
     }
 }

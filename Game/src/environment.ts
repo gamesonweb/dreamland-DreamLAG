@@ -1,9 +1,12 @@
-import { AbstractMesh, Mesh, MeshBuilder, ParseNullTerminatedString, Scene, SceneLoader, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, Color3, CubeTexture, Mesh, MeshBuilder, ParseNullTerminatedString, PhotoDome, ReflectionProbe, Scene, SceneLoader, StandardMaterial, Texture, Vector2, Vector3 } from "@babylonjs/core";
 import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
 import { Area, AreaAsset, MonsterArea } from "./area";
 import { Quest } from "./questMenu";
 import { MemoryPiece } from "./memory";
+import { WaterMaterial } from "@babylonjs/materials";
+
+
 
 
 export class Environment {
@@ -32,6 +35,19 @@ export class Environment {
 
         SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene).then((result) => {
 
+            const photoDome = new PhotoDome(
+                "dreamDome",
+                "assets/images/skies/day1.png",  // votre PNG equirectangular
+                { resolution: 32, size: 2000 },
+                this._scene
+              );
+
+            // const domeMesh = photoDome.mesh; 
+            // const probe = new ReflectionProbe("probe", 512, this._scene);
+            // probe.renderList.push(domeMesh); // PhotoDome étend Mesh
+
+
+
             const geoMeshes = result.meshes.filter(m =>
                 m instanceof Mesh &&
                 m.geometry !== null &&          // a geometry
@@ -43,7 +59,6 @@ export class Environment {
 
             geoMeshes.forEach((mesh) => {
                 if(mesh.name === "QuestCharacter"){
-                    console.log("character Found!!");
                     questCharacterMesh = mesh;
                     // this.questCharacter = new QuestCharacter(mesh, this._scene, player);
                     // this.questCharacter.activateCharacter();
@@ -52,17 +67,59 @@ export class Environment {
                 if(mesh.name.includes("Area")){
                     AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
                 } 
+
+                if(mesh.name === "puzzleTest"){
+                    new MemoryPiece("piece9", "memo1", "assets/images/Puzzle1/piece9.png", mesh, this._scene, this._player);
+                }
+
+                if(mesh.name === "WaterMesh"){
+                    const waterMaterial = new WaterMaterial("waterMat", this._scene);
+                    waterMaterial.bumpTexture = new Texture("assets/models/Islands/Island1/WaterTexture.png", this._scene);
+                    waterMaterial.bumpHeight  = 0.5; // Intensité du relief
+
+                    waterMaterial.windForce          = 1;               // Force du vent
+                    waterMaterial.waveHeight         = 0.1;              // Hauteur des vagues
+                    waterMaterial.waveLength         = 0.1;              // Longueur d’onde
+                    waterMaterial.windDirection      = new Vector2(1, 1);  
+                    waterMaterial.colorBlendFactor   = 0.3;              // Mélange couleur eau vs reflet
+                    waterMaterial.waterColor         = new Color3(0.0, 0.3, 0.6);  
+
+                    waterMaterial.alpha           = 0.7;
+                    waterMaterial.colorBlendFactor = 0.2;
+
+
+                    // waterMaterial.addToRenderList(groundMesh);
+                    // waterMaterial.addToRenderList(skyboxMesh);
+                    waterMaterial.addToRenderList(photoDome.mesh); // PhotoDome est un Mesh
+                    
+                    mesh.material = waterMaterial;
+
+                    mesh.isPickable=false; //Pour le rayCast
+                    
+
+
+                }
+                
             })   
             let questsIslands1 = [];
             let i=0;
             for(const area of AreaAsset.getIslandAreas("Island1")){
                 const pieceNumber = i+5
-                questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1"), [area]));
+                questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1/piece" + pieceNumber +".png"), [area]));
                 i++;
             }
 
+            
+
             this.questCharacter = new QuestCharacter(questCharacterMesh, this._scene, this._player, questsIslands1);
             this.questCharacter.activateCharacter();
+
+            
+
+            
+
+              
+
 
         //     geoMeshes.forEach(abstractMesh => {
         //         console.log("Subdivision Of Island");
