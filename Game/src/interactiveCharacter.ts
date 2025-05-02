@@ -183,7 +183,6 @@ export class Character<T extends CharacterMenu>{
     public startInteraction(): void {
         if (this._isPlayerNear() && !this._dialogueManager.isDialogueActivated && !this._isInteracting) {
             this._talkButton.isVisible = false;
-            document.exitPointerLock();
             this.player.lockControls();
             this._startDialogue();
         }
