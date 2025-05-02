@@ -31,7 +31,7 @@ export class Monster {
         this.state = "idle";
         this.target = null;
         this.lastAttackTime = 0;
-        this.attackCooldown = 3; // secondes
+        this.attackCooldown = 2; // secondes
 
         // Création du corps du monstre
         this.mesh = MeshBuilder.CreateSphere("monster", { diameter: 3 }, scene);

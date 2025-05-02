@@ -1,5 +1,5 @@
 import {
-    AnimationGroup, ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
+    AnimationGroup, ArcRotateCamera, Axis, Color3, Mesh, PickingInfo, Quaternion, Ray, RayHelper,
     Scene, SceneLoader, ShadowGenerator, Tools, TransformNode,
     Vector3
 } from "@babylonjs/core";
@@ -8,42 +8,48 @@ import {App} from "./app";
 import {createDeathAnimation} from "./entities/animation";
 import { Memory, MemoryAsset, MemoryPiece } from "./memory";
 import { PlayerInput } from "./inputController";
+import {MemoryMenu} from "./memoryMenu";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
     public camera: ArcRotateCamera;
     public scene: Scene;
-    public mesh: Mesh;
+    private _input;
     public animationGroups: AnimationGroup[] = [];
-    public dashTime: number = 0;
 
-    private _input: PlayerInput;
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
 
-    private _moveDirection: Vector3 = Vector3.Zero();
-    private _gravity: Vector3 = new Vector3();
+    private _moveDirection: Vector3;
     private _h: number;
     private _v: number;
     private _inputAmt: number;
-    private _deltaTime: number = 0;
+    private _gravity: Vector3 = new Vector3();
+    private _grounded: boolean;
+    private _jumpCount: number;
+    private _dashPressed: boolean = false;
+    private _canDash: boolean = true;
 
-    private _health: number = 100;
+    // Player properties
+    public mesh: Mesh; // Outer collisionbox of the player
+    private _deltaTime: number = 0;
+    private _health: number;
     private _damage: number = 10;
     private _memories:Memory[];
 
-    private _grounded: boolean = false;
-    private _jumpCount: number = 1;
-    private _canDash: boolean = true;
-    private _dashPressed: boolean = false;
-    private _controlsLocked: boolean = false;
+    private _controlsLocked:Boolean = false;
 
-    private static readonly ORIGINAL_TILT = new Vector3(0.593, 0, 0);
-    private static readonly PLAYER_SPEED = 0.45;
-    private static readonly GRAVITY = -2.5;
-    private static readonly JUMP_FORCE = 0.80;
-    private static readonly DASH_FACTOR = 1.5;
-    private static readonly DASH_TIME = 10;
+    private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
+    private static readonly PLAYER_SPEED: number = 0.45;
+    private static readonly GRAVITY: number = -2.5;
+    private static readonly JUMP_FORCE: number = 0.80;
+    private static readonly DASH_FACTOR: number = 1.5;
+    private static readonly DASH_TIME: number = 10;
+    public dashTime: number = 0;
+
+    //public isInteracting:boolean = false;
+    private _memoryMenu:MemoryMenu;
+    private _memoryMenuKeyPressed:boolean = false;
 
     constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
         super("player", scene);
@@ -74,9 +80,10 @@ export class Player extends TransformNode {
             this.playIdleAnimation();
         });
 
-        this._input.onAttack = (pickInfo?: PickingInfo) => {
-            if (pickInfo) this._attack(pickInfo);
+        this._input.onAttack = () => {
+            this._attack();
         };
+        this._memoryMenu=new MemoryMenu(this._scene, this);
     }
 
     private _setupPlayerCamera(): ArcRotateCamera {
@@ -115,22 +122,9 @@ export class Player extends TransformNode {
         const canvas = this.scene.getEngine().getRenderingCanvas();
         if (!canvas) return;
 
-        let previousX = 0, previousY = 0, dragging = false;
-
-        canvas.addEventListener("pointerdown", (evt) => {
-            dragging = true;
-            previousX = evt.clientX;
-            previousY = evt.clientY;
-
-            if (document.pointerLockElement !== canvas) {
-                canvas.requestPointerLock();
-            }
-        });
-
-        canvas.addEventListener("pointerup", () => {
-            dragging = false;
-            document.exitPointerLock();
-        });
+        let previousX: number;
+        let previousY: number;
+        let dragging = false;
 
         canvas.addEventListener("pointermove", (evt) => {
             if (!dragging) return;
@@ -212,10 +206,19 @@ export class Player extends TransformNode {
         }
     }
 
+    private _updateMenus(){
+        if(this._input.memoryKeyDown && !this._memoryMenuKeyPressed){
+            this._memoryMenu.toggleMenu();
+            this._memoryMenuKeyPressed = true;
+        } else if (!this._input.memoryKeyDown){
+            this._memoryMenuKeyPressed = false;
+        }
+    }
 
     private _beforeRenderUpdate(): void {
         if(!this._controlsLocked) this._updateFromControls();
         this._updateGroundDetection();
+        this._updateMenus();
     }
 
     public activatePlayerCamera(): ArcRotateCamera{
@@ -297,7 +300,7 @@ export class Player extends TransformNode {
         }
     }
 
-    private _isGrounded(): boolean {
+    private _isGrounded() {
         const result = this._floorRaycast(0, 0, 1.5);
         if(!result.equals(Vector3.Zero())){
             if(!this._input.jumpKeyDown) this.mesh.position.y = result.y + 0.1;
@@ -308,7 +311,7 @@ export class Player extends TransformNode {
         } 
     }
 
-    private _updateGroundDetection(): void {
+    private _updateGroundDetection() {
         if (!this._isGrounded()) {
             this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
             this._grounded = false;
@@ -344,16 +347,20 @@ export class Player extends TransformNode {
 
     }
 
-    public wantsResumeDialogue(): boolean {
+
+
+    public wantsResumeDialogue(){
         return this._input.resumeDialog;
     }
 
-    public lockControls(): void {
+    public lockControls(){
+        document.exitPointerLock();
         this._moveDirection = Vector3.Zero();
         this._controlsLocked = true;
+        this._input.controlsLocked = true;
     }
 
-    public unlockControls(): void {
+    public unlockControls(){
         this._controlsLocked = false;
     }
 
@@ -363,21 +370,54 @@ export class Player extends TransformNode {
         else console.log("Error, piece does not exist : PieceName = " + piece.name +", memoryName = " + piece.memoryName + ", memories = " + MemoryAsset.memories.length);
     }
 
-    public set health(value: number) {
+    set health(value: number) {
         this._health = value;
     }
 
-    private _attack(pickInfo: PickingInfo) {
+    private _attack(/*pickInfo: PickingInfo*/) {
         // pickInfo vient de onPointerObservable
-        console.log(pickInfo.pickedMesh?.name);
-        console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
-        if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
-          const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
-          console.log(monster);
+        //console.log(pickInfo.pickedMesh?.name);
+        //console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
+        //if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
+          //const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
+          //console.log(monster);
           
-          if(monster) monster.takeDamage(this._damage);
+          ///if(monster) monster.takeDamage(this._damage);
+        if (!this.mesh) {
+            return;
         }
-      }
+
+        // Récupérer la position du joueur (légèrement au-dessus du centre)
+        const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 0.4, 0));
+
+        // Récupérer la direction "avant" du joueur
+        const playerForward = this.mesh.getDirection(Axis.Z).normalize();
+
+        // Créer le rayon d'attaque
+        const ray = new Ray(playerPosition, playerForward, 5); // Portée de l'attaque
+
+        // Visualisation du rayon pour le débogage
+        const rayHelper = new RayHelper(ray);
+        rayHelper.show(this.scene, new Color3(1, 0, 0));
+        setTimeout(() => {
+            rayHelper.dispose();
+        }, 100);
+
+        // Effectuer un picking avec le rayon pour détecter les intersections
+        const hit = this.scene.pickWithRay(ray);
+
+        // Vérifier si une intersection a eu lieu et si l'objet touché est un monstre
+        if (hit.hit && hit.pickedMesh && hit.pickedMesh.metadata && hit.pickedMesh.metadata.isMonster) {
+            const targetMonster = hit.pickedMesh.metadata.monsterInstance as Monster;
+            console.log("Le joueur attaque monstre : health: ", targetMonster.health);
+            targetMonster.takeDamage(this._damage); // Appliquer les dégâts au monstre
+        } else if (hit.hit && hit.pickedMesh) {
+            console.log("Le rayon a touché :", hit.pickedMesh.name);
+        } else {
+            console.log("Le rayon n'a rien touché.");
+        }
+    }
+
 
 
     takeDamage(amount: number) {
