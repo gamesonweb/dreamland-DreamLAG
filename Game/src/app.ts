@@ -10,6 +10,7 @@ import { Monster } from "./entities/monster";
 import { AreaAsset } from "./area";
 import { MemoryMenu } from "./memoryMenu";
 import { Memory, MemoryAsset } from "./memory";
+import {SlimeMonster} from "./entities/slimeMonster";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
@@ -182,18 +183,10 @@ export class App {
     private async _loadEntities(scene: Scene, shadowGenerator: ShadowGenerator): Promise<void> {
         this._player = new Player(this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
-        const monster1 = new Monster(scene, new Vector3(5, 0, 0), 100, 20);
-        const monster2 = new Monster(scene, new Vector3(-5, 0, 0), 100, 20);
-        this._mobs = [monster1, monster2];
+        const slime1 = new SlimeMonster(scene, new Vector3(5, 5, 0));
+        const slime2 = new SlimeMonster(scene, new Vector3(-5, 5, 0));
+        this._mobs = [slime1, slime2];
 
-
-        //À améliorer
-        // // Update enemies every frame
-        // scene.registerBeforeRender(() => {
-        //     this._mobs.forEach(monster => {
-        //         monster.update([this._player]);
-        //     });
-        // });
         this._mobs.forEach(mob => {
             mob.activateMonster([this._player]);
         })

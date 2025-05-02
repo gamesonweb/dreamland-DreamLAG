@@ -1,68 +1,82 @@
-import { ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
-    Scene, ShadowGenerator, Tools, TransformNode,
-    Vector3 } from "@babylonjs/core";
+import {
+    AnimationGroup, ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
+    Scene, SceneLoader, ShadowGenerator, Tools, TransformNode,
+    Vector3
+} from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import {App} from "./app";
 import {createDeathAnimation} from "./entities/animation";
 import { Memory, MemoryAsset, MemoryPiece } from "./memory";
+import { PlayerInput } from "./inputController";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
     public camera: ArcRotateCamera;
     public scene: Scene;
-    private _input;
+    public mesh: Mesh;
+    public animationGroups: AnimationGroup[] = [];
+    public dashTime: number = 0;
 
+    private _input: PlayerInput;
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
 
-    private _moveDirection: Vector3;
+    private _moveDirection: Vector3 = Vector3.Zero();
+    private _gravity: Vector3 = new Vector3();
     private _h: number;
     private _v: number;
     private _inputAmt: number;
-    private _gravity: Vector3 = new Vector3();
-    private _grounded: boolean;
-    private _jumpCount: number;
-    private _dashPressed: boolean = false;
-    private _canDash: boolean = true;
-
-    // Player properties
-    public mesh: Mesh; // Outer collisionbox of the player
     private _deltaTime: number = 0;
-    private _health: number;
+
+    private _health: number = 100;
     private _damage: number = 10;
     private _memories:Memory[];
 
-    private _controlsLocked:Boolean = false;
+    private _grounded: boolean = false;
+    private _jumpCount: number = 1;
+    private _canDash: boolean = true;
+    private _dashPressed: boolean = false;
+    private _controlsLocked: boolean = false;
 
-    private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.45;
-    private static readonly GRAVITY: number = -2.5;
-    private static readonly JUMP_FORCE: number = 0.80;
-    private static readonly DASH_FACTOR: number = 1.5;
-    private static readonly DASH_TIME: number = 10;
-    public dashTime: number = 0;
+    private static readonly ORIGINAL_TILT = new Vector3(0.593, 0, 0);
+    private static readonly PLAYER_SPEED = 0.45;
+    private static readonly GRAVITY = -2.5;
+    private static readonly JUMP_FORCE = 0.80;
+    private static readonly DASH_FACTOR = 1.5;
+    private static readonly DASH_TIME = 10;
 
     constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
         super("player", scene);
         this.scene = scene;
+        this._input = input;
         this._setupPlayerCamera();
-        this.mesh = assets.mesh;
-        this.mesh.parent = this;
-
-        shadowGenerator.addShadowCaster(assets.mesh); // le joueur va projeter des ombres
-
-        this._input = input; // inputs que vous recevez (p.ex. inputController.ts)
-
-        // Ajout des inputs pour la caméra (souris par exemple)
         this._setupCameraInputs();
 
-        this._input.onAttack = (pickInfo?: PickingInfo) => {
-            if (pickInfo) { this._attack(pickInfo); }
-          };
+        SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "BrainStem.gltf", scene).then(result => {
+            const playerMesh = result.meshes[0] as Mesh;
+            playerMesh.name = "PlayerCharacter";
+            playerMesh.position = position.clone();
+            playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
+            playerMesh.checkCollisions = true;
+            playerMesh.ellipsoid = new Vector3(1, 1, 1);
+            playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
+            playerMesh.scalingDeterminant = 1.25;
 
-        // Position initiale
-        this.mesh.position = position;
-        this._health = 100;  // Initialisation de la santé du joueur
+            playerMesh.metadata = {
+                isPlayer: true,
+                playerInstance: this
+            };
+
+            this.mesh = playerMesh;
+            this.mesh.parent = this;
+            shadowGenerator.addShadowCaster(this.mesh);
+            this.animationGroups = result.animationGroups;
+            this.playIdleAnimation();
+        });
+
+        this._input.onAttack = (pickInfo?: PickingInfo) => {
+            if (pickInfo) this._attack(pickInfo);
+        };
     }
 
     private _setupPlayerCamera(): ArcRotateCamera {
@@ -101,15 +115,16 @@ export class Player extends TransformNode {
         const canvas = this.scene.getEngine().getRenderingCanvas();
         if (!canvas) return;
 
-        let previousX: number;
-        let previousY: number;
-        let dragging = false;
+        let previousX = 0, previousY = 0, dragging = false;
 
         canvas.addEventListener("pointerdown", (evt) => {
             dragging = true;
             previousX = evt.clientX;
             previousY = evt.clientY;
-            canvas.requestPointerLock();
+
+            if (document.pointerLockElement !== canvas) {
+                canvas.requestPointerLock();
+            }
         });
 
         canvas.addEventListener("pointerup", () => {
@@ -141,9 +156,6 @@ export class Player extends TransformNode {
 
     private _updateFromControls() {
         this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
-
-        let horizontal = Math.cos(Math.PI - this.camera.alpha);
-        let vertical = Math.sin(Math.PI - this.camera.alpha);
 
         this._moveDirection = Vector3.Zero();
         this._h = this._input.horizontal;
@@ -181,15 +193,6 @@ export class Player extends TransformNode {
             10 * this._deltaTime
           )
         }
-        
-
-        let input = new Vector3(this._input.horizontalAxis, 0, this._input.verticalAxis);
-        // if (input.length() !== 0) {
-        //     let angle = Math.atan2(this._input.horizontalAxis, this._input.verticalAxis);
-        //     angle += this._camRoot.rotation.y;
-        //     let targ = Quaternion.FromEulerAngles(0, angle, 0);
-        //     this.mesh.rotationQuaternion = Quaternion.Slerp(this.mesh.rotationQuaternion, targ, 10 * this._deltaTime);
-        // }
 
         let dashFactor = 1;
         if (this._input.dashing && !this._dashPressed && this._canDash && !this._grounded) {
@@ -225,6 +228,14 @@ export class Player extends TransformNode {
 
     private _hasFrontAnObstacle(){
         return (!this._frontRaycast(0, 2).equals(Vector3.Zero()));
+    }
+
+    get areControlsLocked(): Boolean {
+        return this._controlsLocked;
+    }
+
+    get input() {
+        return this._input;
     }
 
     /**
@@ -286,7 +297,7 @@ export class Player extends TransformNode {
         }
     }
 
-    private _isGrounded() {
+    private _isGrounded(): boolean {
         const result = this._floorRaycast(0, 0, 1.5);
         if(!result.equals(Vector3.Zero())){
             if(!this._input.jumpKeyDown) this.mesh.position.y = result.y + 0.1;
@@ -297,18 +308,11 @@ export class Player extends TransformNode {
         } 
     }
 
-    private _updateGroundDetection() {
+    private _updateGroundDetection(): void {
         if (!this._isGrounded()) {
-            // if (this._checkSlope() && this._gravity.y <= 0*/) {
-            //     this._gravity.y = 0;
-            //     this._jumpCount = 1;
-            //     this._grounded = true;
-            // } else{
-                this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
-                this._grounded = false;
-            // }
-        }
-        else{
+            this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
+            this._grounded = false;
+        } else {
             this._gravity.y = 0;
             this._grounded = true;
             this._jumpCount = 1;
@@ -340,18 +344,16 @@ export class Player extends TransformNode {
 
     }
 
-    
-
-    public wantsResumeDialogue(){
+    public wantsResumeDialogue(): boolean {
         return this._input.resumeDialog;
     }
 
-    public lockControls(){
+    public lockControls(): void {
         this._moveDirection = Vector3.Zero();
         this._controlsLocked = true;
     }
 
-    public unlockControls(){
+    public unlockControls(): void {
         this._controlsLocked = false;
     }
 
@@ -361,7 +363,7 @@ export class Player extends TransformNode {
         else console.log("Error, piece does not exist : PieceName = " + piece.name +", memoryName = " + piece.memoryName + ", memories = " + MemoryAsset.memories.length);
     }
 
-    set health(value: number) {
+    public set health(value: number) {
         this._health = value;
     }
 
@@ -396,10 +398,12 @@ export class Player extends TransformNode {
         this.playDeathAnimation();
     }
 
-    /**
-     * Animation de mort, avec suppression du mesh à la fin.
-     */
-    playDeathAnimation(): void {
+    public playIdleAnimation(): void {
+        const idleAnim = this.animationGroups.find(a => a.name.toLowerCase().includes("idle"));
+        if (idleAnim) idleAnim.start(true);
+    }
+
+    public playDeathAnimation(): void {
         const anim = createDeathAnimation(this.mesh);
         this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
         setTimeout(() => {
