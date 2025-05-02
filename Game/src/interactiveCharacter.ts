@@ -30,7 +30,7 @@ export class Character<T extends CharacterMenu>{
 
     private player:Player;
     
-    private static readonly MIN_DIST_INTERACTION: number = 15;
+    private static readonly MIN_DIST_INTERACTION: number = 200;
 
     constructor(mesh:Mesh, scene:Scene, player:Player, characterName:string, characterMenu?:T){
         this._mesh = mesh;
@@ -92,7 +92,7 @@ export class Character<T extends CharacterMenu>{
 
         
         this._talkButton.onPointerUpObservable.add(() => {
-            this.startInteraction();
+            this._talkButton.isVisible = false;
             this._startDialogue();
         });
     }
@@ -122,15 +122,6 @@ export class Character<T extends CharacterMenu>{
         this._dialogText.textWrapping = true;
 
         this._dialogBox.addControl(this._dialogText);
-
-        this._dialogBox.onPointerUpObservable.add(() => {
-            if (this._dialogueManager.isDialogueActivated) {
-                this._dialogueManager.nextLine();
-                if (!this._dialogueManager.isDialogueActivated && this.characterMenu) { // Si le dialogue vient d'être terminé
-                    if (!this.characterMenu.isWindowRecentlyClosed()) this.characterMenu.showWindow();
-                }
-            }
-        });
 
     }
 
@@ -170,26 +161,11 @@ export class Character<T extends CharacterMenu>{
         this.scene.registerBeforeRender(() => {
             this._updateTalkButton();
             this._updateDialogueBox();
-
-            
-            if (this.player.input.interactKeyDown && this._isPlayerNear() && !this._dialogueManager.isDialogueActivated && !this._isInteracting) {
-                this.startInteraction();
-
-                this.player.input.interactKeyDown = false;
-            }
         })
     }
 
-    public startInteraction(): void {
-        if (this._isPlayerNear() && !this._dialogueManager.isDialogueActivated && !this._isInteracting) {
-            this._talkButton.isVisible = false;
-            document.exitPointerLock();
-            this.player.lockControls();
-            this._startDialogue();
-        }
-    }
-
     private _startDialogue(){
+        this.player.lockControls();
         this._isInteracting = true;
         this._dialogueManager.startDialogue(this._dialogues[this._dialogueState]);
     }

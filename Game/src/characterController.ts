@@ -1,12 +1,10 @@
-import { ArcRotateCamera, Axis, Color3, Mesh, PickingInfo, Quaternion, Ray,
-    RayHelper,
+import { ArcRotateCamera, Axis, Mesh, PickingInfo, Quaternion, Ray,
     Scene, ShadowGenerator, Tools, TransformNode,
     Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import {App} from "./app";
 import {createDeathAnimation} from "./entities/animation";
 import { Memory, MemoryAsset, MemoryPiece } from "./memory";
-import { MemoryMenu } from "./memoryMenu";
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -26,10 +24,6 @@ export class Player extends TransformNode {
     private _jumpCount: number;
     private _dashPressed: boolean = false;
     private _canDash: boolean = true;
-
-    //public isInteracting:boolean = false;
-    private _memoryMenu:MemoryMenu;
-    private _memoryMenuKeyPressed:boolean = false;
 
     // Player properties
     public mesh: Mesh; // Outer collisionbox of the player
@@ -62,19 +56,13 @@ export class Player extends TransformNode {
         // Ajout des inputs pour la caméra (souris par exemple)
         this._setupCameraInputs();
 
-        this._input.onAttack = () => {
-            this._attack();
+        this._input.onAttack = (pickInfo?: PickingInfo) => {
+            if (pickInfo) { this._attack(pickInfo); }
           };
 
         // Position initiale
         this.mesh.position = position;
         this._health = 100;  // Initialisation de la santé du joueur
-
-        this._memoryMenu=new MemoryMenu(this._scene, this);
-    }
-
-    public get input(){
-        return this._input
     }
 
     private _setupPlayerCamera(): ArcRotateCamera {
@@ -117,12 +105,17 @@ export class Player extends TransformNode {
         let previousY: number;
         let dragging = false;
 
-        // canvas.addEventListener("pointerdown", (evt) => {
-        //     dragging = true;
-        //     previousX = evt.clientX;
-        //     previousY = evt.clientY;
-        //     canvas.requestPointerLock();
-        // });
+        canvas.addEventListener("pointerdown", (evt) => {
+            dragging = true;
+            previousX = evt.clientX;
+            previousY = evt.clientY;
+            canvas.requestPointerLock();
+        });
+
+        canvas.addEventListener("pointerup", () => {
+            dragging = false;
+            document.exitPointerLock();
+        });
 
         canvas.addEventListener("pointermove", (evt) => {
             if (!dragging) return;
@@ -216,20 +209,10 @@ export class Player extends TransformNode {
         }
     }
 
-    private _updateMenus(){
-        if(this._input.memoryKeyDown && !this._memoryMenuKeyPressed){
-            this._memoryMenu.toggleMenu();
-            this._memoryMenuKeyPressed = true;
-        } else if (!this._input.memoryKeyDown){
-            this._memoryMenuKeyPressed = false;
-        }
-    }
-
 
     private _beforeRenderUpdate(): void {
         if(!this._controlsLocked) this._updateFromControls();
         this._updateGroundDetection();
-        this._updateMenus();
     }
 
     public activatePlayerCamera(): ArcRotateCamera{
@@ -353,27 +336,23 @@ export class Player extends TransformNode {
         //     this.dashTime = 0;
         //     this._dashPressed = false;
         // }
+
+
     }
 
+    
 
     public wantsResumeDialogue(){
         return this._input.resumeDialog;
     }
 
     public lockControls(){
-        document.exitPointerLock();
         this._moveDirection = Vector3.Zero();
         this._controlsLocked = true;
-        this._input.controlsLocked = true;
     }
 
     public unlockControls(){
         this._controlsLocked = false;
-        this._input.controlsLocked = false;
-    }
-
-    public get areControlsLocked(){
-        return this._controlsLocked;
     }
 
     public claimReward(piece:MemoryPiece){
@@ -386,52 +365,17 @@ export class Player extends TransformNode {
         this._health = value;
     }
 
-    private _attack(/*pickInfo: */) {
+    private _attack(pickInfo: PickingInfo) {
         // pickInfo vient de onPointerObservable
-        // console.log(pickInfo.pickedMesh?.name);
-        // console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
-        // if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
-        //   const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
-        //   console.log(monster);
+        console.log(pickInfo.pickedMesh?.name);
+        console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
+        if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
+          const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
+          console.log(monster);
           
-        //   if(monster) monster.takeDamage(this._damage);
-        //}
-
-        if (!this.mesh) {
-            return;
-        }
-
-        // Récupérer la position du joueur (légèrement au-dessus du centre)
-        const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 0.4, 0));
-
-        // Récupérer la direction "avant" du joueur
-        const playerForward = this.mesh.getDirection(Axis.Z).normalize();
-
-        // Créer le rayon d'attaque
-        const ray = new Ray(playerPosition, playerForward, 5); // Portée de l'attaque
-
-        // Visualisation du rayon pour le débogage
-        const rayHelper = new RayHelper(ray);
-        rayHelper.show(this.scene, new Color3(1, 0, 0));
-        setTimeout(() => {
-            rayHelper.dispose();
-        }, 100);
-
-        // Effectuer un picking avec le rayon pour détecter les intersections
-        const hit = this.scene.pickWithRay(ray);
-
-        // Vérifier si une intersection a eu lieu et si l'objet touché est un monstre
-        if (hit.hit && hit.pickedMesh && hit.pickedMesh.metadata && hit.pickedMesh.metadata.isMonster) {
-            const targetMonster = hit.pickedMesh.metadata.monsterInstance as Monster;
-            console.log("Le joueur attaque monstre : health: ", targetMonster.health);
-            targetMonster.takeDamage(this._damage); // Appliquer les dégâts au monstre
-        } else if (hit.hit && hit.pickedMesh) {
-            console.log("Le rayon a touché :", hit.pickedMesh.name);
-        } else {
-            console.log("Le rayon n'a rien touché.");
+          if(monster) monster.takeDamage(this._damage);
         }
       }
-      
 
 
     takeDamage(amount: number) {
