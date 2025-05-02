@@ -1,7 +1,7 @@
 //import * as BABYLON from "@babylonjs/core/Legacy/legacy";
 import { createMoveAnimation, createAttackAnimation, createDeathAnimation } from "./animation";
 import { Player } from "../characterController";
-import { Color3, Mesh, MeshBuilder, Ray, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
+import {Color3, Mesh, MeshBuilder, Ray, Scene, SceneLoader, StandardMaterial, Vector3} from "@babylonjs/core";
 
 // Classe Monster qui représente un ennemi basique dans le jeu
 export class Monster {
@@ -18,8 +18,8 @@ export class Monster {
     private _deltaTime: number = 0;
 
     private _gravity: Vector3 = new Vector3();
-    private _grounded: boolean;
-    private _moveDirection:Vector3;
+    protected _grounded: boolean;
+    protected _moveDirection:Vector3;
 
     private static readonly GRAVITY: number = -12.5;
     private static readonly MAX_GRAVITY_Y: number = -1.50;
@@ -31,7 +31,7 @@ export class Monster {
         this.state = "idle";
         this.target = null;
         this.lastAttackTime = 0;
-        this.attackCooldown = 2; // secondes
+        this.attackCooldown = 3; // secondes
 
         // Création du corps du monstre
         this.mesh = MeshBuilder.CreateSphere("monster", { diameter: 3 }, scene);
@@ -127,7 +127,7 @@ export class Monster {
 
     public activateMonster(players: Player[]): void {
         this.scene.registerBeforeRender(() => {
-            if (this.state !== "dead"){;
+            if (this.state !== "dead"){
                 this.update(players);
 
                 this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
