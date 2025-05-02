@@ -28,28 +28,28 @@ export class SlimeMonster extends Monster {
             slimeMesh.scalingDeterminant = 0.04;
 
             // Raycast pour poser le slime sur le sol
-            if (this._isGrounded) {
-                slimeMesh.position = this._floorRaycast(0,0,1);
-            } else {
-                slimeMesh.position = position.clone();
-            }
+            // if (this._isGrounded) {
+            //     slimeMesh.position = this._floorRaycast(0,0,1);
+            // } else {
+            //     slimeMesh.position = position.clone();
+            // }
 
-            slimeMesh.checkCollisions = true;
-            slimeMesh.ellipsoid = new Vector3(1.5, 1.5, 1.5);
-            slimeMesh.ellipsoidOffset = new Vector3(0, 1.5, 0);
+            // slimeMesh.checkCollisions = true;
+            // slimeMesh.ellipsoid = new Vector3(1.5, 1.5, 1.5);
+            // slimeMesh.ellipsoidOffset = new Vector3(0, 1.5, 0);
             slimeMesh.metadata = {
                 isMonster: true,
                 monsterInstance: this
             };
 
             this.mesh = slimeMesh;
-            this.mesh.position = position.clone();
+            //this.mesh.position = position.clone();
             this.animationGroups = result.animationGroups;
 
             // Crée une détection propre à la position réelle
-            this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
-            this.detectionZone.isVisible = false;
-            this.detectionZone.position = this.mesh.position.clone();
+            // this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
+            // this.detectionZone.isVisible = false;
+            // this.detectionZone.position = this.mesh.getAbsolutePosition().clone();
 
             this.playIdleAnimation();
         });

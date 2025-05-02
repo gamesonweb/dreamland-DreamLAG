@@ -31,9 +31,9 @@ export class Player extends TransformNode {
     private _canDash: boolean = true;
 
     // Player properties
-    public mesh: Mesh; // Outer collisionbox of the player
+    private _mesh: Mesh; // Outer collisionbox of the player
     private _deltaTime: number = 0;
-    private _health: number;
+    private _health: number = 100;
     private _damage: number = 10;
     private _memories:Memory[];
 
@@ -42,7 +42,7 @@ export class Player extends TransformNode {
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
     private static readonly PLAYER_SPEED: number = 0.45;
     private static readonly GRAVITY: number = -2.5;
-    private static readonly JUMP_FORCE: number = 0.80;
+    private static readonly JUMP_FORCE: number = 0.30;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
     public dashTime: number = 0;
@@ -50,6 +50,9 @@ export class Player extends TransformNode {
     //public isInteracting:boolean = false;
     private _memoryMenu:MemoryMenu;
     private _memoryMenuKeyPressed:boolean = false;
+
+    private _groundCheckInterval: number = 3; // Vérifier tous les 3 frames
+    private _groundCheckCounter: number = 0;
 
     constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
         super("player", scene);
@@ -63,27 +66,31 @@ export class Player extends TransformNode {
             playerMesh.name = "PlayerCharacter";
             playerMesh.position = position.clone();
             playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
-            playerMesh.checkCollisions = true;
-            playerMesh.ellipsoid = new Vector3(1, 1, 1);
-            playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
-            playerMesh.scalingDeterminant = 1.25;
+            //playerMesh.checkCollisions = true;
+            // playerMesh.ellipsoid = new Vector3(1, 1, 1);
+            // playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
+            // playerMesh.scalingDeterminant = 1.25;
 
             playerMesh.metadata = {
                 isPlayer: true,
                 playerInstance: this
             };
 
-            this.mesh = playerMesh;
-            this.mesh.parent = this;
+            this._mesh = playerMesh;
+            this._mesh.parent = this;
             shadowGenerator.addShadowCaster(this.mesh);
-            this.animationGroups = result.animationGroups;
-            this.playIdleAnimation();
+            //this.animationGroups = result.animationGroups;
+            //this.playIdleAnimation();
         });
 
         this._input.onAttack = () => {
             this._attack();
         };
         this._memoryMenu=new MemoryMenu(this._scene, this);
+    }
+
+    public get mesh(){
+        return this._mesh;
     }
 
     private _setupPlayerCamera(): ArcRotateCamera {
@@ -312,16 +319,36 @@ export class Player extends TransformNode {
     }
 
     private _updateGroundDetection() {
-        if (!this._isGrounded()) {
-            this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
-            this._grounded = false;
-        } else {
-            this._gravity.y = 0;
-            this._grounded = true;
-            this._jumpCount = 1;
-            this._canDash = true;
-            this.dashTime = 0;
-            this._dashPressed = false;
+        this._groundCheckCounter++;
+         if(this._groundCheckCounter>=this._groundCheckInterval){
+             if (!this._isGrounded()) {
+                 // if (this._checkSlope() && this._gravity.y <= 0*/) {
+                 //     this._gravity.y = 0;
+                 //     this._jumpCount = 1;
+                 //     this._grounded = true;
+                 // } else{
+                     this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
+                     this._grounded = false;
+                 // }
+             }
+             else{
+                 this._gravity.y = 0;
+                 this._grounded = true;
+                 this._jumpCount = 1;
+                 this._canDash = true;
+                 this.dashTime = 0;
+                 this._dashPressed = false;
+             }
+             this._groundCheckCounter = 0;
+
+            // else{
+            //     this._gravity.y = 0;
+            //     this._grounded = true;
+            //     this._jumpCount = 1;
+            //     this._canDash = true;
+            //     this.dashTime = 0;
+            //     this._dashPressed = false;
+            // }
         }
 
         if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked) {
@@ -329,8 +356,8 @@ export class Player extends TransformNode {
             this._jumpCount--;
         }
 
-        if (this._gravity.y < -Player.JUMP_FORCE) {
-            this._gravity.y = -Player.JUMP_FORCE;
+        if (this._gravity.y < -Player.JUMP_FORCE*this._groundCheckInterval) {
+            this._gravity.y = -Player.JUMP_FORCE*this._groundCheckInterval;
         }
 
         this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
@@ -362,6 +389,7 @@ export class Player extends TransformNode {
 
     public unlockControls(){
         this._controlsLocked = false;
+        this._input.controlsLocked = false;
     }
 
     public claimReward(piece:MemoryPiece){
