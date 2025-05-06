@@ -14,6 +14,7 @@
         attackCooldown: number; // Temps entre deux attaques
         public mesh: Mesh; // Mesh du monstre
         detectionZone: Mesh; // Zone de détection autour du monstre
+        isReady: boolean;
 
         private _deltaTime: number = 0;
 
@@ -40,9 +41,9 @@
             material.diffuseColor = new Color3(1, 0, 0); // Rouge
             this.mesh.material = material;
 
-            // this.mesh.checkCollisions = true;
-            // this.mesh.ellipsoid       = new Vector3(1.5, 1.5, 1.5);  // rayon de ta sphère
-            // this.mesh.ellipsoidOffset = new Vector3(0, 1.5, 0); // pour que l’ellipsoïde soit alignée à la base
+            this.mesh.checkCollisions = true;
+            this.mesh.ellipsoid       = new Vector3(1.5, 1.5, 1.5);  // rayon de ta sphère
+            this.mesh.ellipsoidOffset = new Vector3(0, 1.5, 0); // pour que l’ellipsoïde soit alignée à la base
             this.mesh.isPickable = true;
             this.mesh.metadata = {
                 isMonster: true,
@@ -142,45 +143,8 @@
                     this.update(players);
                     this._updateGroundDetection();
 
-                    
-
-                    // if (!this.target) {
-                    //     // Chercher le joueur le plus proche
-                    //     let closestPlayer: Player | null = null;
-                    //     let minDist = Infinity;
-                    //     for (const player of players) {
-                    //         const dist = Vector3.Distance(this.mesh.getAbsolutePosition(), player.mesh.getAbsolutePosition());
-                    //         if (dist < minDist) {
-                    //             minDist = dist;
-                    //             closestPlayer = player;
-                    //         }
-                    //     }
-                    //     if (closestPlayer && minDist < 20) { // si joueur détecté dans un rayon de 20 unités
-                    //         this.target = closestPlayer;
-                    //         this.state = "pursuing";
-                    //     }
-                    // }
-
-                    // if (this.target) {
-                    //     const distance = Vector3.Distance(this.mesh.getAbsolutePosition(), this.target.mesh.getAbsolutePosition());
-
-                    //     if (distance < 50) { // Distance d'attaque
-                    //         this.state = "attacking";
-                    //         this.attack();
-                    //     } else {
-                    //         this.state = "pursuing";
-                    //         this.moveTowards(this.target.mesh.position);
-                    //     }
-                    // }
-        
                 }
             });
-        }
-
-        private moveTowards(targetPosition: Vector3): void {
-            const direction = targetPosition.subtract(this.mesh.position).normalize();
-            const moveSpeed = 2; // unités par seconde
-            this._moveDirection = direction.scale(moveSpeed * this._deltaTime);
         }
 
         /**
@@ -198,7 +162,6 @@
         die(): void {
             console.log("Monster is dying...");
             this.playDeathAnimation();
-            this.mesh.dispose();
             this.state = "dead"; // On place l’état sur "dead"
         }
 
@@ -213,6 +176,8 @@
          * Met à jour l'état du monstre (appelée à chaque frame).
          */
         public update(targets: Player[]): void {
+            if (!this.isReady) return;
+
             this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
             this._moveDirection=Vector3.Zero();
 
@@ -224,7 +189,7 @@
             // Réinitialise l'état et la cible
             this.state = "idle";
             this.target = null;
-            
+
 
             // Recherche d'un joueur dans la portée
             for (const t of targets) {
@@ -237,7 +202,7 @@
 
             if (this.target) {
                 const dist = Vector3.Distance(this.mesh.getAbsolutePosition(), this.target.mesh.getAbsolutePosition());
-                if (dist > 1) {
+                if (dist > 2) {
                     this.state = "pursuing";
                     this.moveTowardTarget();
                     if(this._grounded) this.playMoveAnimation();

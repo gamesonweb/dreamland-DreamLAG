@@ -66,10 +66,10 @@ export class Player extends TransformNode {
             playerMesh.name = "PlayerCharacter";
             playerMesh.position = position.clone();
             playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
-            //playerMesh.checkCollisions = true;
-            // playerMesh.ellipsoid = new Vector3(1, 1, 1);
-            // playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
-            // playerMesh.scalingDeterminant = 1.25;
+            playerMesh.checkCollisions = true;
+            playerMesh.ellipsoid = new Vector3(1, 1, 1);
+            playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
+            playerMesh.scalingDeterminant = 1.25;
 
             playerMesh.metadata = {
                 isPlayer: true,
@@ -439,6 +439,7 @@ export class Player extends TransformNode {
             const targetMonster = hit.pickedMesh.metadata.monsterInstance as Monster;
             console.log("Le joueur attaque monstre : health: ", targetMonster.health);
             targetMonster.takeDamage(this._damage); // Appliquer les dégâts au monstre
+
         } else if (hit.hit && hit.pickedMesh) {
             console.log("Le rayon a touché :", hit.pickedMesh.name);
         } else {

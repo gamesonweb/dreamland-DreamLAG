@@ -187,8 +187,8 @@ export class App {
     private async _loadEntities(scene: Scene, shadowGenerator: ShadowGenerator): Promise<void> {
         this._player = new Player(this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
-        const slime1 = new SlimeMonster(scene, new Vector3(5, 5, 0));
-        const slime2 = new SlimeMonster(scene, new Vector3(-5, 5, 0));
+        const slime1 = new SlimeMonster(scene, new Vector3(10, 0, 0));
+        const slime2 = new SlimeMonster(scene, new Vector3(-10, 0, 0));
         this._mobs = [slime1, slime2];
 
         this._mobs.forEach(mob => {
@@ -308,9 +308,12 @@ export class App {
         await scene.whenReadyAsync();
         scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
         this._player.mesh.position.y = 75;
-        this._mobs.forEach(mob => {
-            mob.mesh.position.y = 75;
-        })
+        const mob = this._mobs[0];
+        mob.mesh.position.y = this._player.mesh.position.y - 39;
+        mob.mesh.position.x = this._player.mesh.position.x + 10;
+        const mob2 = this._mobs[1];
+        mob2.mesh.position.y = this._player.mesh.position.y - 39;
+        mob2.mesh.position.x = this._player.mesh.position.x - 10;
 
         // Switch scene and set state
         this._scene.dispose();
@@ -389,17 +392,6 @@ export class App {
         // this._sceneCamera.position = new Vector3(0, 50, 0);
     }
 
-    // Function to switch to the player camera
-    private switchToPlayerCamera() {
-        this._currentCamera = this._playerCamera;
-        this._scene.activeCamera = this._playerCamera;
-    }
-
-    // Function to switch to the scene camera
-    private switchToSceneCamera() {
-        this._currentCamera = this._sceneCamera;
-        this._scene.activeCamera = this._sceneCamera;
-    }
 
     private async _main(): Promise<void> {
         await this._goToStart();
