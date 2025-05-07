@@ -1,4 +1,4 @@
-import { AbstractMesh, Color3, CubeTexture, Mesh, MeshBuilder, ParseNullTerminatedString, PhotoDome, ReflectionProbe, Scene, SceneLoader, StandardMaterial, Texture, Vector2, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, Color3, CubeTexture, InstancedMesh, Mesh, MeshBuilder, ParseNullTerminatedString, PhotoDome, ReflectionProbe, Scene, SceneLoader, StandardMaterial, Texture, Vector2, Vector3 } from "@babylonjs/core";
 import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
 import { Area, AreaAsset, MonsterArea } from "./area";
@@ -50,19 +50,45 @@ export class Environment {
 
             const geoMeshes = result.meshes.filter(m =>
                 m instanceof Mesh &&
-                m.geometry !== null &&          // a geometry
-                m.subMeshes !== undefined &&     // a subMeshes array
-                m.subMeshes.length > 0           // non vide
+                m.geometry !== null //&&          // a geometry
+                // m.subMeshes !== undefined &&     // a subMeshes array
+                // m.subMeshes.length > 0           // non vide
             ) as Mesh[];
 
             let questCharacterMesh:Mesh = null;
+            const masterTrees: { [key: string]: Mesh } = {}; // Objet pour stocker les maîtres par type
+            //const treeInstances: { [key: string]: { root: InstancedMesh; leaves: InstancedMesh[] }[] } = {};
+            const treeInstances: { [key: string]: InstancedMesh[] } = {};
+
 
             geoMeshes.forEach((mesh) => {
+                mesh.checkCollisions = true;
                 if(mesh.name === "QuestCharacter"){
                     questCharacterMesh = mesh;
                     // this.questCharacter = new QuestCharacter(mesh, this._scene, player);
                     // this.questCharacter.activateCharacter();
                 }
+
+                if (mesh.name.includes("Arbre") && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
+                    // Nous avons trouvé un "parent" d'arbre
+                    const treeType = mesh.name.substring(0, 6);
+        
+                    if (!masterTrees[treeType]) {
+                        masterTrees[treeType] = mesh;
+                        treeInstances[treeType] = [];
+                        console.log("Origine arbre (avec enfant Plane) : " + masterTrees[treeType].name);
+                        // Optionnel : masterTrees[treeType].isVisible = false; // Cacher l'original
+                    } else if (masterTrees[treeType] !== mesh) {
+                        const treeInstance = masterTrees[treeType].createInstance(mesh.name + "_instance");
+                        console.log("Instance arbre (avec enfant Plane) créée : " + treeInstance.name);
+                        treeInstance.position = mesh.position.clone();
+                        treeInstance.rotation = mesh.rotation.clone();
+                        treeInstance.scaling = mesh.scaling.clone();
+                        treeInstance.isPickable = false;
+                        treeInstances[treeType].push(treeInstance);
+                        mesh.dispose();
+                    }
+                }      
 
                 if(mesh.name.includes("Arbre")) mesh.isPickable = false;
 

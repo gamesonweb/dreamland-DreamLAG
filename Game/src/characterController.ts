@@ -42,7 +42,7 @@ export class Player extends TransformNode {
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
     private static readonly PLAYER_SPEED: number = 0.45;
     private static readonly GRAVITY: number = -2.5;
-    private static readonly JUMP_FORCE: number = 0.30;
+    private static readonly JUMP_FORCE: number = 0.80;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
     public dashTime: number = 0;
@@ -51,7 +51,7 @@ export class Player extends TransformNode {
     private _memoryMenu:MemoryMenu;
     private _memoryMenuKeyPressed:boolean = false;
 
-    private _groundCheckInterval: number = 2; // Vérifier tous les 3 frames
+    private _groundCheckInterval: number = 1; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
 
     constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
@@ -287,7 +287,7 @@ export class Player extends TransformNode {
   
 
     private _floorRaycast(offsetx: number, offsetz: number, raycastlen: number): Vector3 {
-        let raycastFloorPos = new Vector3(this.mesh.position.x + offsetx, this.mesh.position.y + 0.5, this.mesh.position.z + offsetz);
+        let raycastFloorPos = new Vector3(this.mesh.position.x + offsetx, this.mesh.position.y, this.mesh.position.z + offsetz);
         let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
 
         let predicate = function (mesh) {
@@ -308,14 +308,34 @@ export class Player extends TransformNode {
     }
 
     private _isGrounded() {
-        const result = this._floorRaycast(0, 0, 1.5);
+        const result = this._floorRaycast(0, 0, 0.1);
         if(!result.equals(Vector3.Zero())){
-            if(!this._input.jumpKeyDown) this.mesh.position.y = result.y + 0.1;
+            //if(!this._input.jumpKeyDown) this.mesh.position.y = result.y + 0.1;
             return true;
         }
         else{
             return false;
         } 
+
+        // const offsets = [
+        //     new Vector3(0, 0, 0),             // Centre
+        //     new Vector3(0.5, 0, 0),           // Avant (ajuster l'offset)
+        //     new Vector3(-0.5, 0, 0),          // Arrière (ajuster l'offset)
+        //     new Vector3(0, 0, 0.5),           // Droite (ajuster l'offset)
+        //     new Vector3(0, 0, -0.5)           // Gauche (ajuster l'offset)
+        // ];
+        // const raycastLen = 2;
+    
+        // for (const offset of offsets) {
+        //     const result = this._floorRaycast(offset.x, offset.z, raycastLen);
+        //     if (!result.equals(Vector3.Zero())) {
+        //         if (!this._input.jumpKeyDown) {
+        //             this.mesh.position.y = result.y + 0.1; // Ajustez l'offset si nécessaire
+        //         }
+        //         return true;
+        //     }
+        // }
+        // return false;
     }
 
     private _updateGroundDetection() {
