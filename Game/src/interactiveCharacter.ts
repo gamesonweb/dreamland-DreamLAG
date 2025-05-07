@@ -15,6 +15,7 @@ export class Character<T extends CharacterMenu>{
     private _talkButton: GUI.Button;
     private _dialogBox: GUI.Rectangle;
     private _dialogText: GUI.TextBlock;
+    private _indicationText: GUI.TextBlock;
 
     private _characterName:string;
     private _dialogueManager: DialogueManager;
@@ -101,8 +102,8 @@ export class Character<T extends CharacterMenu>{
 
         // Création de la boîte de this._dialogue
         this._dialogBox = new GUI.Rectangle();
-        this._dialogBox.width = "400px";
-        this._dialogBox.height = "100px";
+        this._dialogBox.width = "500px";
+        this._dialogBox.height = "200px";
         this._dialogBox.cornerRadius = 10;
         this._dialogBox.color = "white";
         this._dialogBox.thickness = 2;
@@ -121,7 +122,16 @@ export class Character<T extends CharacterMenu>{
         this._dialogText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
         this._dialogText.textWrapping = true;
 
+        //Texte pour indique comment passer
+        this._indicationText = new GUI.TextBlock();
+        this._indicationText.text = "Taper sur ESPACE pour passer";
+        this._indicationText.color = "white";
+        this._indicationText.fontSize = 15;
+        this._indicationText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this._indicationText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+
         this._dialogBox.addControl(this._dialogText);
+        this._dialogBox.addControl(this._indicationText);
 
         this._dialogBox.onPointerUpObservable.add(() => {
             if (this._dialogueManager.isDialogueActivated) {

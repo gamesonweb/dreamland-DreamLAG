@@ -33,7 +33,7 @@ export class Environment {
     public async loadIsland() {
 
 
-        SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene).then((result) => {
+        await SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene).then(async (result) => {
 
             const photoDome = new PhotoDome(
                 "dreamDome",
@@ -41,6 +41,10 @@ export class Environment {
                 { resolution: 32, size: 2000 },
                 this._scene
               );
+
+              this._scene.onBeforeRenderObservable.add(() => {
+                photoDome.position = this._scene.cameras[0].position; // Assurer que la position du dôme suit celle de la caméra
+            });
 
             // const domeMesh = photoDome.mesh; 
             // const probe = new ReflectionProbe("probe", 512, this._scene);
@@ -55,16 +59,36 @@ export class Environment {
                 // m.subMeshes.length > 0           // non vide
             ) as Mesh[];
 
-            let questCharacterMesh:Mesh = null;
+            let questCharacterHolder:Mesh = null;
             const masterTrees: { [key: string]: Mesh } = {}; // Objet pour stocker les maîtres par type
             //const treeInstances: { [key: string]: { root: InstancedMesh; leaves: InstancedMesh[] }[] } = {};
             const treeInstances: { [key: string]: InstancedMesh[] } = {};
 
 
-            geoMeshes.forEach((mesh) => {
+            geoMeshes.forEach(async (mesh) => {
                 mesh.checkCollisions = true;
                 if(mesh.name === "QuestCharacter"){
-                    questCharacterMesh = mesh;
+                    // console.log("OK");
+                    // const wizardLoading = await SceneLoader.ImportMeshAsync("", "assets/models/characters/", "Wizard.gltf", this._scene);
+                    // const wizard= wizardLoading.meshes[0] as Mesh;
+                    // wizard.position = mesh.position.clone();
+                    // questCharacterMesh = wizard;
+                    // console.log("QuestCharacter : " + questCharacterMesh);
+                    // mesh.dispose();
+
+                    // new Promise<void>(async (resolve) => {
+                    //     const wizardLoading = await SceneLoader.ImportMeshAsync("", "assets/models/characters/", "Wizard.gltf", this._scene);
+                    //     const wizard = wizardLoading.meshes[0] as Mesh;
+                    //     wizard.position = mesh.position.clone();
+                    //     questCharacterMesh = wizard;
+                    //     console.log("QuestCharacter mesh loaded:", questCharacterMesh);
+                    //     mesh.dispose(); // Supprimez le placeholder
+                    //     resolve();
+                    // });
+                
+
+                    questCharacterHolder = mesh;
+
                     // this.questCharacter = new QuestCharacter(mesh, this._scene, player);
                     // this.questCharacter.activateCharacter();
                 }
@@ -80,7 +104,7 @@ export class Environment {
                         // Optionnel : masterTrees[treeType].isVisible = false; // Cacher l'original
                     } else if (masterTrees[treeType] !== mesh) {
                         const treeInstance = masterTrees[treeType].createInstance(mesh.name + "_instance");
-                        console.log("Instance arbre (avec enfant Plane) créée : " + treeInstance.name);
+                        console.log("Instance arbre créée : " + treeInstance.name);
                         treeInstance.position = mesh.position.clone();
                         treeInstance.rotation = mesh.rotation.clone();
                         treeInstance.scaling = mesh.scaling.clone();
@@ -101,6 +125,7 @@ export class Environment {
                 }
 
                 if(mesh.name === "WaterMesh"){
+                    mesh.checkCollisions = false;
                     const waterMaterial = new WaterMaterial("waterMat", this._scene);
                     waterMaterial.bumpTexture = new Texture("assets/models/Islands/Island1/WaterTexture.png", this._scene);
                     waterMaterial.bumpHeight  = 0.5; // Intensité du relief
@@ -137,10 +162,31 @@ export class Environment {
                 i++;
             }
 
-            
 
-            this.questCharacter = new QuestCharacter(questCharacterMesh, this._scene, this._player, questsIslands1);
-            this.questCharacter.activateCharacter();
+            if (!questCharacterHolder) {
+                console.error("No QuestCharacter placeholder found!");
+                return;
+              }
+            else{
+                const wizardResult = await SceneLoader.ImportMeshAsync(
+                    "", "assets/models/characters/", "Wizard.gltf", this._scene
+                  );
+                  const wizard = wizardResult.meshes[0] as Mesh;
+                  
+                  // Position & dispose placeholder
+                  wizard.setAbsolutePosition(questCharacterHolder.getAbsolutePosition());
+                  wizard.scaling = new Vector3(1,1,1) //questCharacterHolder.scaling.clone();
+                  wizard.rotation = new Vector3(0, 3*Math.PI/2, 0); 
+                  console.log(wizard.rotation);
+                  questCharacterHolder.dispose();
+                  
+                  // Now you can safely create and activate your QuestCharacter
+                  this.questCharacter = new QuestCharacter(wizard, this._scene, this._player, questsIslands1);
+                  this.questCharacter.activateCharacter();
+            }
+
+            // this.questCharacter = new QuestCharacter(questCharacterMesh, this._scene, this._player, questsIslands1);
+            // this.questCharacter.activateCharacter();
 
             
 
