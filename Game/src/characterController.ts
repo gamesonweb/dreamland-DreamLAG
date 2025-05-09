@@ -237,7 +237,7 @@ export class Player extends TransformNode {
     }
 
     private _hasFrontAnObstacle(){
-        return (!this._frontRaycast(0, 2).equals(Vector3.Zero()));
+        return (!this._frontRaycast(0, 1).equals(Vector3.Zero()));
     }
 
     get areControlsLocked(): Boolean {
@@ -308,7 +308,7 @@ export class Player extends TransformNode {
     }
 
     private _isGrounded() {
-        const result = this._floorRaycast(0, 0, 0.1);
+        const result = this._floorRaycast(0, 0, 0.5);
         if(!result.equals(Vector3.Zero())){
             //if(!this._input.jumpKeyDown) this.mesh.position.y = result.y + 0.1;
             return true;
