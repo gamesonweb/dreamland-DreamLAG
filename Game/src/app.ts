@@ -15,7 +15,7 @@ import {SlimeMonster} from "./entities/slimeMonster";
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
 export class App {
-    private _scene: Scene;
+    _scene: Scene;
     private _canvas: HTMLCanvasElement;
     private _engine: Engine;
     private _state: number;
@@ -61,12 +61,6 @@ export class App {
 
         // Start the game
         this._main();
-    }
-
-    static goToLose() {
-        new App()._goToLose().then();
-        console.log("Game Over. Player has lost.");
-        window.location.reload();
     }
 
     public async _goToLose(): Promise<void> {
@@ -185,7 +179,7 @@ export class App {
     }
 
     private async _loadEntities(scene: Scene, shadowGenerator: ShadowGenerator): Promise<void> {
-        this._player = new Player(this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
+        this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
         const slime1 = new SlimeMonster(scene, new Vector3(10, 0, 0));
         const slime2 = new SlimeMonster(scene, new Vector3(-10, 0, 0));

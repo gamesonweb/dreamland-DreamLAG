@@ -54,7 +54,7 @@ export class Player extends TransformNode {
     private _groundCheckInterval: number = 1; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
 
-    constructor(assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
+    constructor(private _app: App, assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
         super("player", scene);
         this.scene = scene;
         this._input = input;
@@ -474,7 +474,10 @@ export class Player extends TransformNode {
         console.log(`Player takes ${amount} damage. Remaining health: ${this._health}`);
         if (this._health <= 0) {
             this.die();
-            App.goToLose();
+            this._app._goToLose().then(() => {
+                this._app._scene.clearCachedVertexData();
+                this._app._scene.cleanCachedTextureBuffer();
+            });
         }
     }
 

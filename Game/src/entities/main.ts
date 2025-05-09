@@ -5,6 +5,7 @@ import "@babylonjs/loaders";
 
 import { Monster } from "./monster";
 import { Player } from "../characterController";
+import {App} from "../app";
 
 const createDefaultEngine = (canvas: HTMLCanvasElement): BABYLON.Engine => {
     return new BABYLON.Engine(canvas, true, {
@@ -51,7 +52,7 @@ export class Playground {
             dashing: false
         };
 
-        const player = new Player(mockAssets, scene, new BABYLON.Vector3(0, 0, 0), shadowGenerator, input);
+        const player = new Player(new App(), mockAssets, scene, new BABYLON.Vector3(0, 0, 0), shadowGenerator, input);
         player.health = 100;
         player.activatePlayerCamera();
 

@@ -2,6 +2,7 @@ import { Mesh, Scene, Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import { Player } from "./characterController";
 import { Quest } from "./questMenu";
+import {SlimeMonster} from "./entities/slimeMonster";
 
 export class Area{
     protected _scene:Scene;
@@ -96,7 +97,7 @@ export class MonsterArea extends Area{
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
             const y = this._max.y;   // hauteur du sommet du cube
-            const monster=new Monster(this._scene, new Vector3(x,y,z), 100, 10)
+            const monster=new SlimeMonster(this._scene, new Vector3(x,y,z))
             this._currentMonsters.push(monster);
             monster.activateMonster([this._player]);
         }
