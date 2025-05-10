@@ -22,8 +22,10 @@
         protected _grounded: boolean;
         protected _moveDirection:Vector3;
 
-        private static readonly GRAVITY: number = -12.5;
+        private static readonly GRAVITY: number = -9.5;
         private static readonly MAX_GRAVITY_Y: number = -1.50;
+
+        private _beforeRenderFn?: () => void;
 
         constructor(scene: Scene, position: Vector3, health: number, damage: number) {
             this.scene = scene;
@@ -60,12 +62,12 @@
 
 
         protected _floorRaycast(offsetx: number, offsetz: number, raycastlen: number): Vector3 {
-                let raycastFloorPos = new Vector3(this.mesh.position.x + offsetx, this.mesh.position.y, this.mesh.position.z + offsetz);
+                let raycastFloorPos = new Vector3(this.mesh.getAbsolutePosition().x + offsetx, this.mesh.getAbsolutePosition().y, this.mesh.getAbsolutePosition().z + offsetz);
                 let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
         
                 let predicate = function (mesh) {
-                    if(mesh.name === "InvisibleGround") return mesh.isPickable && mesh.isEnabled();
-                    //return false;
+                    return mesh.isPickable && mesh.isEnabled();
+                    //else return false;
                     
                 }
                 let pick = this.scene.pickWithRay(ray, predicate);
@@ -80,7 +82,7 @@
         
 
         private _isGrounded() {
-            const result = this._floorRaycast(0, 0, 1.5);
+            const result = this._floorRaycast(0, 0, 0.1);
             if(!result.equals(Vector3.Zero())){
                 this.mesh.position.y = result.y + 1;
                 return true;
@@ -134,17 +136,41 @@
         //     this._updateGroundDetection();
         // }
 
-        public activateMonster(players: Player[]): void {
-            this.scene.registerBeforeRender(() => {
-                if (this.state !== "dead"){
+
+        // private _updateMonster(players : Player[]):void{
+        //     if (this.state !== "dead"){
                     
                     
 
+        //             this.update(players);
+        //             this._updateGroundDetection();
+
+        //         }
+        // }
+
+
+        public activateMonster(players: Player[]): void {
+            this._beforeRenderFn = () => {
+                if (this.state !== "dead") {
                     this.update(players);
                     this._updateGroundDetection();
-
                 }
-            });
+                else this.deactivateMonster();
+            };
+
+            this.scene.registerBeforeRender(this._beforeRenderFn);
+        }
+
+        public deactivateMonster(): void {
+            if (this._beforeRenderFn) {
+                this.scene.unregisterBeforeRender(this._beforeRenderFn);
+                this._beforeRenderFn = undefined;
+            }
+        }
+
+        public disposeMonster(){
+            this.mesh.dispose();
+            this.deactivateMonster();
         }
 
         /**

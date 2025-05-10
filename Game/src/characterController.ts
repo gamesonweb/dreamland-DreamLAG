@@ -1,5 +1,5 @@
 import {
-    AnimationGroup, ArcRotateCamera, Axis, Color3, Mesh, PickingInfo, Quaternion, Ray, RayHelper,
+    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, Mesh, PickingInfo, Quaternion, Ray, RayHelper,
     Scene, SceneLoader, ShadowGenerator, Tools, TransformNode,
     Vector3
 } from "@babylonjs/core";
@@ -16,6 +16,7 @@ export class Player extends TransformNode {
     public scene: Scene;
     private _input;
     public animationGroups: AnimationGroup[] = [];
+    public joggingAnimation: AnimationGroup = null;
 
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
@@ -29,6 +30,7 @@ export class Player extends TransformNode {
     private _jumpCount: number;
     private _dashPressed: boolean = false;
     private _canDash: boolean = true;
+    private _inMovement:boolean = false;
 
     // Player properties
     private _mesh: Mesh; // Outer collisionbox of the player
@@ -40,7 +42,7 @@ export class Player extends TransformNode {
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.45;
+    private static readonly PLAYER_SPEED: number = 0.25;
     private static readonly GRAVITY: number = -2.5;
     private static readonly JUMP_FORCE: number = 0.80;
     private static readonly DASH_FACTOR: number = 1.5;
@@ -54,40 +56,72 @@ export class Player extends TransformNode {
     private _groundCheckInterval: number = 1; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
 
+    
     constructor(private _app: App, assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
-        super("player", scene);
-        this.scene = scene;
-        this._input = input;
-        this._setupPlayerCamera();
-        this._setupCameraInputs();
+    super("player", scene);
+    this.scene = scene;
+    this._input = input;
+    this._setupPlayerCamera();
+    this._setupCameraInputs();
+    this.animationGroups = []; // Assure-toi que c'est initialisé ici ou dans la déclaration de classe
 
-        SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "BrainStem.gltf", scene).then(result => {
-            const playerMesh = result.meshes[0] as Mesh;
-            playerMesh.name = "PlayerCharacter";
-            playerMesh.position = position.clone();
-            playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
-            playerMesh.checkCollisions = true;
-            playerMesh.ellipsoid = new Vector3(1, 1, 1);
-            playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
-            playerMesh.scalingDeterminant = 1.25;
+    SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "XBot.gltf", scene).then((result) => {
+    const playerMesh = result.meshes[0] as Mesh;
+    const playerSkeleton = result.skeletons[0];
 
-            playerMesh.metadata = {
-                isPlayer: true,
-                playerInstance: this
-            };
+    playerMesh.position = position.clone();
+    playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
+    playerMesh.checkCollisions = true;
+    playerMesh.ellipsoid = new Vector3(1, 1, 1);
+    playerMesh.ellipsoidOffset = new Vector3(0, 1, 0);
+    
+    console.log("Player Mesh Loaded:", playerMesh);
+    console.log("Player Skeleton Loaded:", playerSkeleton);
 
-            this._mesh = playerMesh;
-            this._mesh.parent = this;
-            shadowGenerator.addShadowCaster(this.mesh);
-            //this.animationGroups = result.animationGroups;
-            //this.playIdleAnimation();
-        });
+    this._mesh = playerMesh;
+    this._mesh.parent = this;
+    shadowGenerator.addShadowCaster(this.mesh);
 
-        this._input.onAttack = () => {
-            this._attack();
-        };
-        this._memoryMenu=new MemoryMenu(this._scene, this);
-    }
+    this.animationGroups = result.animationGroups;
+    console.log(this.animationGroups);
+
+    const originalJoggingGroup = result.animationGroups.find(g => g.name === "jogging");
+    this.joggingAnimation = originalJoggingGroup.clone("Run_NoRoot", (target) => target);
+    this.joggingAnimation.targetedAnimations.length = 0;
+
+
+    //this.joggingAnimation = this.animationGroups.find(a => a.name === "jogging");
+    originalJoggingGroup.targetedAnimations
+    .forEach(ta => {
+        const isRootTranslate = ta.target instanceof Bone &&
+                                ta.target.name === "mixamorig:Hips" &&
+                                ta.animation.targetProperty === "position";
+
+        if (!isRootTranslate) {
+            this.joggingAnimation.addTargetedAnimation(ta.animation, ta.target);
+        }    
+    });
+    // // Charger l'animation séparément
+    // SceneLoader.LoadAssetContainer("assets/playerSkin/", "ThoughtfulAnimation.gltf", scene, (container) => {
+    //     console.log("Animation Container Loaded:", container);
+
+    //     // Vérifier si l'animation est bien dans le container
+    //     container.animationGroups.forEach((animGroup) => {
+    //         console.log("Animation Group:", animGroup);
+    //         animGroup.play(true);
+    //     });
+
+    //     // Ajoute les assets au container de la scène (s'ils sont nécessaires)
+    //     container.addAllToScene();
+    // });
+});
+
+
+    this._input.onAttack = () => {
+        this._attack();
+    };
+    this._memoryMenu = new MemoryMenu(this._scene, this);
+}
 
     public get mesh(){
         return this._mesh;
@@ -161,6 +195,13 @@ export class Player extends TransformNode {
         this._moveDirection = Vector3.Zero();
         this._h = this._input.horizontal;
         this._v = this._input.vertical;
+
+
+        console.log(this._h, this._v)
+        if(!this._h && !this._v) this._inMovement = false;
+        else this._inMovement = true;
+        this.playMovementAnimation();
+
 
         // let fwd = this._camRoot.forward;
         // let right = this._camRoot.right;
@@ -467,6 +508,14 @@ export class Player extends TransformNode {
         }
     }
 
+    public playMovementAnimation(){
+        if(this._inMovement){
+            if(this.joggingAnimation) this.joggingAnimation.start();
+        }   
+        else{
+            if(this.joggingAnimation.isPlaying) this.joggingAnimation.stop();
+        }        
+    }
 
 
     takeDamage(amount: number) {
@@ -492,7 +541,7 @@ export class Player extends TransformNode {
 
     public playIdleAnimation(): void {
         const idleAnim = this.animationGroups.find(a => a.name.toLowerCase().includes("idle"));
-        if (idleAnim) idleAnim.start(true);
+        //if (idleAnim) idleAnim.start(true);
     }
 
     public playDeathAnimation(): void {

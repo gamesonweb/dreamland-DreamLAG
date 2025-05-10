@@ -170,7 +170,7 @@ export class MonsterArea extends Area{
 
     public resetArea(){
         for(const monster of this._currentMonsters){
-            monster.mesh.dispose();
+            monster.disposeMonster();
         }
         this._currentMonsters = [];
         this._stateRound=0;
