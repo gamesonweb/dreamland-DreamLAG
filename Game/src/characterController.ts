@@ -17,6 +17,7 @@ export class Player extends TransformNode {
     private _input;
     public animationGroups: AnimationGroup[] = [];
     public joggingAnimation: AnimationGroup = null;
+    public idleAnimation: AnimationGroup = null;
 
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
@@ -42,7 +43,7 @@ export class Player extends TransformNode {
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.25;
+    private static readonly PLAYER_SPEED: number = 0.5;
     private static readonly GRAVITY: number = -2.5;
     private static readonly JUMP_FORCE: number = 0.80;
     private static readonly DASH_FACTOR: number = 1.5;
@@ -85,22 +86,11 @@ export class Player extends TransformNode {
     this.animationGroups = result.animationGroups;
     console.log(this.animationGroups);
 
-    const originalJoggingGroup = result.animationGroups.find(g => g.name === "jogging");
-    this.joggingAnimation = originalJoggingGroup.clone("Run_NoRoot", (target) => target);
-    this.joggingAnimation.targetedAnimations.length = 0;
-
+    this.joggingAnimation = result.animationGroups.find(g => g.name === "jogging");
+    this.idleAnimation = result.animationGroups.find(g => g.name === "idle");
 
     //this.joggingAnimation = this.animationGroups.find(a => a.name === "jogging");
-    originalJoggingGroup.targetedAnimations
-    .forEach(ta => {
-        const isRootTranslate = ta.target instanceof Bone &&
-                                ta.target.name === "mixamorig:Hips" &&
-                                ta.animation.targetProperty === "position";
-
-        if (!isRootTranslate) {
-            this.joggingAnimation.addTargetedAnimation(ta.animation, ta.target);
-        }    
-    });
+    
     // // Charger l'animation séparément
     // SceneLoader.LoadAssetContainer("assets/playerSkin/", "ThoughtfulAnimation.gltf", scene, (container) => {
     //     console.log("Animation Container Loaded:", container);
@@ -510,10 +500,12 @@ export class Player extends TransformNode {
 
     public playMovementAnimation(){
         if(this._inMovement){
-            if(this.joggingAnimation) this.joggingAnimation.start();
+            if(this.idleAnimation.isPlaying) this.idleAnimation.stop();
+            if(this.joggingAnimation) this.joggingAnimation.play();
         }   
         else{
             if(this.joggingAnimation.isPlaying) this.joggingAnimation.stop();
+            if(!this.idleAnimation.isPlaying) this.idleAnimation.play()
         }        
     }
 
