@@ -96,11 +96,12 @@ export class MonsterArea extends Area{
         for(let i=0; i<this._nbOfMonstersPerRound[this._stateRound]; i++){
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
-            const y = this._max.y;   // hauteur du sommet du cube
-            const monster=new SlimeMonster(this._scene, new Vector3(x,y,z))
+            const y = this._max.y+10;   // hauteur du sommet du cube
+            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10)
             this._currentMonsters.push(monster);
             monster.activateMonster([this._player]);
         }
+        this._scene.createOrUpdateSelectionOctree(64,2);
     }
 
     private _updateMonsters(){
@@ -170,7 +171,7 @@ export class MonsterArea extends Area{
 
     public resetArea(){
         for(const monster of this._currentMonsters){
-            monster.disposeMonster();
+            monster.desactivateMonster();
         }
         this._currentMonsters = [];
         this._stateRound=0;

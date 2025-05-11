@@ -181,8 +181,8 @@ export class App {
     private async _loadEntities(scene: Scene, shadowGenerator: ShadowGenerator): Promise<void> {
         this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
-        const slime1 = new SlimeMonster(scene, new Vector3(10, 0, 0));
-        const slime2 = new SlimeMonster(scene, new Vector3(-10, 0, 0));
+        const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
+        const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10);
         this._mobs = [slime1, slime2];
 
         this._mobs.forEach(mob => {
@@ -297,19 +297,20 @@ export class App {
         let fps = 0;
         // Initialize the game
         await this._initializeGameAsync(scene);
-        //this._gamescene.createOrUpdateSelectionOctree();
+        
 
         await scene.whenReadyAsync();
         scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
-        this._player.mesh.position.y = 75;
+        this._player.mesh.position.y = 30;
         const mob = this._mobs[0];
-        mob.mesh.position.y = this._player.mesh.position.y - 39;
-        mob.mesh.position.x = this._player.mesh.position.x + 10;
-        const mob2 = this._mobs[1];
-        mob2.mesh.position.y = this._player.mesh.position.y - 39;
-        mob2.mesh.position.x = this._player.mesh.position.x - 10;
+        // mob.mesh.position.y = this._player.mesh.position.y - 39;
+        // mob.mesh.position.x = this._player.mesh.position.x + 10;
+        // const mob2 = this._mobs[1];
+        // mob2.mesh.position.y = this._player.mesh.position.y - 39;
+        // mob2.mesh.position.x = this._player.mesh.position.x - 10;
 
         // Switch scene and set state
+        //scene.createOrUpdateSelectionOctree(64,2);
         this._scene.dispose();
         this._state = State.GAME;
         this._scene = scene;
@@ -345,8 +346,6 @@ export class App {
         if (this._canvas) {
             this._canvas.addEventListener("pointerdown", (event) => {
                 if(!this._player.areControlsLocked){
-                    console.log(!this._player.areControlsLocked)
-                    console.log("Pointer locked");
                     event.preventDefault(); // Empêche le comportement par défaut
                     event.stopPropagation(); // Empêche l'événement de se propager à la scène
                     this._canvas.requestPointerLock();

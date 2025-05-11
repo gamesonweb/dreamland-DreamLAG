@@ -39,6 +39,10 @@ export class SlimeMonster extends Monster {
             this.mesh = slimeMesh;
             this.animationGroups = result.animationGroups;
 
+            this.mesh.checkCollisions = true;
+            this.mesh.isVisible = true;
+
+            this.mesh.setAbsolutePosition(position);
             this.isReady = true;
             this.playIdleAnimation();
         });
@@ -58,7 +62,7 @@ export class SlimeMonster extends Monster {
     }
 
     /** Joue l'animation de déplacement ("walk") */
-    public override playMoveAnimation(): void {
+    public override playMoveAnimation(){
         this._stopAllAnimations();
         const moveAnim = this.animationGroups.find(a => a.name.toLowerCase() === "Walk");
         const jumpAnim = this.animationGroups.find(a => a.name.toLowerCase() === "Jump");
@@ -123,28 +127,28 @@ export class SlimeMonster extends Monster {
     }
 
     /** Déplace le slime vers la cible s'il y en a une, et joue l'animation de déplacement */
-    public override moveTowardTarget(): void {
-        if (!this.target || !this.target.isAlive()) return;
+    // public override moveTowardTarget(): void {
+    //     if (!this.target || !this.target.isAlive()) return;
 
-        const targetPos = this.target.mesh.getAbsolutePosition();
-        const slimePos = this.mesh.position;
-        const direction = targetPos.subtract(slimePos).normalize();
-        const moveSpeed = 0.1;
+    //     const targetPos = this.target.mesh.getAbsolutePosition();
+    //     const slimePos = this.mesh.position;
+    //     const direction = targetPos.subtract(slimePos).normalize();
+    //     const moveSpeed = 0.1;
 
-        this._moveDirection = direction.scale(moveSpeed);
-        this.mesh.moveWithCollisions(this._moveDirection);
+    //     this._moveDirection = direction.scale(moveSpeed);
+    //     this.mesh.moveWithCollisions(this._moveDirection);
 
-        // Rotation vers la cible
-        const facingPos = targetPos.clone();
-        facingPos.y = slimePos.y; // Pour éviter de s'incliner vers le haut ou le bas
-        this.mesh.lookAt(facingPos);
+    //     // Rotation vers la cible
+    //     const facingPos = targetPos.clone();
+    //     facingPos.y = slimePos.y; // Pour éviter de s'incliner vers le haut ou le bas
+    //     this.mesh.lookAt(facingPos);
 
-        this.playMoveAnimation();
-    }
+    //     this.playMoveAnimation();
+    // }
 
 
     /** Fait attaquer la cible si possible, avec cooldown, et joue l'animation d'attaque */
-    public override attack(): void {
+    public override async attack(): Promise<void> {
         const now = performance.now() / 1000;
         if (now - this.lastAttackTime < this.attackCooldown) return;
 

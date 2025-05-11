@@ -22,8 +22,8 @@
         protected _grounded: boolean;
         protected _moveDirection:Vector3;
 
-        private static readonly GRAVITY: number = -9.5;
-        private static readonly MAX_GRAVITY_Y: number = -1.50;
+        private static readonly GRAVITY: number = -2.5;
+        private static readonly MAX_GRAVITY_Y: number = -0.8;
 
         private _beforeRenderFn?: () => void;
 
@@ -38,14 +38,14 @@
 
             // Création du corps du monstre
             this.mesh = MeshBuilder.CreateSphere("monster", { diameter: 3 }, scene);
-            this.mesh.position = position;
+            this.mesh.setAbsolutePosition(position);
             const material = new StandardMaterial("monsterMaterial", scene);
             material.diffuseColor = new Color3(1, 0, 0); // Rouge
             this.mesh.material = material;
 
-            this.mesh.checkCollisions = true;
-            this.mesh.ellipsoid       = new Vector3(1.5, 1.5, 1.5);  // rayon de ta sphère
-            this.mesh.ellipsoidOffset = new Vector3(0, 1.5, 0); // pour que l’ellipsoïde soit alignée à la base
+            this.mesh.checkCollisions = false;
+            this.mesh.ellipsoid       = new Vector3(1.5, 1.5, 1.5);  // rayon de la sphère
+            this.mesh.ellipsoidOffset = new Vector3(0, 0.5, 0); // pour que l’ellipsoïde soit alignée à la base
             this.mesh.isPickable = true;
             this.mesh.metadata = {
                 isMonster: true,
@@ -54,15 +54,18 @@
 
 
             // Zone invisible utilisée pour détecter le joueur
-            this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
-            this.detectionZone.isVisible = false;
+            // this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
+            // this.detectionZone.isVisible = false;
+            // this.detectionZone.checkCollisions = false;
 
             this._moveDirection = Vector3.Zero();
+
+            this.isReady = true;
         }
 
 
         protected _floorRaycast(offsetx: number, offsetz: number, raycastlen: number): Vector3 {
-                let raycastFloorPos = new Vector3(this.mesh.getAbsolutePosition().x + offsetx, this.mesh.getAbsolutePosition().y, this.mesh.getAbsolutePosition().z + offsetz);
+                let raycastFloorPos = new Vector3(this.mesh.getAbsolutePosition().x + offsetx, this.mesh.getAbsolutePosition().y-5, this.mesh.getAbsolutePosition().z + offsetz);
                 let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
         
                 let predicate = function (mesh) {
@@ -84,7 +87,7 @@
         private _isGrounded() {
             const result = this._floorRaycast(0, 0, 0.1);
             if(!result.equals(Vector3.Zero())){
-                this.mesh.position.y = result.y + 1;
+                //this.mesh.position.y = result.y + 1;
                 return true;
             }
             else{
@@ -93,7 +96,7 @@
         }
 
 
-        private _updateGroundDetection() {
+        private _updateGroundDetection(){
             //this._moveDirection = Vector3.Zero();
             //this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
                 if (!this._isGrounded()) {
@@ -103,6 +106,7 @@
                     //     this._grounded = true;
                     // } else{
                     //console.log("Grounded!");
+                    
                         this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Monster.GRAVITY));
                         this._grounded = false;
                     // }
@@ -118,7 +122,9 @@
                     this._gravity.y = Monster.MAX_GRAVITY_Y;
                 }
                 
-                this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
+                this._moveDirection = this._moveDirection.add(this._gravity);
+                
+                this.mesh.moveWithCollisions(this._gravity);
         
                 // if (this._isGrounded()) {
                 //     this._gravity.y = 0;
@@ -150,27 +156,27 @@
 
 
         public activateMonster(players: Player[]): void {
-            this._beforeRenderFn = () => {
+            this._beforeRenderFn = async () => {
                 if (this.state !== "dead") {
-                    this.update(players);
+                    // console.log("monstre position = " + this.mesh.position);
+                    // console.log("monstre position absolue= " + this.mesh.getAbsolutePosition())
+                    this._moveDirection=new Vector3(0,0,0);
+                    this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
                     this._updateGroundDetection();
+                    this.update(players);
+                    
                 }
-                else this.deactivateMonster();
+                else this.desactivateMonster();
             };
 
             this.scene.registerBeforeRender(this._beforeRenderFn);
         }
 
-        public deactivateMonster(): void {
+        public desactivateMonster(): void {
             if (this._beforeRenderFn) {
                 this.scene.unregisterBeforeRender(this._beforeRenderFn);
                 this._beforeRenderFn = undefined;
             }
-        }
-
-        public disposeMonster(){
-            this.mesh.dispose();
-            this.deactivateMonster();
         }
 
         /**
@@ -201,11 +207,9 @@
         /**
          * Met à jour l'état du monstre (appelée à chaque frame).
          */
-        public update(targets: Player[]): void {
+        public update(targets: Player[]) {
             if (!this.isReady) return;
-
-            this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
-            this._moveDirection=Vector3.Zero();
+            
 
             if (!this.isAlive()) {
                 this.state = "dead";
@@ -242,19 +246,29 @@
         /**
          * Fait avancer le monstre vers la cible.
          */
-        moveTowardTarget(): void {
-            if (!this.target) return;
-            const direction = this.target.mesh.getAbsolutePosition().subtract(this.mesh.position).normalize();
+        moveTowardTarget() {
+            if (!this.target || !this.target.isAlive()) return;
+
+            const targetPos = this.target.mesh.getAbsolutePosition();
+            const slimePos = this.mesh.getAbsolutePosition();
+            const direction = targetPos.subtract(slimePos).normalize();
             const moveSpeed = 0.1;
 
             this._moveDirection = direction.scale(moveSpeed);
-            //this.mesh.moveWithCollisions(direction.scale(moveSpeed));
+            this.mesh.moveWithCollisions(this._moveDirection);
+
+            // Rotation vers la cible
+            const facingPos = targetPos.clone();
+            facingPos.y = slimePos.y; // Pour éviter de s'incliner vers le haut ou le bas
+            this.mesh.lookAt(facingPos);
+
+            this.playMoveAnimation();
         }
 
         /**
          * Fait attaquer le monstre s’il peut.
          */
-        attack(): void {
+        attack() {
             const now = performance.now() / 1000; // en secondes
             if (now - this.lastAttackTime < this.attackCooldown) return;
 
@@ -270,7 +284,7 @@
         /**
          * Animation de déplacement.
          */
-        playMoveAnimation(): void {
+        playMoveAnimation() {
             const anim = createMoveAnimation(this.mesh);
             this.scene.beginDirectAnimation(this.mesh, [anim], 0, 40, true);
         }
@@ -291,7 +305,7 @@
             this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
             setTimeout(() => {
                 this.mesh.dispose();
-                this.detectionZone.dispose();
+                //this.detectionZone.dispose();
                 console.log("Monster is dead.");
             }, 1000); // délai pour laisser l’animation jouer
         }

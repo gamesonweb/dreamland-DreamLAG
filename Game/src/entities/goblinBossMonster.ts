@@ -65,49 +65,49 @@ export class GoblinBossMonster extends Monster {
     }
 
     // Override du comportement d'update spécifique au boss
-    public override update(players: Player[]): void {
-        if (!this.isAlive()) {
-            this.state = "dead";
-            return;
-        }
+    // public override async update(players: Player[]): Promise<void> {
+    //     if (!this.isAlive()) {
+    //         this.state = "dead";
+    //         return;
+    //     }
 
-        const now = performance.now() / 1000;
-        this._moveDirection = Vector3.Zero();
-        this.target = null;
+    //     const now = performance.now() / 1000;
+    //     this._moveDirection = Vector3.Zero();
+    //     this.target = null;
 
-        // Trouver une cible dans la zone du boss
-        for (const player of players) {
-            const dist = Vector3.Distance(this.bossZoneCenter, player.mesh.position);
-            if (dist <= this.bossZoneRadius && player.isAlive()) {
-                this.target = player;
-                break;
-            }
-        }
+    //     // Trouver une cible dans la zone du boss
+    //     for (const player of players) {
+    //         const dist = Vector3.Distance(this.bossZoneCenter, player.mesh.position);
+    //         if (dist <= this.bossZoneRadius && player.isAlive()) {
+    //             this.target = player;
+    //             break;
+    //         }
+    //     }
 
-        if (this.target) {
-            const distToTarget = Vector3.Distance(this.mesh.position, this.target.mesh.position);
+    //     if (this.target) {
+    //         const distToTarget = Vector3.Distance(this.mesh.position, this.target.mesh.position);
 
-            if (distToTarget > 3) {
-                this.state = "pursuing";
-                this.moveTowardTarget();
-                if (this._grounded) this.playMoveAnimation();
-            } else {
-                this.state = "attacking";
-                this.attack();
-            }
-        } else {
-            this.state = "idle";
-        }
-    }
+    //         if (distToTarget > 3) {
+    //             this.state = "pursuing";
+    //             this.moveTowardTarget();
+    //             if (this._grounded) this.playMoveAnimation();
+    //         } else {
+    //             this.state = "attacking";
+    //             this.attack();
+    //         }
+    //     } else {
+    //         this.state = "idle";
+    //     }
+    // }
 
-    public override moveTowardTarget(): void {
-        if (!this.target) return;
-        const direction = this.target.mesh.position.subtract(this.mesh.position).normalize();
-        const moveSpeed = 0.12; // légèrement plus rapide qu’un monstre basique
-        this._moveDirection = direction.scale(moveSpeed);
-    }
+    // public override moveTowardTarget(): void {
+    //     if (!this.target) return;
+    //     const direction = this.target.mesh.position.subtract(this.mesh.position).normalize();
+    //     const moveSpeed = 0.12; // légèrement plus rapide qu’un monstre basique
+    //     this._moveDirection = direction.scale(moveSpeed);
+    // }
 
-    public override attack(): void {
+    public override attack(){
         const now = performance.now() / 1000;
         if (now - this.lastAttackTime < this.attackCooldown) return;
         this.lastAttackTime = now;
@@ -141,7 +141,7 @@ export class GoblinBossMonster extends Monster {
         }
     }
 
-    public override playMoveAnimation(): void {
+    public override playMoveAnimation(){
         const anim = createMoveAnimation(this.mesh);
         this.scene.beginDirectAnimation(this.mesh, [anim], 0, 40, true); // Bouge le gobelin pendant qu'il se déplace
     }

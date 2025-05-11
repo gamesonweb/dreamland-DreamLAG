@@ -187,7 +187,6 @@ export class Player extends TransformNode {
         this._v = this._input.vertical;
 
 
-        console.log(this._h, this._v)
         if(!this._h && !this._v) this._inMovement = false;
         else this._inMovement = true;
         this.playMovementAnimation();
@@ -318,7 +317,7 @@ export class Player extends TransformNode {
   
 
     private _floorRaycast(offsetx: number, offsetz: number, raycastlen: number): Vector3 {
-        let raycastFloorPos = new Vector3(this.mesh.position.x + offsetx, this.mesh.position.y, this.mesh.position.z + offsetz);
+        let raycastFloorPos = new Vector3(this.mesh.getAbsolutePosition().x + offsetx, this.mesh.getAbsolutePosition().y, this.mesh.getAbsolutePosition().z + offsetz);
         let ray = new Ray(raycastFloorPos, Vector3.Up().scale(-1), raycastlen);
 
         let predicate = function (mesh) {

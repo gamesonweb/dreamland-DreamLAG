@@ -55,8 +55,6 @@ export class Environment {
             const geoMeshes = result.meshes.filter(m =>
                 m instanceof Mesh &&
                 m.geometry !== null //&&          // a geometry
-                // m.subMeshes !== undefined &&     // a subMeshes array
-                // m.subMeshes.length > 0           // non vide
             ) as Mesh[];
 
             let questCharacterHolder:Mesh = null;
@@ -68,48 +66,23 @@ export class Environment {
             geoMeshes.forEach(async (mesh) => {
                 mesh.checkCollisions = true;
                 if(mesh.name === "QuestCharacter"){
-                    // console.log("OK");
-                    // const wizardLoading = await SceneLoader.ImportMeshAsync("", "assets/models/characters/", "Wizard.gltf", this._scene);
-                    // const wizard= wizardLoading.meshes[0] as Mesh;
-                    // wizard.position = mesh.position.clone();
-                    // questCharacterMesh = wizard;
-                    // console.log("QuestCharacter : " + questCharacterMesh);
-                    // mesh.dispose();
-
-                    // new Promise<void>(async (resolve) => {
-                    //     const wizardLoading = await SceneLoader.ImportMeshAsync("", "assets/models/characters/", "Wizard.gltf", this._scene);
-                    //     const wizard = wizardLoading.meshes[0] as Mesh;
-                    //     wizard.position = mesh.position.clone();
-                    //     questCharacterMesh = wizard;
-                    //     console.log("QuestCharacter mesh loaded:", questCharacterMesh);
-                    //     mesh.dispose(); // Supprimez le placeholder
-                    //     resolve();
-                    // });
-                
-
                     questCharacterHolder = mesh;
-
-                    // this.questCharacter = new QuestCharacter(mesh, this._scene, player);
-                    // this.questCharacter.activateCharacter();
                 }
 
                 if (mesh.name.includes("Arbre") && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
-                    // Nous avons trouvé un "parent" d'arbre
                     const treeType = mesh.name.substring(0, 6);
         
                     if (!masterTrees[treeType]) {
                         masterTrees[treeType] = mesh;
                         treeInstances[treeType] = [];
-                        console.log("Origine arbre (avec enfant Plane) : " + masterTrees[treeType].name);
-                        // Optionnel : masterTrees[treeType].isVisible = false; // Cacher l'original
                     } else if (masterTrees[treeType] !== mesh) {
                         const treeInstance = masterTrees[treeType].createInstance(mesh.name + "_instance");
-                        console.log("Instance arbre créée : " + treeInstance.name);
                         treeInstance.position = mesh.position.clone();
                         treeInstance.rotation = mesh.rotation.clone();
                         treeInstance.scaling = mesh.scaling.clone();
                         treeInstance.isPickable = false;
                         treeInstances[treeType].push(treeInstance);
+                        this._scene.selectionOctree.dynamicContent.push(treeInstance);
                         mesh.dispose();
                     }
                 }      
@@ -123,6 +96,11 @@ export class Environment {
                 if(mesh.name === "puzzleTest"){
                     new MemoryPiece("piece9", "memo1", "assets/images/Puzzle1/piece9.png", mesh, this._scene, this._player);
                 }
+
+                // if(mesh.name.includes("terrain")){
+                //     mesh.subdivide(4);
+                //     mesh.createOrUpdateSubmeshesOctree(16, 8);
+                // }
 
                 if(mesh.name === "WaterMesh"){
                     mesh.checkCollisions = false;
@@ -140,9 +118,6 @@ export class Environment {
                     waterMaterial.alpha           = 0.7;
                     waterMaterial.colorBlendFactor = 0.2;
 
-
-                    // waterMaterial.addToRenderList(groundMesh);
-                    // waterMaterial.addToRenderList(skyboxMesh);
                     waterMaterial.addToRenderList(photoDome.mesh); // PhotoDome est un Mesh
                     
                     mesh.material = waterMaterial;
@@ -177,7 +152,6 @@ export class Environment {
                   wizard.setAbsolutePosition(questCharacterHolder.getAbsolutePosition());
                   wizard.scaling = new Vector3(1,1,1) //questCharacterHolder.scaling.clone();
                   wizard.rotation = new Vector3(0, 3*Math.PI/2, 0); 
-                  console.log(wizard.rotation);
                   questCharacterHolder.dispose();
                   
                   // Now you can safely create and activate your QuestCharacter
@@ -185,8 +159,6 @@ export class Environment {
                   this.questCharacter.activateCharacter();
             }
 
-            // this.questCharacter = new QuestCharacter(questCharacterMesh, this._scene, this._player, questsIslands1);
-            // this.questCharacter.activateCharacter();
 
             
 
