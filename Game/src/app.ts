@@ -2,7 +2,7 @@ import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
 import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button, Control, TextBlock } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
 import { PlayerInput } from "./inputController";
@@ -35,6 +35,17 @@ export class App {
     private _playerCamera: ArcRotateCamera; // Player camera
     private _sceneCamera: ArcRotateCamera;  // Scene camera
     private _currentCamera: ArcRotateCamera; // To track the active camera
+
+    //Mouse properties
+    private _pointerDownHandler;
+    private _pointerMoveHandler;
+
+    //GamePause parameters
+    private _isOnPauseMenu:boolean = false;
+    private _pauseMenuUI: AdvancedDynamicTexture;
+    private _menuContainer: Rectangle;
+
+
     constructor() {
         // Create the canvas HTML element and attach it to the webpage
         this._canvas = document.createElement("canvas");
@@ -66,6 +77,10 @@ export class App {
     public async _goToLose(): Promise<void> {
         this._engine.displayLoadingUI();
 
+        document.exitPointerLock();
+        if(this._pointerDownHandler) this._canvas.removeEventListener("pointerdown", this._pointerDownHandler);
+        if(this._pointerMoveHandler) this._canvas.removeEventListener("pointermove", this._pointerMoveHandler);
+        
         //--SCENE SETUP--
         this._scene.detachControl();
         let scene = new Scene(this._engine);
@@ -195,6 +210,7 @@ export class App {
         let scene = new Scene(this._engine);
         this._gamescene = scene;
 
+
         await MemoryAsset.init();
         AreaAsset.areas = {};
         
@@ -221,6 +237,8 @@ export class App {
 
         //const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment
+
+        this._createPauseMenu();
 
 
     }
@@ -344,22 +362,27 @@ export class App {
         var camera = this._player.activatePlayerCamera();
         this._canvas = this._scene.getEngine().getRenderingCanvas();
         if (this._canvas) {
-            this._canvas.addEventListener("pointerdown", (event) => {
-                if(!this._player.areControlsLocked){
-                    event.preventDefault(); // Empêche le comportement par défaut
-                    event.stopPropagation(); // Empêche l'événement de se propager à la scène
+
+            this._pointerDownHandler = (event) => {
+                if (!this._player.areControlsLocked && !this._isOnPauseMenu) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     this._canvas.requestPointerLock();
                 }
-            });
+            };
 
-            this._canvas.addEventListener("pointermove", (evt) => {
-                if (document.pointerLockElement === this._canvas) {
+            this._pointerMoveHandler = (evt) => {
+                if (document.pointerLockElement === this._canvas && !this._isOnPauseMenu) {
                     const sensitivity = 0.002;
                     camera.alpha -= evt.movementX * sensitivity;
                     camera.beta -= evt.movementY * sensitivity;
                     camera.beta = Math.max(0.1, Math.min(Math.PI - 0.1, camera.beta));
                 }
-            });
+            };
+
+            this._canvas.addEventListener("pointerdown", this._pointerDownHandler);
+
+            this._canvas.addEventListener("pointermove", this._pointerMoveHandler);
 
             this._canvas.addEventListener("blur", () => {
                 console.log("Le canvas a perdu le focus.");
@@ -372,6 +395,14 @@ export class App {
                     console.log("Pointeur déverrouillé.");
                 }
             });
+
+            window.addEventListener("keydown", (ev) => {
+                if (ev.key === "Escape") {
+                    this._isOnPauseMenu = !this._isOnPauseMenu;
+                    this._menuContainer.isVisible = !this._menuContainer.isVisible;
+                }
+            });
+
         }
 
         //camera.attachControl(this._canvas, true);
@@ -384,6 +415,51 @@ export class App {
         // this._sceneCamera.setTarget(Vector3.Zero());
         // this._sceneCamera.position = new Vector3(0, 50, 0);
     }
+
+    // private _togglePauseMenu(): void {
+    //     this._isPauseMenuOpen = !this._isPauseMenuOpen;
+    //     if (this._pauseMenuUI) {
+    //         this._pauseMenuUI.isVisible = this._isMenuOpen;
+    //     }
+
+    //     if (this._isMenuOpen) {
+    //         // Optionnel : figez le jeu
+    //         this._scene.detachControl();
+    //         document.exitPointerLock();
+    //     } else {
+    //         this._scene.attachControl();
+    //     }
+    // }
+
+
+    private _createPauseMenu(): void {
+        // Crée l'UI
+        this._pauseMenuUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        // Crée un conteneur pour ton menu (Rectangle semi-transparent)
+        const menuContainer = new Rectangle();
+        menuContainer.width = "100%";
+        menuContainer.height = "100%";
+        menuContainer.background = "black";
+        menuContainer.alpha = 0.5;
+        menuContainer.isVisible = false; // caché par défaut
+        this._pauseMenuUI.addControl(menuContainer);
+
+        // Ajoute un bouton au menu (ex. : "Resume")
+        const resumeButton = Button.CreateSimpleButton("resume", "Resume");
+        resumeButton.width = "150px";
+        resumeButton.height = "50px";
+        resumeButton.color = "white";
+        resumeButton.onPointerUpObservable.add(() => {
+            menuContainer.isVisible = false;
+            this._isOnPauseMenu = false;
+            // tu peux ici remettre le jeu en marche si tu l'avais mis en pause
+        });
+        this._menuContainer = menuContainer
+        this._menuContainer.addControl(resumeButton);
+
+    }
+
 
 
     private async _main(): Promise<void> {

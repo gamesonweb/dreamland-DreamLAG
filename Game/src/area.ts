@@ -101,7 +101,7 @@ export class MonsterArea extends Area{
             this._currentMonsters.push(monster);
             monster.activateMonster([this._player]);
         }
-        this._scene.createOrUpdateSelectionOctree(64,2);
+        //this._scene.createOrUpdateSelectionOctree(64,2);
     }
 
     private _updateMonsters(){
