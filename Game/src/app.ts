@@ -44,6 +44,8 @@ export class App {
     private _isOnPauseMenu:boolean = false;
     private _pauseMenuUI: AdvancedDynamicTexture;
     private _menuContainer: Rectangle;
+    private _relockDelay = 600; 
+    private _shouldPauseOnUnlock = false;
 
 
     constructor() {
@@ -193,16 +195,16 @@ export class App {
         });
     }
 
-    private async _loadEntities(scene: Scene, shadowGenerator: ShadowGenerator): Promise<void> {
-        this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
+    private async _loadEntities(scene: Scene, shadowGenerator?: ShadowGenerator): Promise<void> {
+        this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), null, this._input);
 
-        const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
-        const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10);
-        this._mobs = [slime1, slime2];
+        // const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
+        // const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10);
+        // this._mobs = [slime1, slime2];
 
-        this._mobs.forEach(mob => {
-            mob.activateMonster([this._player]);
-        })
+        // this._mobs.forEach(mob => {
+        //     mob.activateMonster([this._player]);
+        // })
     }
 
 
@@ -217,9 +219,9 @@ export class App {
 
         //--CREATE ENVIRONMENT--
         const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
-        const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
+        const light = new PointLight("sparklight", new Vector3(0, 100, 0), scene);
         light.diffuse = new Color3(0.086, 0.109, 0.153);
-        light.intensity = 35;
+        light.intensity = 70;
         light.radius = 1;
 
         // INPUT
@@ -228,7 +230,7 @@ export class App {
         const shadowGenerator:ShadowGenerator=new ShadowGenerator(1024, light);
         shadowGenerator.darkness = 0.4
 
-        await this._loadCharacterAssets(scene); //character
+        //await this._loadCharacterAssets(scene); //character
         await this._loadEntities(scene, shadowGenerator);
 
         const environment = new Environment(scene, this._player);
@@ -318,9 +320,9 @@ export class App {
         
 
         await scene.whenReadyAsync();
-        scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
+        //scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
         this._player.mesh.position.y = 30;
-        const mob = this._mobs[0];
+        //const mob = this._mobs[0];
         // mob.mesh.position.y = this._player.mesh.position.y - 39;
         // mob.mesh.position.x = this._player.mesh.position.x + 10;
         // const mob2 = this._mobs[1];
@@ -367,7 +369,13 @@ export class App {
                 if (!this._player.areControlsLocked && !this._isOnPauseMenu) {
                     event.preventDefault();
                     event.stopPropagation();
-                    this._canvas.requestPointerLock();
+                    const p = this._canvas.requestPointerLock();
+                    if (p instanceof Promise) {
+                        p.catch(() => {
+                            // Silence complet du rejet
+                        });
+                    } 
+                    //this._canvas.requestPointerLock();
                 }
             };
 
@@ -388,55 +396,25 @@ export class App {
                 console.log("Le canvas a perdu le focus.");
             });
 
-            document.addEventListener("pointerlockchange", () => {
-                if (document.pointerLockElement !== this._canvas) {
-                    // Le pointeur a été déverrouillé (par exemple, en appuyant sur Échap)
-                    // Tu peux ici implémenter une pause du jeu ou afficher un menu.
-                    console.log("Pointeur déverrouillé.");
-                }
-            });
-
-            window.addEventListener("keydown", (ev) => {
+            window.addEventListener("keydown", ev => {
                 if (ev.key === "Escape") {
-                    this._isOnPauseMenu = !this._isOnPauseMenu;
-                    this._menuContainer.isVisible = !this._menuContainer.isVisible;
+                    setTimeout(() => {
+                        this._isOnPauseMenu = true;
+                        this._menuContainer.isVisible = true;
+                    }, this._relockDelay/2);
                 }
-            });
+              });  
 
         }
 
-        //camera.attachControl(this._canvas, true);
         scene.activeCamera = camera;
 
-
-
-        // Scene camera (overview of the entire scene)
-        // this._sceneCamera = new ArcRotateCamera("sceneCamera", Math.PI, Math.PI / 2, 50, new Vector3(0, 0, 0), scene);
-        // this._sceneCamera.setTarget(Vector3.Zero());
-        // this._sceneCamera.position = new Vector3(0, 50, 0);
     }
 
-    // private _togglePauseMenu(): void {
-    //     this._isPauseMenuOpen = !this._isPauseMenuOpen;
-    //     if (this._pauseMenuUI) {
-    //         this._pauseMenuUI.isVisible = this._isMenuOpen;
-    //     }
-
-    //     if (this._isMenuOpen) {
-    //         // Optionnel : figez le jeu
-    //         this._scene.detachControl();
-    //         document.exitPointerLock();
-    //     } else {
-    //         this._scene.attachControl();
-    //     }
-    // }
-
-
+    //Crée l'affichage du menu de pause dans le jeu.
     private _createPauseMenu(): void {
-        // Crée l'UI
         this._pauseMenuUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-        // Crée un conteneur pour ton menu (Rectangle semi-transparent)
         const menuContainer = new Rectangle();
         menuContainer.width = "100%";
         menuContainer.height = "100%";
@@ -445,18 +423,48 @@ export class App {
         menuContainer.isVisible = false; // caché par défaut
         this._pauseMenuUI.addControl(menuContainer);
 
-        // Ajoute un bouton au menu (ex. : "Resume")
         const resumeButton = Button.CreateSimpleButton("resume", "Resume");
         resumeButton.width = "150px";
         resumeButton.height = "50px";
         resumeButton.color = "white";
+        resumeButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        resumeButton.verticalAlignment   = Control.VERTICAL_ALIGNMENT_CENTER;
+        resumeButton.top = "-30px";      // 30px au-dessus du centre
         resumeButton.onPointerUpObservable.add(() => {
+            setTimeout(() => {
+                menuContainer.isVisible = false;
+                this._shouldPauseOnUnlock = false;
+                this._isOnPauseMenu = false;
+                const p = this._canvas.requestPointerLock();
+                    if (p instanceof Promise) {
+                        p.catch(() => {
+                            //on ignore cette erreur pour pointerLock
+                        });
+                    } 
+                
+            }, this._relockDelay )
+        });
+
+
+        const leaveButton = Button.CreateSimpleButton("leave", "Leave");
+        leaveButton.width = "150px";
+        leaveButton.height = "50px";
+        leaveButton.color = "white";
+        leaveButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        leaveButton.verticalAlignment   = Control.VERTICAL_ALIGNMENT_CENTER;
+        leaveButton.top = "30px";        // 30px en-dessous du centre
+        leaveButton.onPointerClickObservable.add(() => {
             menuContainer.isVisible = false;
             this._isOnPauseMenu = false;
-            // tu peux ici remettre le jeu en marche si tu l'avais mis en pause
-        });
+            this._goToLose().then(() => {
+                this._scene.clearCachedVertexData();
+                this._scene.cleanCachedTextureBuffer();
+            })
+        })
+
         this._menuContainer = menuContainer
         this._menuContainer.addControl(resumeButton);
+        this._menuContainer.addControl(leaveButton);
 
     }
 

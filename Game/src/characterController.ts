@@ -58,7 +58,7 @@ export class Player extends TransformNode {
     private _groundCheckCounter: number = 0;
 
     
-    constructor(private _app: App, assets, scene: Scene, position: Vector3, shadowGenerator: ShadowGenerator, input?) {
+    constructor(private _app: App, assets:any, scene: Scene, position: Vector3, shadowGenerator?: ShadowGenerator, input?) {
     super("player", scene);
     this.scene = scene;
     this._input = input;
@@ -81,7 +81,7 @@ export class Player extends TransformNode {
 
     this._mesh = playerMesh;
     this._mesh.parent = this;
-    shadowGenerator.addShadowCaster(this.mesh);
+    if(shadowGenerator) shadowGenerator.addShadowCaster(this.mesh);
 
     this.animationGroups = result.animationGroups;
     console.log(this.animationGroups);
@@ -89,21 +89,6 @@ export class Player extends TransformNode {
     this.joggingAnimation = result.animationGroups.find(g => g.name === "jogging");
     this.idleAnimation = result.animationGroups.find(g => g.name === "idle");
 
-    //this.joggingAnimation = this.animationGroups.find(a => a.name === "jogging");
-    
-    // // Charger l'animation séparément
-    // SceneLoader.LoadAssetContainer("assets/playerSkin/", "ThoughtfulAnimation.gltf", scene, (container) => {
-    //     console.log("Animation Container Loaded:", container);
-
-    //     // Vérifier si l'animation est bien dans le container
-    //     container.animationGroups.forEach((animGroup) => {
-    //         console.log("Animation Group:", animGroup);
-    //         animGroup.play(true);
-    //     });
-
-    //     // Ajoute les assets au container de la scène (s'ils sont nécessaires)
-    //     container.addAllToScene();
-    // });
 });
 
 

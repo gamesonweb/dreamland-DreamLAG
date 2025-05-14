@@ -10,8 +10,10 @@ export class PlayerInput {
     public horizontalAxis:number;
     public dashing:boolean = false;
     public jumpKeyDown:boolean = false;
+    
     public resumeDialog: boolean = false;
     public interactKeyDown:boolean = false;
+    
     public memoryKeyDown:boolean = false;
 
     public onAttack: (() => void) | null = null;
