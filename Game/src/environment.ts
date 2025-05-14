@@ -94,7 +94,7 @@ export class Environment {
 
                 if(mesh.name.includes("Area")){
                     mesh.checkCollisions = false;
-                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1, 1:2, 2:5}));
+                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
                 } 
 
                 if(mesh.name === "puzzleTest"){

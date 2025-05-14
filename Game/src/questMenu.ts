@@ -82,14 +82,39 @@ export class QuestAsset{
     public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, pieceAwardName:string}} = 
     {
         "Quest1" : {
-            areasNames:["Area1", "Area2"],
+            areasNames:["Area1"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece7"
+        },
+        "Quest2" : {
+            areasNames:["Area2"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece4"
+        },
+        "Quest3": {
+            areasNames:["Area3"],
             puzzleName:"Puzzle1",
             pieceAwardName:"piece2"
         },
-        "Quest2" : {
-            areasNames:["Area3"],
+        "Quest4": {
+            areasNames:["Area4"],
             puzzleName:"Puzzle1",
-            pieceAwardName:"piece4"
+            pieceAwardName:"piece16"
+        },
+        "Quest5":{
+            areasNames:["Area5"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece24"
+        },
+        "Quest6":{
+            areasNames:["Area6"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece11"
+        },
+        "Quest7":{
+            areasNames:["Area7", "Area8", "Area9"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece1"
         }
     }; 
 
