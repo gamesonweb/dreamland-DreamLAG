@@ -44,10 +44,18 @@ export class Quest {
     }
     
 
-    public setQuestCompleted(){
+    public setQuestProgression(){
         console.log("NOTIFICATION");
-        this._isCompleted = true;
-        this.onStateChange.notifyObservers(this);
+        const nbAreas = this._involvedAreas.length;
+        let nbCompletedAreas = 0;
+        for(const area of this._involvedAreas){
+            if(area.isCompleted) nbCompletedAreas++;
+        }
+        if(nbCompletedAreas === nbAreas){
+            this._isCompleted = true;
+            this.onStateChange.notifyObservers(this);
+        }
+        
     }
 
     public claimReward(player:Player) {
@@ -68,6 +76,46 @@ export class Quest {
         return /* à renseigner */ false;
     }
 
+}
+
+export class QuestAsset{
+    public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, pieceAwardName:string}} = 
+    {
+        "Quest1" : {
+            areasNames:["Area1", "Area2"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece2"
+        },
+        "Quest2" : {
+            areasNames:["Area3"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece4"
+        }
+    }; 
+
+    private static _quests:Quest[] = [];
+
+    public static createQuests(areas:Area[]){
+        Object.keys(QuestAsset.questsDatas).forEach(questName => {
+            try{
+                const questData = QuestAsset.questsDatas[questName];
+                const areasNames = questData.areasNames;
+                const relatedPuzzleName = questData.puzzleName;
+                let questRelatedAreas = areas.filter(area => areasNames.includes(area.areaName));
+                const award = new MemoryPiece(questData.pieceAwardName, "memo1", "assets/images/"+relatedPuzzleName+"/"+questData.pieceAwardName+".png");
+                const quest = new Quest(questName, award, questRelatedAreas);
+                this._quests.push(quest);
+            }
+            catch(err) {
+                console.log("Warning : Some areas are missed");
+            }    
+            
+        });
+    }
+
+    public static get quests(){
+        return this._quests;
+    }
 }
 
 export interface CharacterMenu{

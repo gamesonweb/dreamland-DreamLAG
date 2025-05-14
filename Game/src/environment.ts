@@ -1,8 +1,8 @@
-import { AbstractMesh, Color3, CubeTexture, InstancedMesh, Mesh, MeshBuilder, ParseNullTerminatedString, PhotoDome, ReflectionProbe, Scene, SceneLoader, StandardMaterial, Texture, Vector2, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, Color3, CubeTexture, InstancedMesh, Mesh, MeshBuilder, ParseNullTerminatedString, PhotoDome, ReflectionProbe, Scene, SceneLoader, ShadowGenerator, StandardMaterial, Texture, Vector2, Vector3 } from "@babylonjs/core";
 import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
 import { Area, AreaAsset, MonsterArea } from "./area";
-import { Quest } from "./questMenu";
+import { Quest, QuestAsset } from "./questMenu";
 import { MemoryPiece } from "./memory";
 import { WaterMaterial } from "@babylonjs/materials";
 
@@ -30,7 +30,7 @@ export class Environment {
         ground.scaling = new Vector3(1,.02,1);
     }
 
-    public async loadIsland() {
+    public async loadIsland(shadowGenerator?:ShadowGenerator) {
 
 
         await SceneLoader.ImportMeshAsync("", "assets/models/Islands/Island1/", "FirstIsland.gltf", this._scene).then(async (result) => {
@@ -65,11 +65,14 @@ export class Environment {
 
             geoMeshes.forEach(async (mesh) => {
                 mesh.checkCollisions = true;
+
+                if(shadowGenerator) shadowGenerator.addShadowCaster(mesh);
+
                 if(mesh.name === "QuestCharacter"){
                     questCharacterHolder = mesh;
                 }
 
-                if (mesh.name.includes("Arbre") && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
+                if ((mesh.name.includes("Arbre")|| mesh.name.includes("House")) && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
                     const treeType = mesh.name.substring(0, 6);
         
                     if (!masterTrees[treeType]) {
@@ -90,7 +93,8 @@ export class Environment {
                 if(mesh.name.includes("Arbre")) mesh.isPickable = false;
 
                 if(mesh.name.includes("Area")){
-                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
+                    mesh.checkCollisions = false;
+                    AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1, 1:2, 2:5}));
                 } 
 
                 if(mesh.name === "puzzleTest"){
@@ -130,12 +134,12 @@ export class Environment {
                 
             })   
             let questsIslands1 = [];
-            let i=0;
-            for(const area of AreaAsset.getIslandAreas("Island1")){
-                const pieceNumber = i+5
-                questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1/piece" + pieceNumber +".png"), [area]));
-                i++;
-            }
+            // let i=0;
+            // for(const area of AreaAsset.getIslandAreas("Island1")){
+            //     const pieceNumber = i+5
+            //     questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1/piece" + pieceNumber +".png"), [area]));
+            //     i++;
+            // }
 
 
             if (!questCharacterHolder) {
@@ -150,9 +154,12 @@ export class Environment {
                   
                   // Position & dispose placeholder
                   wizard.setAbsolutePosition(questCharacterHolder.getAbsolutePosition());
-                  wizard.scaling = new Vector3(1,1,1) //questCharacterHolder.scaling.clone();
+                  wizard.scaling = new Vector3(0.7,0.7,0.7) //questCharacterHolder.scaling.clone();
                   wizard.rotation = new Vector3(0, 3*Math.PI/2, 0); 
                   questCharacterHolder.dispose();
+
+                  QuestAsset.createQuests(AreaAsset.getIslandAreas("Island1"));
+                  questsIslands1 = QuestAsset.quests;
                   
                   // Now you can safely create and activate your QuestCharacter
                   this.questCharacter = new QuestCharacter(wizard, this._scene, this._player, questsIslands1);

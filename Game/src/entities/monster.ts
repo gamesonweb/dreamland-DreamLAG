@@ -25,9 +25,11 @@
         private static readonly GRAVITY: number = -2.5;
         private static readonly MAX_GRAVITY_Y: number = -0.8;
 
+        private meshNameToPick:String = null;
+
         private _beforeRenderFn?: () => void;
 
-        constructor(scene: Scene, position: Vector3, health: number, damage: number) {
+        constructor(scene: Scene, position: Vector3, health: number, damage: number, meshNameToPick?:String) {
             this.scene = scene;
             this.health = health;
             this.damage = damage;
@@ -60,6 +62,8 @@
 
             this._moveDirection = Vector3.Zero();
 
+            if(meshNameToPick) this.meshNameToPick = meshNameToPick
+
             this.isReady = true;
         }
 
@@ -73,7 +77,15 @@
                     //else return false;
                     
                 }
-                let pick = this.scene.pickWithRay(ray, predicate);
+
+                let predicate2 = function(mesh){
+                    if(mesh.name.includes("Area")) return mesh.isPickable && mesh.isEnabled();
+                    else return false;
+                }
+
+                let pick = null;
+                if(this.meshNameToPick) pick = this.scene.pickWithRay(ray, predicate2);
+                else pick = this.scene.pickWithRay(ray, predicate);
         
                 if (pick.hit) {
                     return pick.pickedPoint;
@@ -85,14 +97,15 @@
         
 
         private _isGrounded() {
-            const result = this._floorRaycast(0, 0, 0.1);
-            if(!result.equals(Vector3.Zero())){
-                //this.mesh.position.y = result.y + 1;
-                return true;
-            }
-            else{
-                return false;
-            } 
+            // const result = this._floorRaycast(0, 0, 0.1);
+            // if(!result.equals(Vector3.Zero())){
+            //     //this.mesh.position.y = result.y + 1;
+            //     return true;
+            // }
+            // else{
+            //     return false;
+            // } 
+            return false;
         }
 
 
@@ -172,10 +185,11 @@
             this.scene.registerBeforeRender(this._beforeRenderFn);
         }
 
-        public desactivateMonster(): void {
+        public async desactivateMonster(): Promise<void> {
             if (this._beforeRenderFn) {
                 this.scene.unregisterBeforeRender(this._beforeRenderFn);
                 this._beforeRenderFn = undefined;
+                if(this.state!=="dead")this.mesh.dispose();
             }
         }
 

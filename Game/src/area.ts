@@ -18,7 +18,9 @@ export class Area{
     protected _max:Vector3;
 
     protected static readonly AREA_MINIMUM_ACTIVATED_ALTITUDE = 10;
-    protected static readonly MINIMAL_DISTANCE_RENDER = 50;
+    protected static readonly MINIMAL_DISTANCE_RENDER = 500;
+
+    
 
     constructor(scene:Scene, player:Player, mesh: Mesh, areaName:string, quest?:Quest){
         this._scene=scene;
@@ -40,7 +42,7 @@ export class Area{
     protected _setAreaCompleted(){
         this._areaCompleted = true;
         console.log("TERMINATED, quest : " + this._relatedQuest);
-        if(this._relatedQuest) this._relatedQuest.setQuestCompleted();
+        if(this._relatedQuest) this._relatedQuest.setQuestProgression();
     }
 
     public setRelatedQuest(quest:Quest){
@@ -50,6 +52,10 @@ export class Area{
     public activateArea(): void{
         //temporaire
         this._areaMesh.isVisible = true;
+    }
+
+    public get isCompleted(){
+        return this._areaCompleted;
     }
 }
 
@@ -65,6 +71,9 @@ export class MonsterArea extends Area{
     private _playerInArea:boolean = false;
 
     private _beforeRenderCallback: () => void;
+
+    private _isSpawning:boolean = false;  //flag pour éviter que update soit appelé successivement pendant le spawn
+    private _isResetting:boolean = false; //flag pour éviter que update soit appelé successivement pendant le reset
 
 
     constructor(scene:Scene, player:Player, mesh:Mesh, areaName:string, monstersInfo: {[round:number]: number}){
@@ -96,25 +105,38 @@ export class MonsterArea extends Area{
         for(let i=0; i<this._nbOfMonstersPerRound[this._stateRound]; i++){
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
-            const y = this._max.y+10;   // hauteur du sommet du cube
-            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10)
+            const y = this._max.y+5;   // hauteur du sommet du cube
+            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10, "Area")
             this._currentMonsters.push(monster);
-            monster.activateMonster([this._player]);
+            await monster.activateMonster([this._player]);
         }
         //this._scene.createOrUpdateSelectionOctree(64,2);
     }
 
     private _updateMonsters(){
+        const newCurrentMonsters = [];
         for(const monster of this._currentMonsters){
-            if(monster.state=="dead"){
-                this._currentMonsters = this._currentMonsters.filter(monster2 => monster2 != monster);
+            if(monster.state!="dead"){
+                //this._currentMonsters = this._currentMonsters.filter(monster2 => monster2 != monster);
+                newCurrentMonsters.push(monster);
             }
+            
         }
+        this._currentMonsters=newCurrentMonsters;
     }
 
     // Ajoute cette fonction dans ta classe :
     private _wait(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    private async _nextRoundSpawn() {
+        console.log("OK => round = " + this._stateRound);
+        
+        await this._wait(5000);
+        await this._spawnMonsters();     // spawn round this._stateRound
+        this._stateRound++; 
+        this._isSpawning=false;
     }
 
     private async _updateArea(){
@@ -130,11 +152,9 @@ export class MonsterArea extends Area{
             }
             else if(this._currentMonsters.length === 0 && this._stateRound <= this._lastRound){
                 this._playerInArea = true;
-
-                await this._wait(5000);
-
-                await this._spawnMonsters();
-                this._stateRound++;
+                this._isSpawning=true;
+                await this._nextRoundSpawn();
+                
                 
             }
             else if(this._currentMonsters.length === 0 && this._stateRound > this._lastRound){
@@ -146,7 +166,7 @@ export class MonsterArea extends Area{
             }
             
         }
-        else this.resetArea();
+        else if(this._playerInArea) await this.resetArea();
     }
 
     private _stopUpdate() {
@@ -161,7 +181,7 @@ export class MonsterArea extends Area{
         super.activateArea();
         
         this._beforeRenderCallback = async () => {
-            if (this._isPlayerNear()) {
+            if (this._isPlayerNear() && !this._isSpawning && !this._isResetting) {
               await this._updateArea();
             }
           };
@@ -169,14 +189,17 @@ export class MonsterArea extends Area{
           this._scene.registerBeforeRender(this._beforeRenderCallback);
     }
 
-    public resetArea(){
+    public async resetArea(){
+        this._isResetting=true;
+        console.log("Reset de l'Area");
         for(const monster of this._currentMonsters){
-            monster.desactivateMonster();
+            await monster.desactivateMonster();
         }
         this._currentMonsters = [];
         this._stateRound=0;
         this._playerInArea = false;
         this._isAreaActive = false;
+        this._isResetting=false;
     }
 
 }
