@@ -43,9 +43,9 @@ export class Player extends TransformNode {
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.7;
+    private static readonly PLAYER_SPEED: number = 0.35;
     private static readonly GRAVITY: number = -2.5;
-    private static readonly JUMP_FORCE: number = 0.80;
+    private static readonly JUMP_FORCE: number = 0.50;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
     public dashTime: number = 0;

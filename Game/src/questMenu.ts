@@ -107,15 +107,30 @@ export class QuestAsset{
             pieceAwardName:"piece24"
         },
         "Quest6":{
-            areasNames:["Area6"],
+            areasNames:["Area6", "Area7"],
             puzzleName:"Puzzle1",
             pieceAwardName:"piece11"
         },
         "Quest7":{
-            areasNames:["Area7", "Area8", "Area9"],
+            areasNames:["Area8", "Area9", "Area10"],
             puzzleName:"Puzzle1",
             pieceAwardName:"piece1"
-        }
+        },
+        "Quest8":{
+            areasNames:["Area11", "Area12"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece20"
+        },
+        "Quest9":{
+            areasNames:["Area13", "Area14"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece14"
+        },
+        "Quest10":{
+            areasNames:["Area15", "Area16", "Area17"],
+            puzzleName:"Puzzle1",
+            pieceAwardName:"piece22"
+        },
     }; 
 
     private static _quests:Quest[] = [];

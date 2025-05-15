@@ -240,7 +240,7 @@ export class App {
         //const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment
 
-        this._createPauseMenu();
+        await this._createPauseMenu();
 
 
     }
@@ -412,7 +412,7 @@ export class App {
     }
 
     //Crée l'affichage du menu de pause dans le jeu.
-    private _createPauseMenu(): void {
+    private async _createPauseMenu(): Promise<void> {
         this._pauseMenuUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
         const menuContainer = new Rectangle();

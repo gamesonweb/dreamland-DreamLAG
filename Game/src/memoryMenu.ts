@@ -104,9 +104,6 @@ export class MemoryMenu{
             const piece1 = new MemoryPiece("piece1", "memo" + (i+1), "assets/images/Puzzle1/piece1.png");
             const piece2 = new MemoryPiece("piece2", "memo" + (i+1), "assets/images/Puzzle1/piece2.png");
             const piece3 = new MemoryPiece("piece3", "memo" + (i+1), "assets/images/Puzzle1/piece3.png");
-            mem.unlockPiece(piece1);
-            mem.unlockPiece(piece2);
-            mem.unlockPiece(piece3);
             const button1 = this._createMemoryButton(mem);
             button1.onPointerClickObservable.add(() => {
                 mem.showWindow();
