@@ -1,7 +1,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools } from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools, Sound, BackgroundMaterial } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
@@ -47,6 +47,8 @@ export class App {
     private _relockDelay = 600; 
     private _shouldPauseOnUnlock = false;
 
+    private _backgroundMusic:Sound = null;
+
 
     constructor() {
         // Create the canvas HTML element and attach it to the webpage
@@ -57,7 +59,7 @@ export class App {
         document.body.appendChild(this._canvas);
 
         // Initialize Babylon.js engine and scene
-        this._engine = new Engine(this._canvas, true);
+        this._engine = new Engine(this._canvas, true, { audioEngine: true }, true);
         this._scene = new Scene(this._engine);
 
         // Hide/show the Inspector with Shift+Ctrl+Alt+I
@@ -78,6 +80,8 @@ export class App {
 
     public async _goToLose(): Promise<void> {
         this._engine.displayLoadingUI();
+        
+        this._backgroundMusic.stop();
 
         document.exitPointerLock();
         if(this._pointerDownHandler) this._canvas.removeEventListener("pointerdown", this._pointerDownHandler);
@@ -228,7 +232,7 @@ export class App {
         this._input = new PlayerInput(scene);
 
         const shadowGenerator:ShadowGenerator=new ShadowGenerator(1024, light);
-        shadowGenerator.darkness = 1.5;
+        shadowGenerator.darkness = 0.1;
 
         //await this._loadCharacterAssets(scene); //character
         await this._loadEntities(scene, shadowGenerator);
@@ -242,7 +246,34 @@ export class App {
 
         await this._createPauseMenu();
 
+        await new Promise<void>((resolve) => {
+            this._backgroundMusic = new Sound(
+                "AmbientTheme",
+                "assets/music/Island1Music.mp3",
+                scene,
+                () => {
+                    resolve();
+                },
+                {
+                    loop: true,
+                    autoplay: false,
+                    volume: 0.5
+                }
+            );
+        });
 
+
+        if (!this._backgroundMusic.isPlaying) {
+                    console.log("Music play");
+                    this._backgroundMusic.setVolume(1);
+                   this._backgroundMusic.play();   
+        }
+        console.log("backgroundMusic.isPlaying = "+ this._backgroundMusic.isPlaying);
+
+        // if(this._backgroundMusic) {
+        //     this._backgroundMusic.play();
+        //     console.log("background music played");
+        // }    
     }
 
     private async _goToStart() {
@@ -252,6 +283,7 @@ export class App {
         scene.clearColor = new Color4(0, 0, 0, 1);
         let camera = new FreeCamera("camera1", new Vector3(0, 0, 0), scene);
         camera.setTarget(Vector3.Zero());
+        
 
         // GUI setup
         const guiMenu = AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -283,6 +315,9 @@ export class App {
         this._scene.detachControl();
         let scene = this._gamescene;
         scene.clearColor = new Color4(0.01568627450980392, 0.01568627450980392, 0.20392156862745098);
+
+        
+        
 
         // GUI
         const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -375,6 +410,7 @@ export class App {
                             // Silence complet du rejet
                         });
                     } 
+                    
                     //this._canvas.requestPointerLock();
                 }
             };
