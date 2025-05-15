@@ -97,8 +97,9 @@ export class Environment {
                     AreaAsset.addArea("Island1", new MonsterArea(this._scene, this._player, mesh, mesh.name, {0:1}));
                 } 
 
-                if(mesh.name === "puzzleTest"){
-                    new MemoryPiece("piece9", "memo1", "assets/images/Puzzle1/piece9.png", mesh, this._scene, this._player);
+                if(mesh.name.includes("Puzzle")){
+                    const pieceName = mesh.name.substring(8, mesh.name.length);
+                    new MemoryPiece(pieceName, "memo1", "assets/images/Puzzle1/"+pieceName+".png", mesh, this._scene, this._player);
                 }
 
                 // if(mesh.name.includes("terrain")){

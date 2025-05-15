@@ -265,7 +265,7 @@ export class App {
 
         if (!this._backgroundMusic.isPlaying) {
                     console.log("Music play");
-                    this._backgroundMusic.setVolume(1);
+                    //this._backgroundMusic.setVolume(1);
                    this._backgroundMusic.play();   
         }
         console.log("backgroundMusic.isPlaying = "+ this._backgroundMusic.isPlaying);

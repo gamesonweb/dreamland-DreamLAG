@@ -97,7 +97,7 @@
         
 
         private _isGrounded() {
-            // const result = this._floorRaycast(0, 0, 0.1);
+            // const result = this._floorRaycast(0, 0, 0.7);
             // if(!result.equals(Vector3.Zero())){
             //     //this.mesh.position.y = result.y + 1;
             //     return true;

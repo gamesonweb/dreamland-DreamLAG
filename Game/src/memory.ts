@@ -62,8 +62,8 @@ export class MemoryPiece{
 
         // 2. Crée un bouton
         this._claimButton = GUI.Button.CreateSimpleButton("claim", "Récupérer! (E)");
-        this._claimButton.width = "150px";
-        this._claimButton.height = "60px";
+        this._claimButton.width = "130px";
+        this._claimButton.height = "30px";
         this._claimButton.color = "white";
         this._claimButton.cornerRadius = 10;
         this._claimButton.background = "black";
