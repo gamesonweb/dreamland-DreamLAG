@@ -32,6 +32,7 @@ export class Player extends TransformNode {
     private _dashPressed: boolean = false;
     private _canDash: boolean = true;
     private _inMovement:boolean = false;
+    private _isFlying = false;
 
     // Player properties
     private _mesh: Mesh; // Outer collisionbox of the player
@@ -166,48 +167,75 @@ export class Player extends TransformNode {
 
     private _updateFromControls() {
         this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
-
+        let move=null
         this._moveDirection = Vector3.Zero();
         this._h = this._input.horizontal;
         this._v = this._input.vertical;
-
-
-        if(!this._h && !this._v) this._inMovement = false;
-        else this._inMovement = true;
-        this.playMovementAnimation();
-
-
-        // let fwd = this._camRoot.forward;
-        // let right = this._camRoot.right;
-
-        let fwd = this.camera.getDirection(Axis.Z);
-        let right = this.camera.getDirection(Axis.X);
-
-        let correctedVertical = fwd.scale(this._v);
-        let correctedHorizontal = right.scale(this._h);
-
-        let move = correctedHorizontal.add(correctedVertical);
-        move.y = 0;
-        
-        if(!this._hasFrontAnObstacle()){
-            this._moveDirection = move.normalize();
+        if (this._input.flyDown){
+            console.log("Je vole")
+            this._isFlying=!this._isFlying;
         }
-        
+        if (this._isFlying) {
+            // Désactive la gravité en vol
+            this._gravity = Vector3.Zero();
 
-        let inputMag = Math.abs(this._h) + Math.abs(this._v);
-        this._inputAmt = inputMag > 1 ? 1 : inputMag;
+            // Autoriser le déplacement vertical avec d'autres touches
+            let verticalMove = 0;
+            if (this._input.jumpKeyDown) verticalMove = 1;
+            else if (this._input.dashing) verticalMove=-1// touche saut = monter// touche accroupir = descendre
 
-        this._moveDirection = this._moveDirection.scale(this._inputAmt * Player.PLAYER_SPEED);
-        
-        if(!move.equals(Vector3.Zero())){
-            let angle = Math.atan2(move.x, move.z);
-        const targetQuat = Quaternion.FromEulerAngles(0, angle, 0);
+            let fwd = this.camera.getDirection(Axis.Z);
+            let right = this.camera.getDirection(Axis.X);
 
-        this.mesh.rotationQuaternion = Quaternion.Slerp(
-            this.mesh.rotationQuaternion || Quaternion.Identity(), 
-            targetQuat, 
-            10 * this._deltaTime
-          )
+            let correctedVertical = fwd.scale(this._v);
+            let correctedHorizontal = right.scale(this._h);
+
+            // Ajoute le mouvement vertical
+            move = correctedHorizontal.add(correctedVertical);
+            move.y = verticalMove;
+
+            if (!this._hasFrontAnObstacle()) {
+                this._moveDirection = move.normalize().scale(Player.PLAYER_SPEED);
+            }
+
+        } else {
+
+            if (!this._h && !this._v) this._inMovement = false;
+            else this._inMovement = true;
+            this.playMovementAnimation();
+
+
+            // let fwd = this._camRoot.forward;
+            // let right = this._camRoot.right;
+
+            let fwd = this.camera.getDirection(Axis.Z);
+            let right = this.camera.getDirection(Axis.X);
+
+            let correctedVertical = fwd.scale(this._v);
+            let correctedHorizontal = right.scale(this._h);
+
+            move = correctedHorizontal.add(correctedVertical);
+            move.y = 0;
+
+            if (!this._hasFrontAnObstacle()) {
+                this._moveDirection = move.normalize();
+            }
+
+
+            let inputMag = Math.abs(this._h) + Math.abs(this._v);
+            this._inputAmt = inputMag > 1 ? 1 : inputMag;
+
+            this._moveDirection = this._moveDirection.scale(this._inputAmt * Player.PLAYER_SPEED);
+        }
+        if(!this._moveDirection.equals(Vector3.Zero())) {
+            let angle = Math.atan2(this._moveDirection.x, this._moveDirection.z);
+            const targetQuat = Quaternion.FromEulerAngles(0, angle, 0);
+
+            this.mesh.rotationQuaternion = Quaternion.Slerp(
+                this.mesh.rotationQuaternion || Quaternion.Identity(),
+                targetQuat,
+                10 * this._deltaTime
+            );
         }
 
         let dashFactor = 1;
@@ -363,8 +391,15 @@ export class Player extends TransformNode {
                  //     this._jumpCount = 1;
                  //     this._grounded = true;
                  // } else{
+                 if(!this._isFlying) {
+                     // Appliquer gravité seulement si pas en mode vol
                      this._gravity = this._gravity.add(Vector3.Up().scale(this._deltaTime * Player.GRAVITY));
                      this._grounded = false;
+                 } else {
+                     // En vol, on ne tombe pas
+                     this._gravity = Vector3.Zero();
+                     this._grounded = false;
+                 }
                  // }
              }
              else{
@@ -374,6 +409,7 @@ export class Player extends TransformNode {
                  this._canDash = true;
                  this.dashTime = 0;
                  this._dashPressed = false;
+                 this._isFlying=false;
              }
              this._groundCheckCounter = 0;
 
@@ -387,7 +423,7 @@ export class Player extends TransformNode {
             // }
         }
 
-        if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked) {
+        if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked && !this._isFlying) {
             this._gravity.y = Player.JUMP_FORCE;
             this._jumpCount--;
         }
