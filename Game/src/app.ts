@@ -257,7 +257,7 @@ export class App {
                 {
                     loop: true,
                     autoplay: false,
-                    volume: 0.5
+                    volume: 0
                 }
             );
         });

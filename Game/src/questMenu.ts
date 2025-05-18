@@ -6,16 +6,20 @@ import { MemoryPiece } from "./memory";
 
 export class Quest {
     public title:string
+    private _description:string = null;
+
     private _questAccepted:boolean=false;
     private _isCompleted:boolean=false;
     private _isRewardClaimed:boolean = false;
+
     private _reward:MemoryPiece=null;
     public onStateChange = new Observable<Quest>();
 
     private _involvedAreas:Area[]|null=[];
 
-    constructor(title: string, reward: MemoryPiece, areas?:Area[]) {
+    constructor(title: string, reward: MemoryPiece, description?:string, areas?:Area[]) {
         this.title = title;
+        if(description) this._description=description;
 
         this._reward = reward;
 
@@ -64,6 +68,11 @@ export class Quest {
         this.onStateChange.notifyObservers(this);
     }
 
+    public get description(){
+        return this._description;
+    }
+
+    
     public get isAccepted() {
         return this._questAccepted;
     }
@@ -79,51 +88,61 @@ export class Quest {
 }
 
 export class QuestAsset{
-    public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, pieceAwardName:string}} = 
+    public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, description?:String, pieceAwardName:string}} = 
     {
         "Quest1" : {
             areasNames:["Area1"],
             puzzleName:"Puzzle1",
+            description:"Le sorcier te demande d'éliminer les monstres qui se trouvent dans la zone en face du village.",
             pieceAwardName:"piece7"
+            
         },
         "Quest2" : {
             areasNames:["Area2"],
             puzzleName:"Puzzle1",
+            description:"Le sorcier te demande d'éliminer les monstres qui se trouvent dans la zone juste en face de lui.",
             pieceAwardName:"piece4"
         },
         "Quest3": {
             areasNames:["Area3"],
             puzzleName:"Puzzle1",
+            description:"Des monstres semblent perturber la population locale à côté du lac. Élimine-les !",
             pieceAwardName:"piece2"
         },
         "Quest4": {
             areasNames:["Area4"],
             puzzleName:"Puzzle1",
+            description:"Un fermier semble être perturbé au sud de l'île. Le sorcier te demande de l'aider.",
             pieceAwardName:"piece16"
         },
         "Quest5":{
             areasNames:["Area5"],
             puzzleName:"Puzzle1",
+            description:"Des monstres sont apparus au port de l'île. Le sorcier ne pouvant être présent compte sur toi pour te débarasser de ces cauchemars.",
             pieceAwardName:"piece24"
         },
         "Quest6":{
             areasNames:["Area6", "Area7"],
             puzzleName:"Puzzle1",
+            description:"La petite forêt au sud du village semble être en ce moment perturbé. La source semble par ailleurs provenir aux abords de l'île à l'issue de la forêt.",
             pieceAwardName:"piece11"
         },
         "Quest7":{
             areasNames:["Area8", "Area9", "Area10"],
             puzzleName:"Puzzle1",
+            description:"Les habitants de l'île ne peuvent plus accéder au sommet de la montagne au nord du village. Le chemin semble être infesté de cauchemars. Aide le sorcier à les éliminer.",
             pieceAwardName:"piece1"
         },
         "Quest8":{
             areasNames:["Area11", "Area12"],
             puzzleName:"Puzzle1",
+            description:"Des cauchemars sont encore apparus dans les montagnes près du port et du village. Il faut cependant grimper depuis le port accéder aux zones consernées et passer par les îles volantes se trouvant au dessus de la forêt.",
             pieceAwardName:"piece20"
         },
         "Quest9":{
             areasNames:["Area13", "Area14"],
             puzzleName:"Puzzle1",
+            description:"De nouveaux monstres perturbent le sud de l'île vers la crevasse et la bosse à proximité du port. Le sorcier te demande de les éliminer le temps qu'il te trouve d'autres de tes souvenirs.",
             pieceAwardName:"piece14"
         },
         "Quest10":{
@@ -143,7 +162,10 @@ export class QuestAsset{
                 const relatedPuzzleName = questData.puzzleName;
                 let questRelatedAreas = areas.filter(area => areasNames.includes(area.areaName));
                 const award = new MemoryPiece(questData.pieceAwardName, "memo1", "assets/images/"+relatedPuzzleName+"/"+questData.pieceAwardName+".png");
-                const quest = new Quest(questName, award, questRelatedAreas);
+                let questDescription = null
+                if(questData.description) questDescription = questData.description;
+                
+                const quest = new Quest(questName, award, questDescription, questRelatedAreas);
                 this._quests.push(quest);
             }
             catch(err) {
@@ -166,9 +188,18 @@ export interface CharacterMenu{
 
 export class QuestMenu implements CharacterMenu{
     private _ui: GUI.AdvancedDynamicTexture;
+
     private _questWindow: GUI.Rectangle;
     private _closeButton: GUI.Button;
     private _questListPanel: GUI.StackPanel;
+
+    //quest description window
+    private _questDescriptionUI: GUI.Rectangle;
+    private _questTitleText:GUI.TextBlock;
+    private _questDescriptionText:GUI.TextBlock;
+    private _questAwardText:GUI.TextBlock;
+    private _currentQuestStatus:GUI.Button|GUI.TextBlock;
+
 
     private _quests: Quest[] = [];
 
@@ -177,7 +208,7 @@ export class QuestMenu implements CharacterMenu{
     private _isWindowRecentlyClosed: boolean = false;
 
     private _uiMap = new Map<Quest, {
-        container: GUI.Rectangle,
+        container: GUI.Button,
         acceptBtn?: GUI.Button,
         statusText?: GUI.TextBlock,
         rewardBtn?: GUI.Button
@@ -241,6 +272,7 @@ export class QuestMenu implements CharacterMenu{
 
         scrollViewer.addControl(this._questListPanel);
 
+        this._createQuestsUIDescription();
         this._setUpUIQuests();
     }
 
@@ -252,14 +284,21 @@ export class QuestMenu implements CharacterMenu{
         }
     }
 
+    
+
+    //private _displayQuestDescription(Quest:)
+
     private _createUiQuest(quest:Quest){
-        const questContainer = new GUI.Rectangle();
+        const questContainer = new GUI.Button();
         questContainer.width = "100%"
         questContainer.height = "100px"; // un peu plus grand pour inclure padding + bordure
         questContainer.thickness = 2;   // bordure de 2px
         questContainer.color = "white"; // couleur de la bordure
         questContainer.background = "#333"; // optionnel : fond gris foncé
         questContainer.cornerRadius = 5; // optionnel : coins arrondis
+        questContainer.onPointerClickObservable.add(() => {
+            this._showQuestDescriptionWindow(quest);
+        })
 
         const questLabel = new GUI.TextBlock();
         questLabel.text = quest.title;
@@ -269,23 +308,141 @@ export class QuestMenu implements CharacterMenu{
         questLabel.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
 
         const acceptButton = GUI.Button.CreateSimpleButton("acceptQuest", "Accepter");
-        acceptButton.width = "150px";
-        acceptButton.height = "50px";
+        acceptButton.width = "100px";
+        acceptButton.height = "40px";
         acceptButton.color = "white";
         acceptButton.background = "green";
 
-        acceptButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        acceptButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        acceptButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        acceptButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        acceptButton.paddingBottom = "10px";
+        acceptButton.paddingRight = "10px";
 
         acceptButton.onPointerClickObservable.add(() => {
             quest.acceptQuest();
         })
 
+
         questContainer.addControl(questLabel); 
-        questContainer.addControl(acceptButton);
+        //questContainer.addControl(acceptButton);
+        //this._questDescriptionUI.addControl(acceptButton);
         this._questListPanel.addControl(questContainer); // on ajoute le rectangle à la liste
         this._uiMap.set(quest, { container: questContainer, acceptBtn : acceptButton });
     }
+
+    private _createQuestsUIDescription(){
+        this._questDescriptionUI = new GUI.Rectangle();
+        this._questDescriptionUI.width = "400px";
+        this._questDescriptionUI.height = "200px";
+        this._questDescriptionUI.cornerRadius = 10;
+        this._questDescriptionUI.color = "white";
+        this._questDescriptionUI.thickness = 2;
+        this._questDescriptionUI.background = "black";
+        this._questDescriptionUI.isVisible = false;
+
+        // Positionnement en haut à droite de l'écran
+        this._questDescriptionUI.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        this._questDescriptionUI.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._questDescriptionUI.top = "10px";  // Marge par rapport au haut
+        this._questDescriptionUI.left = "-10px"; // Marge par rapport au bord droit (négatif pour reculer)
+
+        this._questTitleText = new GUI.TextBlock();
+        this._questTitleText.text = "Quest";
+        this._questTitleText.color = "white";
+        this._questTitleText.fontSize = 20;
+        this._questTitleText.textWrapping = true;
+        this._questTitleText.resizeToFit = true;
+        this._questTitleText.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questTitleText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._questTitleText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questTitleText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._questTitleText.paddingLeft = "10px"; 
+        this._questTitleText.paddingTop = "10px";  
+        this._questDescriptionUI.addControl(this._questTitleText);
+
+        this._questDescriptionText = new GUI.TextBlock();
+        this._questDescriptionText.text = "Un homme semble avoir apercu quelque chose près du port. Allez jeter un coup d'oeil";
+        this._questDescriptionText.color = "white";
+        this._questDescriptionText.fontSize = 15;
+        this._questDescriptionText.textWrapping = true;
+        this._questDescriptionText.resizeToFit = true;
+        this._questDescriptionText.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questDescriptionText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._questDescriptionText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questDescriptionText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._questDescriptionText.paddingLeft = "10px";
+        this._questDescriptionText.paddingTop = "50px";
+        this._questDescriptionUI.addControl(this._questDescriptionText);
+
+        this._questAwardText = new GUI.TextBlock();
+        this._questAwardText.text = "Récompense : pièce de puzzle";
+        this._questAwardText.color = "white";
+        this._questAwardText.fontSize = 15;
+        this._questAwardText.textWrapping = true;
+        this._questAwardText.resizeToFit = true;
+        this._questAwardText.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questAwardText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this._questAwardText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questAwardText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this._questAwardText.paddingLeft = "10px";
+        this._questAwardText.paddingBottom= "10px";
+        this._questDescriptionUI.addControl(this._questAwardText);
+
+        // === Ajout du bouton "croix" ===
+        const closeButton = GUI.Button.CreateSimpleButton("closeButton", "X");
+        closeButton.width = "40px";
+        closeButton.height = "40px";
+        closeButton.color = "white";
+        closeButton.background = "red";
+
+        closeButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        closeButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        closeButton.top = "10px";
+        closeButton.left = "-10px";
+
+        closeButton.onPointerClickObservable.add(() => {
+            this._closeQuestDescriptionWindow()
+        });
+
+
+        this._questDescriptionUI.addControl(closeButton);
+
+        //this._questDescriptionText.text = "Un homme semble avoir apercu quelque chose près du port. Allez jeter un coup d'oeil"
+
+        this._updateQuestDescriptionPosition();
+        
+        this._ui.addControl(this._questDescriptionUI);
+    }
+
+    private _updateQuestDescriptionPosition() {
+        const questWindowWidth = 500;
+        const questWindowHeight = 600;
+        const spacing = 20;
+
+        // const descriptionUIWidth = 400;
+        // const descriptionUIHeight = 200;
+
+        // Récupère la taille de l'écran via l'engine du canvas
+        const engine = this._ui.getScene()?.getEngine();
+        if (!engine) return;
+
+        const screenWidth = engine.getRenderWidth();
+        const screenHeight = engine.getRenderHeight();
+
+        // Position de questWindow (centrée)
+        const questWindowX = (screenWidth - questWindowWidth) / 2;
+        const questWindowY = (screenHeight - questWindowHeight) / 2;
+
+        // Position de la fenêtre de description à droite de questWindow
+        const descriptionX = questWindowX + questWindowWidth + spacing;
+        const descriptionY = questWindowY;
+
+        this._questDescriptionUI.leftInPixels = descriptionX;
+        this._questDescriptionUI.topInPixels = descriptionY;
+        this._questDescriptionUI.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this._questDescriptionUI.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    }
+
 
      /** Reconstruit l’UI d’une quête après changement d’état */
      private _updateQuestUI(quest: Quest) {
@@ -295,15 +452,18 @@ export class QuestMenu implements CharacterMenu{
 
         // 1) On retire les anciens contrôles s'ils existent
         if (ui.acceptBtn) {
-            ui.container.removeControl(ui.acceptBtn);
+            //ui.container.removeControl(ui.acceptBtn);
+            this._questDescriptionUI.removeControl(this._currentQuestStatus);
             ui.acceptBtn = undefined;
         }
         if (ui.statusText) {
             ui.container.removeControl(ui.statusText);
+            this._questDescriptionUI.removeControl(this._currentQuestStatus);
             ui.statusText = undefined;
         }
         if (ui.rewardBtn) {
-            ui.container.removeControl(ui.rewardBtn);
+            //ui.container.removeControl(ui.rewardBtn);
+            this._questDescriptionUI.removeControl(this._currentQuestStatus);
             ui.rewardBtn = undefined;
         }
 
@@ -315,10 +475,15 @@ export class QuestMenu implements CharacterMenu{
             status.color = "yellow";
             status.fontSize = 18;
             status.paddingLeft = "10px";
-            status.horizontalAlignment=GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            status.verticalAlignment=GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-            // status.left                  = "160px"; // largeur du bouton (150px) + 10px de marge
+            status.horizontalAlignment=GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            status.verticalAlignment=GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            status.paddingBottom="10px";
+            status.paddingRight="10px";
+            // status.left                  = "160px"; 
+            const statusCpy = status.clone() as GUI.TextBlock;
             ui.container.addControl(status);
+            this._currentQuestStatus = statusCpy;
+            this._questDescriptionUI.addControl(statusCpy);
             ui.statusText = status;
             return;
         }
@@ -326,19 +491,40 @@ export class QuestMenu implements CharacterMenu{
         if (quest.isCompleted && !quest.isRewardClaimed) {
             // bouton Récupérer récompense
             const rewardBtn = GUI.Button.CreateSimpleButton("rewardBtn", "Récupérer récompense");
-            rewardBtn.width = "200px";
+            rewardBtn.width = "150px";
             rewardBtn.height = "50px";
             rewardBtn.color = "white";
             rewardBtn.background = "blue";
-            rewardBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            rewardBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            rewardBtn.fontSize = 16;
+            rewardBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            rewardBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            rewardBtn.paddingBottom="10px";
+            rewardBtn.paddingRight="10px";
+
+            const completedStatus = new GUI.TextBlock();
+            completedStatus.resizeToFit = true;
+            completedStatus.text = "Terminé";
+            completedStatus.color = "#90ee90";
+            completedStatus.fontSize = 18;
+            completedStatus.paddingLeft = "10px";
+            completedStatus.horizontalAlignment=GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            completedStatus.verticalAlignment=GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            completedStatus.paddingBottom="10px";
+            completedStatus.paddingRight="10px";
+
             rewardBtn.onPointerClickObservable.add(() => {
                 quest.claimReward(this._player);
                 // on peut directement supprimer la quête
                 this._questListPanel.removeControl(ui.container);
                 this._uiMap.delete(quest);
+                this._closeQuestDescriptionWindow();
             });
-            ui.container.addControl(rewardBtn);
+
+            
+
+            ui.container.addControl(completedStatus);
+            this._currentQuestStatus = rewardBtn;
+            this._questDescriptionUI.addControl(rewardBtn);
             ui.rewardBtn = rewardBtn;
             return;
         }
@@ -356,6 +542,52 @@ export class QuestMenu implements CharacterMenu{
         
     }
 
+    private _showQuestDescriptionWindow(quest:Quest){
+        // const acceptButton = GUI.Button.CreateSimpleButton("acceptQuest", "Accepter");
+        // acceptButton.width = "100px";
+        // acceptButton.height = "40px";
+        // acceptButton.color = "white";
+        // acceptButton.background = "green";
+
+        // acceptButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        // acceptButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        // acceptButton.paddingBottom = "10px";
+        // acceptButton.paddingRight = "10px";
+
+        // acceptButton.onPointerClickObservable.add(() => {
+        //     quest.acceptQuest();
+        // })
+
+        if(this._currentQuestStatus) this._questDescriptionUI.removeControl(this._currentQuestStatus)
+
+        const ui = this._uiMap.get(quest);
+        if(!quest.isCompleted && !quest.isAccepted){
+            this._currentQuestStatus = ui.acceptBtn;
+            this._questDescriptionUI.addControl(this._currentQuestStatus);
+        } 
+        else if(!quest.isCompleted) {
+            const statusCpy = ui.statusText.clone() as GUI.TextBlock;
+            this._currentQuestStatus = statusCpy;
+            this._questDescriptionUI.addControl(this._currentQuestStatus);
+        }
+        else if(!quest.isRewardClaimed){
+            this._currentQuestStatus = ui.rewardBtn;
+            this._questDescriptionUI.addControl(this._currentQuestStatus);
+        }
+        
+        // this._questDescriptionUI.addControl()
+
+        // this._questDescriptionUI.addControl(acceptButton);
+
+        this._questTitleText.text = quest.title;
+        this._questDescriptionText.text = quest.description;
+        this._questDescriptionUI.isVisible = true;
+    }
+
+    private _closeQuestDescriptionWindow(){
+        this._questDescriptionUI.isVisible = false;
+    }
+
     // Montrer ou cacher la fenêtre
     public showWindow() {
         //if(this._questWindow.isVisible) Player.controlsLocked = false;
@@ -364,6 +596,7 @@ export class QuestMenu implements CharacterMenu{
 
     public closeWindow(){
         this._questWindow.isVisible = false;
+        this._questDescriptionUI.isVisible = false;
     }
 
     public isWindowRecentlyClosed(): boolean{

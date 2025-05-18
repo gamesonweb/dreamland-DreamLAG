@@ -44,7 +44,7 @@ export class MemoryMenu{
         image.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
         this._buttonMenu.addControl(image);
     
-        const textButton = new GUI.TextBlock("memoText", "Memories (M)");
+        const textButton = new GUI.TextBlock("memoText", "Souvenirs (M)");
         textButton.fontSize = 13;
         textButton.color = "white";
         textButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
