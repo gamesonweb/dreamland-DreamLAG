@@ -10,6 +10,7 @@ export class PlayerInput {
     public horizontalAxis:number;
     public dashing:boolean = false;
     public jumpKeyDown:boolean = false;
+    public flyDown:boolean = false;
     
     public resumeDialog: boolean = false;
     public interactKeyDown:boolean = false;
@@ -60,7 +61,7 @@ export class PlayerInput {
             this.verticalAxis = 0;
         }
     
-        if (this.inputMap["a"] ||this.inputMap["A"]) {
+        if (this.inputMap["a"] || this.inputMap["A"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, -1, 0.2);
             this.horizontalAxis = -1;
     
@@ -86,7 +87,12 @@ export class PlayerInput {
             this.jumpKeyDown = false;
             this.resumeDialog = false;
         }
-
+        if (this.inputMap["f"] || this.inputMap["F"]) {
+            this.flyDown=true
+        }
+        else{
+            this.flyDown = false;
+        }
         if(this.inputMap["e"] || this.inputMap["E"]){
             this.interactKeyDown = true;
         }
