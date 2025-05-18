@@ -175,7 +175,7 @@
                     // console.log("monstre position absolue= " + this.mesh.getAbsolutePosition())
                     this._moveDirection=new Vector3(0,0,0);
                     this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
-                    this._updateGroundDetection();
+                    //this._updateGroundDetection();
                     this.update(players);
                     
                 }

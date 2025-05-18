@@ -105,7 +105,7 @@ export class MonsterArea extends Area{
         for(let i=0; i<this._nbOfMonstersPerRound[this._stateRound]; i++){
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
-            const y = this._max.y+5;   // hauteur du sommet du cube
+            const y = this._max.y+2;   // hauteur du sommet du cube
             const monster=new Monster(this._scene, new Vector3(x,y,z),100,10, "Area")
             this._currentMonsters.push(monster);
             await monster.activateMonster([this._player]);
@@ -208,11 +208,39 @@ export class MonsterArea extends Area{
 export class AreaAsset{
     
     public static areas: {[island:string]: Area[]} = {}; 
+    public static areasData: {[island:string]: {
+        [areaName:string]: {monstersInfo:{[round:number]:number}}
+    }} = {
+        "Island1": {
+            "Area1":{
+                monstersInfo:{
+                    0:1,
+                    1:2
+                }
+            },
+            "Area2":{
+                monstersInfo:{
+                    0:2,
+                    1:3
+                }
+            },
+            "Area3":{
+                monstersInfo:{
+                    0:3,
+                    1:4
+                }
+            }
+        }
+    }
 
-    public static addArea(island:string, area:Area){
+    public static addArea(island:string, scene:Scene, player:Player, mesh:Mesh){
         if(!this.areas[island]){
             this.areas[island] = [];
         }
+        let areaMonstersInfo:{[round:number]:number}={0:1};
+        if(AreaAsset.areasData[island][mesh.name]) areaMonstersInfo = AreaAsset.areasData[island][mesh.name].monstersInfo;
+        
+        const area = new MonsterArea(scene, player, mesh, mesh.name, areaMonstersInfo);
         this.areas[island].push(area);
     }
 
