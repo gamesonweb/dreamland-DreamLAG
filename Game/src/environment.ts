@@ -5,6 +5,7 @@ import { Area, AreaAsset, MonsterArea } from "./area";
 import { Quest, QuestAsset } from "./questMenu";
 import { MemoryPiece } from "./memory";
 import { WaterMaterial } from "@babylonjs/materials";
+import { GoblinBossMonster } from "./entities/goblinBossMonster";
 
 
 
@@ -100,6 +101,14 @@ export class Environment {
                 if(mesh.name.includes("Puzzle")){
                     const pieceName = mesh.name.substring(8, mesh.name.length);
                     new MemoryPiece(pieceName, "memo1", "assets/images/Puzzle1/"+pieceName+".png", mesh, this._scene, this._player);
+                }
+
+                if(mesh.name === "FinalBoss"){
+                    const boss = new GoblinBossMonster(this._scene, mesh.getAbsolutePosition());
+                    // boss.mesh.scaling = new Vector3(0.007,0.007,0.007);
+                    console.log("bossMesh scaling = " + boss.mesh.scaling);
+                    mesh.dispose();
+                    boss.activateMonster([this._player]);
                 }
 
                 // if(mesh.name.includes("terrain")){

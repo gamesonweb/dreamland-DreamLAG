@@ -44,7 +44,8 @@ export class Player extends TransformNode {
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 2;
+    private static readonly PLAYER_SPEED: number = 0.4;
+    private static readonly PLAYER_FLIGHT_SPEED:number = 1;
     private static readonly GRAVITY: number = -2.5;
     private static readonly JUMP_FORCE: number = 0.50;
     private static readonly DASH_FACTOR: number = 1.5;
@@ -195,7 +196,7 @@ export class Player extends TransformNode {
             move.y = verticalMove;
 
             if (!this._hasFrontAnObstacle()) {
-                this._moveDirection = move.normalize().scale(Player.PLAYER_SPEED);
+                this._moveDirection = move.normalize().scale(Player.PLAYER_FLIGHT_SPEED);
             }
 
         } else {

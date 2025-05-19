@@ -21,11 +21,14 @@ export class GoblinBossMonster extends Monster {
         this.mesh.dispose();
 
         // Charge le modèle GLB
-        SceneLoader.ImportMeshAsync("", "./assets/models/monsters/", "goblin_boss.glb", scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "./assets/monsters/", "goblin_boss.glb", scene).then((result) => {
             const goblinMesh = result.meshes[0] as Mesh;
             goblinMesh.name = "GoblinBoss";
             goblinMesh.position = this.bossZoneCenter.clone();
-            goblinMesh.scaling = new Vector3(2, 2, 2);
+            // goblinMesh.getChildMeshes().forEach((child) => {
+            //     child.scaling = new Vector3(0.1, 0.1, 0.1);
+            // })
+            goblinMesh.scaling = new Vector3(0.02, 0.02, 0.02);
 
             goblinMesh.checkCollisions = true;
             goblinMesh.ellipsoid = new Vector3(1, 1.5, 1);
