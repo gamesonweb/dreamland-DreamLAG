@@ -164,7 +164,9 @@
 				147,
 				148,
 				149,
-				150
+				150,
+				151,
+				152
 			]
 		}
 	],
@@ -2841,6 +2843,36 @@
 				63.28409194946289,
 				-167.77369689941406
 			]
+		},
+		{
+			"mesh":151,
+			"name":"Cone.007",
+			"rotation":[
+				0,
+				0.8233615159988403,
+				0,
+				0.5675172209739685
+			],
+			"translation":[
+				1769.7344970703125,
+				431.6820373535156,
+				-898.5932006835938
+			]
+		},
+		{
+			"mesh":152,
+			"name":"Terrain2",
+			"rotation":[
+				0,
+				0.8233615159988403,
+				0,
+				0.5675172209739685
+			],
+			"translation":[
+				1769.7344970703125,
+				431.6820373535156,
+				-898.5932006835938
+			]
 		}
 	],
 	"materials":[
@@ -2964,6 +2996,31 @@
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":4
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"Material.011",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.10337497293949127,
+					0.10337497293949127,
+					0.10337497293949127,
+					1
+				],
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"Material.012",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":5
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
@@ -10042,6 +10099,56 @@
 					"mode":4
 				}
 			]
+		},
+		{
+			"name":"Cone.007",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":995,
+						"NORMAL":996,
+						"TEXCOORD_0":997
+					},
+					"extensions":{
+						"KHR_draco_mesh_compression":{
+							"bufferView":321,
+							"attributes":{
+								"POSITION":0,
+								"NORMAL":1,
+								"TEXCOORD_0":2
+							}
+						}
+					},
+					"indices":998,
+					"material":10,
+					"mode":4
+				}
+			]
+		},
+		{
+			"name":"Terrain2",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":999,
+						"NORMAL":1000,
+						"TEXCOORD_0":1001
+					},
+					"extensions":{
+						"KHR_draco_mesh_compression":{
+							"bufferView":322,
+							"attributes":{
+								"POSITION":0,
+								"NORMAL":1,
+								"TEXCOORD_0":2
+							}
+						}
+					},
+					"indices":1002,
+					"material":11,
+					"mode":4
+				}
+			]
 		}
 	],
 	"textures":[
@@ -10064,6 +10171,10 @@
 		{
 			"sampler":0,
 			"source":1
+		},
+		{
+			"sampler":0,
+			"source":2
 		}
 	],
 	"images":[
@@ -10076,6 +10187,11 @@
 			"mimeType":"image/png",
 			"name":"doom-i-ii-color-pallete-32x",
 			"uri":"doom-i-ii-color-pallete-32x.png"
+		},
+		{
+			"mimeType":"image/png",
+			"name":"terrainTexture2",
+			"uri":"terrainTexture2.png"
 		}
 	],
 	"accessors":[
@@ -18263,6 +18379,66 @@
 			"componentType":5126,
 			"count":4,
 			"type":"VEC2"
+		},
+		{
+			"componentType":5126,
+			"count":2880,
+			"max":[
+				403.2757568359375,
+				18.7916316986084,
+				377.7641906738281
+			],
+			"min":[
+				-331.88983154296875,
+				-216.87632751464844,
+				-375.984130859375
+			],
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":2880,
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":2880,
+			"type":"VEC2"
+		},
+		{
+			"componentType":5123,
+			"count":4320,
+			"type":"SCALAR"
+		},
+		{
+			"componentType":5126,
+			"count":13888,
+			"max":[
+				297.5283203125,
+				164.0890350341797,
+				334.0733947753906
+			],
+			"min":[
+				-303.58221435546875,
+				-79.43328857421875,
+				-315.7662658691406
+			],
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":13888,
+			"type":"VEC3"
+		},
+		{
+			"componentType":5126,
+			"count":13888,
+			"type":"VEC2"
+		},
+		{
+			"componentType":5123,
+			"count":24576,
+			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
@@ -19870,6 +20046,16 @@
 			"buffer":0,
 			"byteLength":166,
 			"byteOffset":637360
+		},
+		{
+			"buffer":0,
+			"byteLength":22900,
+			"byteOffset":637528
+		},
+		{
+			"buffer":0,
+			"byteLength":94436,
+			"byteOffset":660428
 		}
 	],
 	"samplers":[
@@ -19880,7 +20066,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":637528,
+			"byteLength":754864,
 			"uri":"FirstIsland.bin"
 		}
 	]
