@@ -25,10 +25,10 @@ export class PlayerInput {
     
         this.inputMap = {};
         scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
-            this.inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
         }));
         scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
-            this.inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
         }));
 
         scene.onPointerObservable.add((pi) => {
@@ -49,11 +49,11 @@ export class PlayerInput {
     }
 
     private _updateFromKeyboard(): void {
-        if (this.inputMap["w"] ||this.inputMap["W"]) {
+        if (this.inputMap["KeyW"]) {
             this.vertical = Scalar.Lerp(this.vertical, 1, 0.2);
             this.verticalAxis = 1;
     
-        } else if (this.inputMap["s"] ||this.inputMap["S"]) {
+        } else if (this.inputMap["KeyS"]) {
             this.vertical = Scalar.Lerp(this.vertical, -1, 0.2);
             this.verticalAxis = -1;
         } else {
@@ -61,11 +61,11 @@ export class PlayerInput {
             this.verticalAxis = 0;
         }
     
-        if (this.inputMap["a"] || this.inputMap["A"]) {
+        if (this.inputMap["KeyA"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, -1, 0.2);
             this.horizontalAxis = -1;
     
-        } else if (this.inputMap["d"] ||this.inputMap["D"]) {
+        } else if (this.inputMap["KeyD"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, 1, 0.2);
             this.horizontalAxis = 1;
         }
@@ -74,31 +74,33 @@ export class PlayerInput {
             this.horizontalAxis = 0;
         }
 
-        if (this.inputMap["Shift"]){
+        console.log("vertical = " + this.verticalAxis + ", " + this.horizontalAxis);
+
+        if (this.inputMap["ShiftLeft"]){
             this.dashing = true;
         }else{
             this.dashing = false;
         }
 
-        if(this.inputMap[" "]){
+        if(this.inputMap["Space"]){
             this.jumpKeyDown = true;
             this.resumeDialog = true;
         }else{
             this.jumpKeyDown = false;
             this.resumeDialog = false;
         }
-        if (this.inputMap["f"] || this.inputMap["F"]) {
+        if (this.inputMap["KeyF"]) {
             this.flyDown=true
         }
         else{
             this.flyDown = false;
         }
-        if(this.inputMap["e"] || this.inputMap["E"]){
+        if(this.inputMap["KeyE"]){
             this.interactKeyDown = true;
         }
         else this.interactKeyDown = false;
 
-        if(this.inputMap["m"] || this.inputMap["M"]){
+        if(this.inputMap["KeyM"]){
             this.memoryKeyDown = true;
         }
         else this.memoryKeyDown = false;
