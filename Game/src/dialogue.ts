@@ -1,26 +1,110 @@
 export interface Dialogue{
     lines: string[];
+    changeState:boolean;
+    questsConditionsForNextState?:String[]|null;
 }
 
 
 export interface Dialogues{
-    [state: number] : Dialogue
+    [state: number] : {dialogue : Dialogue}
 }
 
 export interface DialogueAssets{
     [characterName: string]: Dialogues
 }
 
-export const dialoguesAssets: DialogueAssets= 
-    {
-        "Merlin":{
-            0:{
+export const dialoguesAssets: DialogueAssets= {
+    "Morphéus":{
+        0:{
+            dialogue:{
                 lines: [
-                    "Salut, je m'appelle Merlin, le légendaire magicien de DreamLand!",
-                    "Je suis ici pout te donner des quêtes"
+                    "Salut! Je suis un sorcier. Je peux t'aider à récupérer tes souvenirs en échange de mission.",
+                    "Les zones des monstres apparaissent dès que tu acceptes une quête. Lis bien la description pour avoir des détails sur les lieux concernants les missions"
+                ],
+                changeState:true,
+                questsConditionsForNextState:[
+                    "Quest1",
+                    "Quest2",
+                    "Quest3"
                 ]
             }
+        },
+        1:{
+            dialogue:{
+                lines:[
+                    "Salut! Tu veux de nouvelles quêtes?"
+                ],
+                changeState:false,
+                questsConditionsForNextState:[
+                    "Quest1",
+                    "Quest2",
+                    "Quest3"
+                ]
+            }
+        },
+        2:{
+            dialogue:{
+                lines:[
+                    "Hmmh, quelle efficacité! Tu as terminé toutes les quêtes que je t'ai donné.",
+                    "Tiens, en voici des nouvelles, tu pourras toujours obtenir des pièces de tes souvenirs en complétant ces quêtes"
+                ],
+                changeState:true,
+                questsConditionsForNextState:[
+                    "Quest4",
+                    "Quest5",
+                    "Quest6"
+                ]
+            }
+        },
+        3:{
+            dialogue:{
+                lines:[
+                    "Salut! Tu souhaites de nouvelles quêtes?"
+                ],
+                changeState:false,
+                questsConditionsForNextState:[
+                    "Quest4",
+                    "Quest5",
+                    "Quest6"
+                ]
+            }
+        },
+        4:{
+            dialogue:{
+                lines:[
+                    "Ouah! Tu as déjà fini?! Et en plus tu as trouvé d'autres fragments?!",
+                    "Tu ne cesses de m'étonner. Mais j'ai encore des missions à te donner. Il me reste encore quelques endroits où je pourrai trouver certains de tes souvenirs."
+                ],
+                changeState:true,
+                questsConditionsForNextState:[
+                    "Quest7",
+                    "Quest8",
+                    "Quest9",
+                    //"Quest10"
+                ]
+            }
+        },
+        5:{
+            dialogue:{
+                lines:[
+                    "Il te reste encore quelques quêtes à finir. Je m'occupe de retrouver les fragments qui te sont inaccessibles"
+                ],
+                changeState:false,
+                questsConditionsForNextState:[
+                    "Quest7",
+                    "Quest8",
+                    "Quest9",
+                    //"Quest10"
+                ]
+            }
+        },
+        6:{
+            dialogue:{
+                lines:[
+                    "J'ai fini le travail de mon côté. La suite repose entre tes mains. Tu sais ce qu'il te reste à faire pour sauver ce monde."
+                ],
+                changeState:false
+            }
         }
-        
-        
-    }
+    }    
+}

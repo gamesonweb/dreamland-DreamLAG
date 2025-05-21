@@ -2,10 +2,10 @@ import { AbstractMesh, Color3, CubeTexture, InstancedMesh, Mesh, MeshBuilder, Pa
 import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
 import { Area, AreaAsset, MonsterArea } from "./area";
-import { Quest, QuestAsset } from "./questMenu";
 import { MemoryPiece } from "./memory";
 import { WaterMaterial } from "@babylonjs/materials";
 import { GoblinBossMonster } from "./entities/goblinBossMonster";
+import { QuestAsset } from "./quest";
 
 
 

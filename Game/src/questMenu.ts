@@ -3,182 +3,9 @@ import * as GUI from "@babylonjs/gui";
 import { Player } from "./characterController";
 import { Area } from "./area";
 import { MemoryPiece } from "./memory";
+import { Quest } from "./quest";
 
-export class Quest {
-    public title:string
-    private _description:string = null;
 
-    private _questAccepted:boolean=false;
-    private _isCompleted:boolean=false;
-    private _isRewardClaimed:boolean = false;
-
-    private _reward:MemoryPiece=null;
-    public onStateChange = new Observable<Quest>();
-
-    private _involvedAreas:Area[]|null=[];
-
-    constructor(title: string, reward: MemoryPiece, description?:string, areas?:Area[]) {
-        this.title = title;
-        if(description) this._description=description;
-
-        this._reward = reward;
-
-        this._involvedAreas = areas;
-
-        this._linkToAreas();
-
-        
-
-    } // Pour l'instant, juste un titre
-
-    private _linkToAreas(){
-        for(const area of this._involvedAreas){
-            area.setRelatedQuest(this);
-        }
-    }
-
-    public acceptQuest(){
-        this._questAccepted=true;
-        this.onStateChange.notifyObservers(this);
-        if(this._involvedAreas){
-            for(const area of this._involvedAreas){
-                area.activateArea();
-            }
-        }
-    }
-    
-
-    public setQuestProgression(){
-        console.log("NOTIFICATION");
-        const nbAreas = this._involvedAreas.length;
-        let nbCompletedAreas = 0;
-        for(const area of this._involvedAreas){
-            if(area.isCompleted) nbCompletedAreas++;
-        }
-        if(nbCompletedAreas === nbAreas){
-            this._isCompleted = true;
-            this.onStateChange.notifyObservers(this);
-        }
-        
-    }
-
-    public claimReward(player:Player) {
-        player.claimReward(this._reward);
-        this._isRewardClaimed = true;
-        this.onStateChange.notifyObservers(this);
-    }
-
-    public get description(){
-        return this._description;
-    }
-
-    
-    public get isAccepted() {
-        return this._questAccepted;
-    }
-
-    public get isCompleted() { 
-        return this._isCompleted; 
-    }
-
-    public get isRewardClaimed() { 
-        return /* à renseigner */ false;
-    }
-
-}
-
-export class QuestAsset{
-    public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, description?:String, pieceAwardName:string}} = 
-    {
-        "Quest1" : {
-            areasNames:["Area1"],
-            puzzleName:"Puzzle1",
-            description:"Le sorcier te demande d'éliminer les monstres qui se trouvent dans la zone en face du village.",
-            pieceAwardName:"piece7"
-            
-        },
-        "Quest2" : {
-            areasNames:["Area2"],
-            puzzleName:"Puzzle1",
-            description:"Le sorcier te demande d'éliminer les monstres qui se trouvent dans la zone juste en face de lui.",
-            pieceAwardName:"piece4"
-        },
-        "Quest3": {
-            areasNames:["Area3"],
-            puzzleName:"Puzzle1",
-            description:"Des monstres semblent perturber la population locale à côté du lac. Élimine-les !",
-            pieceAwardName:"piece2"
-        },
-        "Quest4": {
-            areasNames:["Area4"],
-            puzzleName:"Puzzle1",
-            description:"Un fermier semble être perturbé au sud de l'île. Le sorcier te demande de l'aider.",
-            pieceAwardName:"piece16"
-        },
-        "Quest5":{
-            areasNames:["Area5"],
-            puzzleName:"Puzzle1",
-            description:"Des monstres sont apparus au port de l'île. Le sorcier ne pouvant être présent compte sur toi pour te débarasser de ces cauchemars.",
-            pieceAwardName:"piece24"
-        },
-        "Quest6":{
-            areasNames:["Area6", "Area7"],
-            puzzleName:"Puzzle1",
-            description:"La petite forêt au sud du village semble être en ce moment perturbé. La source semble par ailleurs provenir aux abords de l'île à l'issue de la forêt.",
-            pieceAwardName:"piece11"
-        },
-        "Quest7":{
-            areasNames:["Area8", "Area9", "Area10"],
-            puzzleName:"Puzzle1",
-            description:"Les habitants de l'île ne peuvent plus accéder au sommet de la montagne au nord du village. Le chemin semble être infesté de cauchemars. Aide le sorcier à les éliminer.",
-            pieceAwardName:"piece1"
-        },
-        "Quest8":{
-            areasNames:["Area11", "Area12"],
-            puzzleName:"Puzzle1",
-            description:"Des cauchemars sont encore apparus dans les montagnes près du port et du village. Il faut cependant grimper depuis le port accéder aux zones consernées et passer par les îles volantes se trouvant au dessus de la forêt.",
-            pieceAwardName:"piece20"
-        },
-        "Quest9":{
-            areasNames:["Area13", "Area14"],
-            puzzleName:"Puzzle1",
-            description:"De nouveaux monstres perturbent le sud de l'île vers la crevasse et la bosse à proximité du port. Le sorcier te demande de les éliminer le temps qu'il te trouve d'autres de tes souvenirs.",
-            pieceAwardName:"piece14"
-        },
-        "Quest10":{
-            areasNames:["Area15", "Area16", "Area17"],
-            puzzleName:"Puzzle1",
-            pieceAwardName:"piece22"
-        },
-    }; 
-
-    private static _quests:Quest[] = [];
-
-    public static createQuests(areas:Area[]){
-        Object.keys(QuestAsset.questsDatas).forEach(questName => {
-            try{
-                const questData = QuestAsset.questsDatas[questName];
-                const areasNames = questData.areasNames;
-                const relatedPuzzleName = questData.puzzleName;
-                let questRelatedAreas = areas.filter(area => areasNames.includes(area.areaName));
-                const award = new MemoryPiece(questData.pieceAwardName, "memo1", "assets/images/"+relatedPuzzleName+"/"+questData.pieceAwardName+".png");
-                let questDescription = null
-                if(questData.description) questDescription = questData.description;
-                
-                const quest = new Quest(questName, award, questDescription, questRelatedAreas);
-                this._quests.push(quest);
-            }
-            catch(err) {
-                console.log("Warning : Some areas are missed");
-            }    
-            
-        });
-    }
-
-    public static get quests(){
-        return this._quests;
-    }
-}
 
 export interface CharacterMenu{
     showWindow();
@@ -202,6 +29,7 @@ export class QuestMenu implements CharacterMenu{
 
 
     private _quests: Quest[] = [];
+    private _showedQuests: Quest[] = [];
 
     private _player:Player;
 
@@ -324,6 +152,7 @@ export class QuestMenu implements CharacterMenu{
 
 
         questContainer.addControl(questLabel); 
+        questContainer.isVisible=false;
         //questContainer.addControl(acceptButton);
         //this._questDescriptionUI.addControl(acceptButton);
         this._questListPanel.addControl(questContainer); // on ajoute le rectangle à la liste
@@ -533,6 +362,33 @@ export class QuestMenu implements CharacterMenu{
         this._questListPanel.removeControl(ui.container);
         this._uiMap.delete(quest);
     }
+
+    public showQuestUI(questName:String){
+        const quest=this._quests.find(quest => quest.title === questName);
+        if(quest){
+            this._uiMap.get(quest).container.isVisible = true;
+        }
+    }
+
+    // public addToShowedQuests(quest:Quest){
+    //     const tmp = this._quests;
+    //     this._quests = this._quests.filter(currQuest => currQuest!==quest);
+        
+    //     if(tmp == this._quests) console.log("Error : the quest " + quest + "is not in list _quests");
+    //     if(tmp){
+    //         this._showedQuests.push(tmp);
+    //     }
+    // }
+
+    // public addToShowedQuestsFromQuestsTitles(questNames:string[]){
+    //     const quests = this._quests.filter(quest => questNames.includes(quest.title));
+    //     if(quests){
+    //         for(const quest of quests){
+    //             this.addToShowedQuests(quest);
+    //         }
+    //     }
+    //     else console.log("Erreur : no quests found with the given name in list _quests");
+    // }
 
     // Ajouter une quête
     public addQuest(quest: Quest) {

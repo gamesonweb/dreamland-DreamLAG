@@ -1,8 +1,8 @@
 import { Mesh, Scene, Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import { Player } from "./characterController";
-import { Quest } from "./questMenu";
 import {SlimeMonster} from "./entities/slimeMonster";
+import { Quest } from "./quest";
 
 export class Area{
     protected _scene:Scene;
@@ -215,19 +215,19 @@ export class AreaAsset{
             "Area1":{
                 monstersInfo:{
                     0:1,
-                    1:2
+                    //1:2
                 }
             },
             "Area2":{
                 monstersInfo:{
                     0:2,
-                    1:3
+                    //1:3
                 }
             },
             "Area3":{
                 monstersInfo:{
                     0:3,
-                    1:4
+                    //1:4
                 }
             }
         }

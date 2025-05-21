@@ -19,8 +19,8 @@ export class Character<T extends CharacterMenu>{
 
     private _characterName:string;
     private _dialogueManager: DialogueManager;
-    private _dialogueState: number;
-    private _dialogues: Dialogues;
+    //private dialogueState: number;
+    protected dialogues: Dialogues; //protected car les dialogues peuvent changer en fonction de l'évolution du jeu
 
     private _isInteracting:Boolean = false;
     //private _onDialogueEnd:(() => void) | null;
@@ -30,6 +30,8 @@ export class Character<T extends CharacterMenu>{
     // private _gui3dManager: GUI.GUI3DManager;
 
     private player:Player;
+
+    protected dialogueState:number = 0;
     
     private static readonly MIN_DIST_INTERACTION: number = 15;
 
@@ -38,7 +40,7 @@ export class Character<T extends CharacterMenu>{
         this.scene = scene;
         this.player = player;
         this._characterName = characterName;
-        this._dialogues = dialoguesAssets[this._characterName];
+        this.dialogues = dialoguesAssets[this._characterName];
         //this._onDialogueEnd = onDialogueEnd;
         this.characterMenu = characterMenu;
 
@@ -46,7 +48,7 @@ export class Character<T extends CharacterMenu>{
         this._setUpBoxDialogue();
 
         this._dialogueManager = new DialogueManager(this._dialogBox, this._dialogText);
-        this._dialogueState = 0;
+        this.dialogueState = 0;
 
 
         //this._gui3dManager = new GUI.GUI3DManager(this.scene);
@@ -201,6 +203,7 @@ export class Character<T extends CharacterMenu>{
 
     private _startDialogue(){
         this._isInteracting = true;
-        this._dialogueManager.startDialogue(this._dialogues[this._dialogueState]);
+        this._dialogueManager.startDialogue(this.dialogues[this.dialogueState].dialogue);
+        if(this.dialogues[this.dialogueState].dialogue.changeState) this.dialogueState++;
     }
 }
