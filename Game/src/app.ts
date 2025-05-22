@@ -1,7 +1,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools, Sound, BackgroundMaterial } from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools, Sound, BackgroundMaterial, Layer } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
@@ -98,7 +98,18 @@ export class App {
         camera.setTarget(Vector3.Zero());
 
         //--GUI--
+        const backgroundLayer = new Layer("background", "assets/images/LoseImage.png", scene);
         const guiMenu = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        const loseText = new TextBlock();
+        loseText.fontSize = 80;
+        loseText.text = "You lost!";
+        loseText.color = "white";
+        loseText.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        loseText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        loseText.paddingTop = "150px";
+        guiMenu.addControl(loseText);
+
+        
         const mainBtn = Button.CreateSimpleButton("mainmenu", "MAIN MENU");
         mainBtn.width = 0.2;
         mainBtn.height = "40px";
@@ -286,7 +297,7 @@ export class App {
         scene.clearColor = new Color4(0, 0, 0, 1);
         let camera = new FreeCamera("camera1", new Vector3(0, 0, 0), scene);
         camera.setTarget(Vector3.Zero());
-        
+        const backgroundLayer = new Layer("background", "assets/images/HomeImage.png", scene);
 
         // GUI setup
         const guiMenu = AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -298,7 +309,8 @@ export class App {
         startBtn.color = "white";
         startBtn.top = "-14px";
         startBtn.thickness = 0;
-        startBtn.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        startBtn.background = "rgba(0, 0, 0, 0.5)";
+        startBtn.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
         guiMenu.addControl(startBtn);
 
         startBtn.onPointerDownObservable.add(() => {

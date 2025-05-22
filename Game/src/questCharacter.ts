@@ -13,7 +13,7 @@ export class QuestCharacter extends Character<QuestMenu>{
     private _isTalking:Boolean = false;
     private _completedQuestsTitles:String[] = [];
 
-    private _dialogueStateForFlightMode = 6;
+    private _dialogueStateForFlightMode = 0;
 
     
     constructor(mesh:Mesh, scene:Scene, player:Player, quests: Quest[]){
