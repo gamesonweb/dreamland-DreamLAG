@@ -27,7 +27,6 @@ export class Quest {
         this._linkToAreas();
 
         
-
     } // Pour l'instant, juste un titre
 
     private _linkToAreas(){
@@ -175,5 +174,10 @@ export class QuestAsset{
 
     public static get quests(){
         return this._quests;
+    }
+
+    // fonction à appeler quand on souhaite réinitialiser l'état du jeu (par exemple une fois que le joueur a perdu)
+    public static resetQuests(){
+        QuestAsset._quests = [];
     }
 }

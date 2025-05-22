@@ -11,6 +11,7 @@ import { AreaAsset } from "./area";
 import { MemoryMenu } from "./memoryMenu";
 import { Memory, MemoryAsset } from "./memory";
 import {SlimeMonster} from "./entities/slimeMonster";
+import { QuestAsset } from "./quest";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
@@ -82,6 +83,8 @@ export class App {
         this._engine.displayLoadingUI();
         
         this._backgroundMusic.stop();
+
+        QuestAsset.resetQuests();
 
         document.exitPointerLock();
         if(this._pointerDownHandler) this._canvas.removeEventListener("pointerdown", this._pointerDownHandler);
@@ -374,28 +377,11 @@ export class App {
     }
 
     private async _initializeGameAsync(scene: Scene): Promise<void> {
-        // const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
-        // const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
-        // light.diffuse = new Color3(0.086, 0.109, 0.153);
-        // light.intensity = 35;
-        // light.radius = 1;
-
-        // const shadowGenerator = new ShadowGenerator(1024, light);
-        // shadowGenerator.darkness = 0.4;
-
-        // await this._loadEntities(scene, shadowGenerator);
         this._setupCameras(scene);
     }
 
     private _setupCameras(scene: Scene) {
-        // Player camera (follows the player)
-        // this._playerCamera = new ArcRotateCamera("playerCamera", Math.PI / 2, Math.PI / 3, 20, this._player.mesh.position, scene);
-        // this._playerCamera.setTarget(this._player.mesh.position);
-
-
-
-
-        //scene.activeCamera = this._playerCamera;
+        
         var camera = this._player.activatePlayerCamera();
         this._canvas = this._scene.getEngine().getRenderingCanvas();
         if (this._canvas) {
@@ -407,11 +393,9 @@ export class App {
                     const p = this._canvas.requestPointerLock();
                     if (p instanceof Promise) {
                         p.catch(() => {
-                            // Silence complet du rejet
                         });
                     } 
                     
-                    //this._canvas.requestPointerLock();
                 }
             };
 

@@ -29,7 +29,7 @@ export class Character<T extends CharacterMenu>{
     // private _button3D: Button3D;
     // private _gui3dManager: GUI.GUI3DManager;
 
-    private player:Player;
+    protected player:Player;
 
     protected dialogueState:number = 0;
     
@@ -49,28 +49,6 @@ export class Character<T extends CharacterMenu>{
 
         this._dialogueManager = new DialogueManager(this._dialogBox, this._dialogText);
         this.dialogueState = 0;
-
-
-        //this._gui3dManager = new GUI.GUI3DManager(this.scene);
-
-        // this._button3D = new Button3D("talk3D", {
-        //     width:  0.3,
-        //     height: 0.3,
-        //     depth:  0.3
-        //   });
-        // const label3D = new GUI.TextBlock("lbl3D", "Parler (E)");
-        // label3D.fontSize = 24;
-        // this._button3D.content = label3D;
-
-        // // 3) Ajoute le bouton au manager et lie-le au mesh
-        // this._gui3dManager.addControl(this._button3D);
-        // this._button3D.linkToTransformNode(this._mesh);
-        // this._button3D.isVisible = false;
-
-        // // 4) Déclenche l’interaction au clic
-        // this._button3D.onPointerUpObservable.add(() => {
-        // console.log("On parle !");
-        // }); 
     }
     
 

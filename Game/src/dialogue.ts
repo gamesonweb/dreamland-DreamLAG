@@ -13,6 +13,8 @@ export interface DialogueAssets{
     [characterName: string]: Dialogues
 }
 
+
+
 export const dialoguesAssets: DialogueAssets= {
     "Morphéus":{
         0:{
@@ -101,9 +103,15 @@ export const dialoguesAssets: DialogueAssets= {
         6:{
             dialogue:{
                 lines:[
-                    "J'ai fini le travail de mon côté. La suite repose entre tes mains. Tu sais ce qu'il te reste à faire pour sauver ce monde."
+                    "Tu as terminé! Incroyable!",
+                    "Il me reste une dernière quête à te confier, mais pour ca je tepasse ceci.",
+                    "Ce sont des ailes. Elles te permettront de voler. Tu en auras besoin pour cette dernière mission et pour ce qui t'attends après.",
+                    "Si tu souhaites passer en mode vol, il te suffit d'appuyer sur [F].",
+                    "Pour monter en altitude, appuye sur [ESPACE] et pour descendre, sur [Shift].",
+                    "Bonne chance pour ta dernière mission!"
                 ],
-                changeState:false
+                changeState:false,
+                questsConditionsForNextState: null
             }
         }
     }    

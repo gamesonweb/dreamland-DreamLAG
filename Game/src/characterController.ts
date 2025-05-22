@@ -22,6 +22,7 @@ export class Player extends TransformNode {
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
 
+    //Propriétés de mouvement
     private _moveDirection: Vector3;
     private _h: number;
     private _v: number;
@@ -50,15 +51,23 @@ export class Player extends TransformNode {
     private static readonly JUMP_FORCE: number = 0.7;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
+    private static readonly DEATH_Y_THRESHOLD = -500;
     public dashTime: number = 0;
 
     //public isInteracting:boolean = false;
     private _memoryMenu:MemoryMenu;
     private _memoryMenuKeyPressed:boolean = false;
 
+    //Conditions de vol
+    private _flyKeyPressed:boolean = false;
+    private _flightUnlocked = false;
+
     private _groundCheckInterval: number = 1; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
 
+
+    //fontion pour update en fonction des commandes choisies par le joueur
+    private _renderLoop = () => {};
     
     constructor(private _app: App, assets:any, scene: Scene, position: Vector3, shadowGenerator?: ShadowGenerator, input?) {
     super("player", scene);
@@ -66,7 +75,7 @@ export class Player extends TransformNode {
     this._input = input;
     this._setupPlayerCamera();
     this._setupCameraInputs();
-    this.animationGroups = []; // Assure-toi que c'est initialisé ici ou dans la déclaration de classe
+    this.animationGroups = []; 
 
     SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "XBot.gltf", scene).then((result) => {
     const playerMesh = result.meshes[0] as Mesh;
@@ -161,6 +170,7 @@ export class Player extends TransformNode {
     }
 
     private _updateCamera(): void {
+        if (!this._mesh || !this._camRoot) return;
         let centerPlayer = this.mesh.position.y + 2;
         this.camera.setTarget(this.mesh.position);
         this._camRoot.position = Vector3.Lerp(this._camRoot.position, new Vector3(this.mesh.position.x, centerPlayer, this.mesh.position.z), 0.4);
@@ -172,10 +182,13 @@ export class Player extends TransformNode {
         this._moveDirection = Vector3.Zero();
         this._h = this._input.horizontal;
         this._v = this._input.vertical;
-        if (this._input.flyDown){
+        if (this._flightUnlocked && this._input.flyDown && !this._flyKeyPressed){
             console.log("Je vole")
             this._isFlying=!this._isFlying;
+            this._flyKeyPressed = true;
         }
+        else if(!this._input.flyDown) this._flyKeyPressed = false;
+
         if (this._isFlying) {
             // Désactive la gravité en vol
             this._gravity = Vector3.Zero();
@@ -266,6 +279,10 @@ export class Player extends TransformNode {
         }
     }
 
+    private _checkPlayerHeight(){
+        if(this.mesh.getAbsolutePosition().y < Player.DEATH_Y_THRESHOLD) this.die();
+    }
+
     private _beforeRenderUpdate(): void {
         if(!this._controlsLocked) this._updateFromControls();
         this._updateGroundDetection();
@@ -273,10 +290,12 @@ export class Player extends TransformNode {
     }
 
     public activatePlayerCamera(): ArcRotateCamera{
-        this.scene.registerBeforeRender(() => {
+        this._renderLoop = () => {
             this._beforeRenderUpdate();
             this._updateCamera();
-        });
+            this._checkPlayerHeight();
+        };
+        this.scene.registerBeforeRender(this._renderLoop);
         return this.camera;
     }
 
@@ -362,25 +381,6 @@ export class Player extends TransformNode {
             return false;
         } 
 
-        // const offsets = [
-        //     new Vector3(0, 0, 0),             // Centre
-        //     new Vector3(0.5, 0, 0),           // Avant (ajuster l'offset)
-        //     new Vector3(-0.5, 0, 0),          // Arrière (ajuster l'offset)
-        //     new Vector3(0, 0, 0.5),           // Droite (ajuster l'offset)
-        //     new Vector3(0, 0, -0.5)           // Gauche (ajuster l'offset)
-        // ];
-        // const raycastLen = 2;
-    
-        // for (const offset of offsets) {
-        //     const result = this._floorRaycast(offset.x, offset.z, raycastLen);
-        //     if (!result.equals(Vector3.Zero())) {
-        //         if (!this._input.jumpKeyDown) {
-        //             this.mesh.position.y = result.y + 0.1; // Ajustez l'offset si nécessaire
-        //         }
-        //         return true;
-        //     }
-        // }
-        // return false;
     }
 
     private _updateGroundDetection() {
@@ -413,15 +413,6 @@ export class Player extends TransformNode {
                  this._isFlying=false;
              }
              this._groundCheckCounter = 0;
-
-            // else{
-            //     this._gravity.y = 0;
-            //     this._grounded = true;
-            //     this._jumpCount = 1;
-            //     this._canDash = true;
-            //     this.dashTime = 0;
-            //     this._dashPressed = false;
-            // }
         }
 
         if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked && !this._isFlying) {
@@ -434,17 +425,6 @@ export class Player extends TransformNode {
         }
 
         this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
-
-        // if (this._isGrounded()) {
-        //     this._gravity.y = 0;
-        //     this._grounded = true;
-        //     this._jumpCount = 1;
-        //     this._canDash = true;
-        //     this.dashTime = 0;
-        //     this._dashPressed = false;
-        // }
-
-
     }
 
 
@@ -471,19 +451,15 @@ export class Player extends TransformNode {
         else console.log("Error, piece does not exist : PieceName = " + piece.name +", memoryName = " + piece.memoryName + ", memories = " + MemoryAsset.memories.length);
     }
 
+    public unlockFlightMode(){
+        this._flightUnlocked = true;
+    }
+
     set health(value: number) {
         this._health = value;
     }
 
-    private _attack(/*pickInfo: PickingInfo*/) {
-        // pickInfo vient de onPointerObservable
-        //console.log(pickInfo.pickedMesh?.name);
-        //console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
-        //if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
-          //const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
-          //console.log(monster);
-          
-          ///if(monster) monster.takeDamage(this._damage);
+    private _attack() {
         if (!this.mesh) {
             return;
         }
@@ -537,10 +513,7 @@ export class Player extends TransformNode {
         console.log(`Player takes ${amount} damage. Remaining health: ${this._health}`);
         if (this._health <= 0) {
             this.die();
-            this._app._goToLose().then(() => {
-                this._app._scene.clearCachedVertexData();
-                this._app._scene.cleanCachedTextureBuffer();
-            });
+            
         }
     }
 
@@ -551,6 +524,11 @@ export class Player extends TransformNode {
     die() {
         console.log("Player has died.");
         this.playDeathAnimation();
+        this.scene.unregisterBeforeRender(this._renderLoop);
+        this._app._goToLose().then(() => {
+            this._app._scene.clearCachedVertexData();
+            this._app._scene.cleanCachedTextureBuffer();
+        });
     }
 
     public playIdleAnimation(): void {

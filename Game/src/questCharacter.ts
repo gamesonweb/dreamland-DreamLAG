@@ -13,8 +13,7 @@ export class QuestCharacter extends Character<QuestMenu>{
     private _isTalking:Boolean = false;
     private _completedQuestsTitles:String[] = [];
 
-    // private _button3D: Button3D;
-    // private _gui3dManager: GUI.GUI3DManager;
+    private _dialogueStateForFlightMode = 6;
 
     
     constructor(mesh:Mesh, scene:Scene, player:Player, quests: Quest[]){
@@ -33,6 +32,11 @@ export class QuestCharacter extends Character<QuestMenu>{
     private areEqualSets(a: any[], b: any[]): boolean {
         return new Set(a).size === new Set(b).size &&
             [...new Set(a)].every(item => new Set(b).has(item));
+    }
+
+    public startInteraction(): void {
+        if(this.dialogueState == this._dialogueStateForFlightMode) this.player.unlockFlightMode();
+        super.startInteraction();
     }
 
 
