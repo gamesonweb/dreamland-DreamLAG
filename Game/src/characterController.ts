@@ -9,6 +9,8 @@ import {createDeathAnimation} from "./entities/animation";
 import { Memory, MemoryAsset, MemoryPiece } from "./memory";
 import { PlayerInput } from "./inputController";
 import {MemoryMenu} from "./memoryMenu";
+import { AdvancedDynamicTexture, Control, Rectangle, TextBlock } from "@babylonjs/gui";
+
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -54,9 +56,12 @@ export class Player extends TransformNode {
     private static readonly DEATH_Y_THRESHOLD = -500;
     public dashTime: number = 0;
 
-    //public isInteracting:boolean = false;
+    //Player UI properties
     private _memoryMenu:MemoryMenu;
     private _memoryMenuKeyPressed:boolean = false;
+
+    private _healthBar:Rectangle;
+    private _healthText:TextBlock;
 
     //Conditions de vol
     private _flyKeyPressed:boolean = false;
@@ -64,6 +69,7 @@ export class Player extends TransformNode {
 
     private _groundCheckInterval: number = 1; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
+
 
 
     //fontion pour update en fonction des commandes choisies par le joueur
@@ -167,6 +173,80 @@ export class Player extends TransformNode {
             newTiltX = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, newTiltX));
             this._yTilt.rotation.x = newTiltX;
         });
+    }
+
+    public createPlayerUI(scene:Scene){
+
+        // GUI
+        const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+        // const loseBtn = Button.CreateSimpleButton("lose", "LOSE");
+        // loseBtn.width = 0.2;
+        // loseBtn.height = "40px";
+        // loseBtn.color = "white";
+        // loseBtn.top = "-14px";
+        // loseBtn.thickness = 0;
+        // loseBtn.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        // playerUI.addControl(loseBtn);
+
+        // loseBtn.onPointerDownObservable.add(() => {
+        //     this._goToLose();
+        //     scene.detachControl(); // Observables disabled
+        // });
+
+        //Pour afficher les fps
+        // this.fpsDisplay = new TextBlock();
+        // this.fpsDisplay.text = "FPS: 0";
+        // this.fpsDisplay.color = "black";
+        // this.fpsDisplay.fontSize = 24;
+        // this.fpsDisplay.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        // this.fpsDisplay.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        // this.fpsDisplay.paddingLeft = "10px";
+        // this.fpsDisplay.paddingBottom = "10px";
+        // this.fpsDisplay.isVisible = true;
+        // playerUI.addControl(this.fpsDisplay);
+        // 2. Conteneur pour la barre
+        const healthBarContainer = new Rectangle();
+        healthBarContainer.width = "20%";
+        healthBarContainer.height = "10%";
+        healthBarContainer.cornerRadius = 10;
+        healthBarContainer.color = "white";
+        healthBarContainer.thickness = 1;
+        healthBarContainer.background = "gray";
+        healthBarContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        healthBarContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        healthBarContainer.paddingBottom = "50px";
+        playerUI.addControl(healthBarContainer);
+
+        
+        const healthBar = new Rectangle();
+        healthBar.width = "100%"; // 1 = 100%
+        healthBar.height = 1;
+        healthBar.cornerRadius = 0;
+        healthBar.color = "red";
+        healthBar.thickness = 0;
+        healthBar.background = "red";
+        healthBar.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        healthBar.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        healthBarContainer.addControl(healthBar);
+        this._healthBar = healthBar;
+
+        const healthText = new TextBlock();
+        healthText.text = "100/100";
+        healthText.color = "black";
+        healthText.fontSize = 20;
+        healthText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        healthText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        healthText.isVisible = true;
+        healthBarContainer.addControl(healthText);
+        this._healthText = healthText;
+
+        scene.detachControl();
+    }
+
+    private _updateHealthUI(){
+        this._healthText.text = `${this._health}/100`;
+        this._healthBar.width = `${this._health}%`;
     }
 
     private _updateCamera(): void {
@@ -496,6 +576,8 @@ export class Player extends TransformNode {
         }
     }
 
+    
+
     public playMovementAnimation(){
         if(this._inMovement){
             if(this.idleAnimation.isPlaying) this.idleAnimation.stop();
@@ -510,6 +592,7 @@ export class Player extends TransformNode {
 
     takeDamage(amount: number) {
         this._health -= amount;
+        this._updateHealthUI();
         console.log(`Player takes ${amount} damage. Remaining health: ${this._health}`);
         if (this._health <= 0) {
             this.die();

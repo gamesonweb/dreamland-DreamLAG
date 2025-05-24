@@ -1,4 +1,4 @@
-import { Scene, ActionManager, ExecuteCodeAction, Scalar, PointerEventTypes } from "@babylonjs/core";
+import { Scene, ActionManager, ExecuteCodeAction, Scalar, PointerEventTypes, KeyboardEventTypes } from "@babylonjs/core";
 
 
 export class PlayerInput {
@@ -24,23 +24,32 @@ export class PlayerInput {
         scene.actionManager = new ActionManager(scene);
     
         this.inputMap = {};
-        scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
-            this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
-        }));
-        scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
-            this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
-        }));
+        // scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
+        //     this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
+        // }));
+        // scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
+        //     this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
+        // }));
+        scene.onKeyboardObservable.add((kbInfo) => {
+            const key = kbInfo.event.code;
+            switch (kbInfo.type) {
+                case KeyboardEventTypes.KEYDOWN:
+                    this.inputMap[key] = true;
+                    break;
+                case KeyboardEventTypes.KEYUP:
+                    this.inputMap[key] = false;
+                    break;
+            }
+        });
+
 
         scene.onPointerObservable.add((pi) => {
             if (
-                //pi.type === PointerEventTypes.POINTERDOWN &&
                 pi.event.button === 0 &&
                 !this.controlsLocked
             ) {
               this.onAttack?.();
             }
-            // else if(this.controlsLocked && pi.event.button === 0) this.resumeDialog=true;
-            // else this.resumeDialog=false;
           });
     
         scene.onBeforeRenderObservable.add(() => {
@@ -52,7 +61,6 @@ export class PlayerInput {
         if (this.inputMap["KeyW"]) {
             this.vertical = Scalar.Lerp(this.vertical, 1, 0.2);
             this.verticalAxis = 1;
-    
         } else if (this.inputMap["KeyS"]) {
             this.vertical = Scalar.Lerp(this.vertical, -1, 0.2);
             this.verticalAxis = -1;

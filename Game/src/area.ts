@@ -1,4 +1,4 @@
-import { Mesh, Scene, Vector3 } from "@babylonjs/core";
+import { Color3, Mesh, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import { Player } from "./characterController";
 import {SlimeMonster} from "./entities/slimeMonster";
@@ -27,8 +27,14 @@ export class Area{
 
         this._player = player;
 
+        // Création d'un matériau
+        const material = new StandardMaterial("material", scene);
+        material.diffuseColor = new Color3(0,0,0); // rouge
+        material.alpha = 0.1;
+
         this.areaName = areaName;
         this._areaMesh = mesh;
+        this._areaMesh.material = material;
         this._areaMesh.isVisible = false;
 
 
@@ -40,6 +46,7 @@ export class Area{
     }
 
     protected _setAreaCompleted(){
+        this.disactivateArea();
         this._areaCompleted = true;
         console.log("TERMINATED, quest : " + this._relatedQuest);
         if(this._relatedQuest) this._relatedQuest.setQuestProgression();
@@ -50,8 +57,11 @@ export class Area{
     }
 
     public activateArea(): void{
-        //temporaire
         this._areaMesh.isVisible = true;
+    }
+
+    public disactivateArea(): void{
+        this._areaMesh.isVisible = false;
     }
 
     public get isCompleted(){

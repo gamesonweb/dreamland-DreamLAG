@@ -332,37 +332,7 @@ export class App {
         scene.clearColor = new Color4(0.01568627450980392, 0.01568627450980392, 0.20392156862745098);
 
         
-        
-
-        // GUI
-        const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-        scene.detachControl();
-
-        const loseBtn = Button.CreateSimpleButton("lose", "LOSE");
-        loseBtn.width = 0.2;
-        loseBtn.height = "40px";
-        loseBtn.color = "white";
-        loseBtn.top = "-14px";
-        loseBtn.thickness = 0;
-        loseBtn.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-        playerUI.addControl(loseBtn);
-
-        loseBtn.onPointerDownObservable.add(() => {
-            this._goToLose();
-            scene.detachControl(); // Observables disabled
-        });
-
-        //Pour afficher les fps
-        this.fpsDisplay = new TextBlock();
-        this.fpsDisplay.text = "FPS: 0";
-        this.fpsDisplay.color = "black";
-        this.fpsDisplay.fontSize = 24;
-        this.fpsDisplay.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-        this.fpsDisplay.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        this.fpsDisplay.paddingLeft = "10px";
-        this.fpsDisplay.paddingTop = "10px";
-        this.fpsDisplay.isVisible = true;
-        playerUI.addControl(this.fpsDisplay);
+        this._player.createPlayerUI(scene);
 
         let fps = 0;
         // Initialize the game
@@ -516,12 +486,12 @@ export class App {
                     break;
                 case State.GAME:
                     this._scene.render();
-                    const currentTime = performance.now();
-                    const deltaTime = currentTime - this.lastTime;
-                    const fps = Math.round(1000 / deltaTime);
-                    this.lastTime = currentTime;
+                    // const currentTime = performance.now();
+                    // const deltaTime = currentTime - this.lastTime;
+                    // const fps = Math.round(1000 / deltaTime);
+                    // this.lastTime = currentTime;
 
-                    this.fpsDisplay.text = `FPS: ${fps}`;
+                    // this.fpsDisplay.text = `FPS: ${fps}`;
                     break;
                 case State.LOSE:
                     this._scene.render();
