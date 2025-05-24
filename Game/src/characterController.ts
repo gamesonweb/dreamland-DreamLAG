@@ -1,5 +1,6 @@
 import {
-    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, Mesh, PickingInfo, Quaternion, Ray, RayHelper,
+    AbstractMesh,
+    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, Mesh, Nullable, PickingInfo, Quaternion, Ray, RayHelper,
     Scene, SceneLoader, ShadowGenerator, Tools, TransformNode,
     Vector3
 } from "@babylonjs/core";
@@ -544,39 +545,44 @@ export class Player extends TransformNode {
             return;
         }
 
-        // Récupérer la position du joueur (légèrement au-dessus du centre)
         const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 0.4, 0));
-
-        // Récupérer la direction "avant" du joueur
         const playerForward = this.mesh.getDirection(Axis.Z).normalize();
+        const ray = new Ray(playerPosition, playerForward, 5);
 
-        // Créer le rayon d'attaque
-        const ray = new Ray(playerPosition, playerForward, 5); // Portée de l'attaque
-
-        // Visualisation du rayon pour le débogage
         const rayHelper = new RayHelper(ray);
         rayHelper.show(this.scene, new Color3(1, 0, 0));
-        setTimeout(() => {
-            rayHelper.dispose();
-        }, 100);
+        setTimeout(() => rayHelper.dispose(), 100);
 
-        // Effectuer un picking avec le rayon pour détecter les intersections
         const hit = this.scene.pickWithRay(ray);
 
-        // Vérifier si une intersection a eu lieu et si l'objet touché est un monstre
-        if (hit.hit && hit.pickedMesh && hit.pickedMesh.metadata && hit.pickedMesh.metadata.isMonster) {
-            const targetMonster = hit.pickedMesh.metadata.monsterInstance as Monster;
-            console.log("Le joueur attaque monstre : health: ", targetMonster.health);
-            targetMonster.takeDamage(this._damage); // Appliquer les dégâts au monstre
+        if (hit.hit && hit.pickedMesh) {
+            // Fonction pour remonter dans la hiérarchie et trouver un parent avec isMonster=true
+            function findMonsterParent(mesh: Nullable<AbstractMesh>): Nullable<AbstractMesh> {
+                while (mesh) {
+                    if (mesh.metadata && mesh.metadata.isMonster) {
+                        return mesh;
+                    }
+                    mesh = mesh.parent as Mesh | null;
+                }
+                return null;
+            }
 
-        } else if (hit.hit && hit.pickedMesh) {
-            console.log("Le rayon a touché :", hit.pickedMesh.name);
+            const monsterMesh = findMonsterParent(hit.pickedMesh);
+
+            if (monsterMesh) {
+                const targetMonster = monsterMesh.metadata.monsterInstance as Monster;
+                console.log("Le joueur attaque le monstre : health: ", targetMonster.health);
+                targetMonster.takeDamage(this._damage);
+            } else {
+                console.log("Le rayon a touché :", hit.pickedMesh.name, "mais ce n'est pas un monstre.");
+            }
         } else {
             console.log("Le rayon n'a rien touché.");
         }
     }
 
-    
+
+
 
     public playMovementAnimation(){
         if(this._inMovement){

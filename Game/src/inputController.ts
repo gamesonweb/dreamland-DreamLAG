@@ -82,8 +82,6 @@ export class PlayerInput {
             this.horizontalAxis = 0;
         }
 
-        console.log("vertical = " + this.verticalAxis + ", " + this.horizontalAxis);
-
         if (this.inputMap["ShiftLeft"]){
             this.dashing = true;
         }else{

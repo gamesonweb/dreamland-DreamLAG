@@ -1,17 +1,34 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, Matrix, Quaternion, StandardMaterial, Color3, PointLight, ShadowGenerator, Tools, Sound, BackgroundMaterial, Layer } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "@babylonjs/gui";
-import { Environment } from "./environment";
-import { Player } from "./characterController";
-import { PlayerInput } from "./inputController";
-import { Monster } from "./entities/monster";
-import { AreaAsset } from "./area";
-import { MemoryMenu } from "./memoryMenu";
-import { Memory, MemoryAsset } from "./memory";
+import {
+    ArcRotateCamera,
+    Color3,
+    Color4,
+    Engine,
+    FreeCamera,
+    HemisphericLight,
+    Layer,
+    Matrix,
+    Mesh,
+    MeshBuilder,
+    PointLight,
+    Quaternion,
+    Scene,
+    ShadowGenerator,
+    Sound,
+    StandardMaterial,
+    Vector3
+} from "@babylonjs/core";
+import {AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock} from "@babylonjs/gui";
+import {Environment} from "./environment";
+import {Player} from "./characterController";
+import {PlayerInput} from "./inputController";
+import {Monster} from "./entities/monster";
+import {AreaAsset} from "./area";
+import {MemoryAsset} from "./memory";
 import {SlimeMonster} from "./entities/slimeMonster";
-import { QuestAsset } from "./quest";
+import {QuestAsset} from "./quest";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
@@ -216,24 +233,21 @@ export class App {
     private async _loadEntities(scene: Scene, shadowGenerator?: ShadowGenerator): Promise<void> {
         this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
-        // const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
-        // const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10);
-        // this._mobs = [slime1, slime2];
+        const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
+        const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10);
+        this._mobs = [slime1, slime2];
 
-        // this._mobs.forEach(mob => {
-        //     mob.activateMonster([this._player]);
-        // })
+        this._mobs.forEach(mob => {
+            mob.activateMonster([this._player]);
+        })
     }
-
 
     private async _setUpGame() {
         let scene = new Scene(this._engine);
         this._gamescene = scene;
 
-
         await MemoryAsset.init();
         AreaAsset.areas = {};
-        
 
         //--CREATE ENVIRONMENT--
         const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
@@ -253,7 +267,6 @@ export class App {
 
         const environment = new Environment(scene, this._player);
         this._environment = environment; //class variable for App
-
 
         //const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment
@@ -275,7 +288,6 @@ export class App {
                 }
             );
         });
-
 
         if (!this._backgroundMusic.isPlaying) {
                     console.log("Music play");
@@ -341,15 +353,8 @@ export class App {
 
         await scene.whenReadyAsync();
         //scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
-        this._player.mesh.position.y = 30;
-        //const mob = this._mobs[0];
-        // mob.mesh.position.y = this._player.mesh.position.y - 39;
-        // mob.mesh.position.x = this._player.mesh.position.x + 10;
-        // const mob2 = this._mobs[1];
-        // mob2.mesh.position.y = this._player.mesh.position.y - 39;
-        // mob2.mesh.position.x = this._player.mesh.position.x - 10;
+        this._positionMobsRelativeToPlayer();
 
-        // Switch scene and set state
         //scene.createOrUpdateSelectionOctree(64,2);
         this._scene.dispose();
         this._state = State.GAME;
@@ -357,6 +362,30 @@ export class App {
         this._engine.hideLoadingUI();
         this._scene.attachControl();
     }
+
+    private _positionMobsRelativeToPlayer(): void {
+        if (!this._player || this._mobs.length === 0) return;
+
+        const baseY = 2;
+
+        // Position joueur
+        const playerPos = this._player.mesh.position;
+
+        // Rayon autour du joueur pour placer les mobs
+        const radius = 15;
+
+        const count = this._mobs.length;
+
+        for (let i = 0; i < count; i++) {
+            // Angle réparti sur 360 degrés selon le nombre de mobs
+            const angle = (2 * Math.PI / count) * i;
+
+            const x = playerPos.x + radius * Math.cos(angle);
+            const z = playerPos.z + radius * Math.sin(angle);
+            this._mobs[i].mesh.position.set(x, baseY, z);
+        }
+    }
+
 
     private async _initializeGameAsync(scene: Scene): Promise<void> {
         this._setupCameras(scene);
