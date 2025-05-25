@@ -20,6 +20,9 @@ export class PlayerInput {
     public onAttack: (() => void) | null = null;
     public controlsLocked:boolean = false;
 
+    private attackLocked = false;
+    private attackCooldown = 0.05; // en secondes, par exemple
+
     constructor(scene: Scene) {
         scene.actionManager = new ActionManager(scene);
     
@@ -44,11 +47,10 @@ export class PlayerInput {
 
 
         scene.onPointerObservable.add((pi) => {
-            if (
-                pi.event.button === 0 &&
-                !this.controlsLocked
-            ) {
-              this.onAttack?.();
+            if (pi.event.button === 0 && !this.controlsLocked) {
+                if(!this.attackLocked) this.onAttack?.();
+                this.attackLocked = true;
+                setTimeout(() => {this.attackLocked = false;}, this.attackCooldown * 1000);
             }
           });
     

@@ -163,7 +163,7 @@ export class GoblinBossMonster extends Monster {
 
     override die(): void{
         super.die();
-        console.log("Boss die");
+        console.log("Boss die")
         this.onDeathObservable.notifyObservers();
     }
 }

@@ -66,7 +66,7 @@ export class Environment {
             const treeInstances: { [key: string]: InstancedMesh[] } = {};
 
 
-            geoMeshes.forEach(async (mesh) => {
+            await geoMeshes.forEach(async (mesh) => {
                 mesh.checkCollisions = true;
 
                 if(shadowGenerator) shadowGenerator.addShadowCaster(mesh);
@@ -110,7 +110,7 @@ export class Environment {
                     // boss.mesh.scaling = new Vector3(0.007,0.007,0.007);
                     console.log("bossMesh scaling = " + boss.mesh.scaling);
                     mesh.dispose();
-                    boss.activateMonster([this._player]);
+                    //boss.activateMonster([this._player]);
                     this._finalBoss = boss;
                 }
 
@@ -164,7 +164,7 @@ export class Environment {
                   wizard.rotation = new Vector3(0, 3*Math.PI/2, 0); 
                   questCharacterHolder.dispose();
 
-                  QuestAsset.createQuests(AreaAsset.getIslandAreas("Island1"));
+                  QuestAsset.createQuests(AreaAsset.getIslandAreas("Island1"), this._finalBoss, this._player);
                   questsIslands1 = QuestAsset.quests;
                   
                   // Now you can safely create and activate your QuestCharacter

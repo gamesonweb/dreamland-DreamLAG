@@ -42,13 +42,13 @@ export class Player extends TransformNode {
     private _mesh: Mesh; // Outer collisionbox of the player
     private _deltaTime: number = 0;
     private _health: number = 100;
-    private _damage: number = 10;
+    private _damage: number = 200;
     private _memories:Memory[];
 
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.3;
+    private static readonly PLAYER_SPEED: number = 0.8;
     private static readonly PLAYER_FLIGHT_SPEED:number = 1.5;
     private static readonly GRAVITY: number = -2.5;
     private static readonly JUMP_FORCE: number = 0.7;
@@ -671,7 +671,7 @@ export class Player extends TransformNode {
             if (monsterMesh) {
                 const targetMonster = monsterMesh.metadata.monsterInstance as Monster;
                 console.log("Le joueur attaque le monstre : health: ", targetMonster.health);
-                targetMonster.takeDamage(this._damage);
+                if(targetMonster.isAlive())targetMonster.takeDamage(this._damage);
             } else {
                 console.log("Le rayon a touché :", hit.pickedMesh.name, "mais ce n'est pas un monstre.");
             }

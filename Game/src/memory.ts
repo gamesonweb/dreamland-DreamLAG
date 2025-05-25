@@ -133,6 +133,8 @@ export class Memory{
     private _advancedTexture:GUI.AdvancedDynamicTexture;
     private _memoryWindow: GUI.Rectangle;
 
+    public onAchievementObservable = new Observable<void>();
+
     constructor(memoryName:string, puzzleUrl:string){
         this.name = memoryName;
 
@@ -148,6 +150,7 @@ export class Memory{
     private _checkMemoryAchieved(){
         if(this._unlockedPieces.length === Memory.NB_OF_MEMORY_PIECES){
             this._isMemoryAchieved = true;
+            this.onAchievementObservable.notifyObservers();
         }
     }
 

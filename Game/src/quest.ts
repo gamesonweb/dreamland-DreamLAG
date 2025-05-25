@@ -2,6 +2,8 @@ import { Observable } from "@babylonjs/core";
 import { Area } from "./area";
 import { Player } from "./characterController";
 import { MemoryPiece } from "./memory";
+import { Monster } from "./entities/monster";
+import { GoblinBossMonster } from "./entities/goblinBossMonster";
 
 export class Quest {
     public title:string
@@ -15,14 +17,22 @@ export class Quest {
     public onStateChange = new Observable<Quest>();
 
     private _involvedAreas:Area[]|null=[];
+    private _involvedBossMonster:GoblinBossMonster|null;
+    private _player:Player|null;
 
-    constructor(title: string, reward: MemoryPiece, description?:string, areas?:Area[]) {
+    constructor(title: string, reward: MemoryPiece, description?:string, areas?:Area[], involvedBossMonster?:GoblinBossMonster, player?:Player) {
         this.title = title;
         if(description) this._description=description;
 
         this._reward = reward;
 
         this._involvedAreas = areas;
+        this._involvedBossMonster=involvedBossMonster;
+        if(this._involvedBossMonster){
+            this._involvedBossMonster.onDeathObservable.add(() => this.setQuestProgression());
+        } 
+        //this._involvedBossMonster.is
+        this._player = player;
 
         this._linkToAreas();
 
@@ -43,6 +53,8 @@ export class Quest {
                 area.activateArea();
             }
         }
+        console.log(this._involvedBossMonster);
+        if(this._involvedBossMonster) this._involvedBossMonster.activateMonster([this._player]);
     }
     
 
@@ -53,8 +65,16 @@ export class Quest {
             if(area.isCompleted) nbCompletedAreas++;
         }
         if(nbCompletedAreas === nbAreas){
-            this._isCompleted = true;
-            this.onStateChange.notifyObservers(this);
+            if(this._involvedBossMonster){
+                if(!this._involvedBossMonster.isAlive()){
+                    this._isCompleted = true;
+                    this.onStateChange.notifyObservers(this);
+                }
+            }   
+            else{
+                this._isCompleted = true;
+                this.onStateChange.notifyObservers(this);
+            } 
         }
         
     }
@@ -85,7 +105,7 @@ export class Quest {
 }
 
 export class QuestAsset{
-    public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, description?:String, pieceAwardName:string}} = 
+    public static questsDatas: {[questName:string]: {areasNames:String[], puzzleName:String, description?:String, pieceAwardName:string; boss?:boolean}} = 
     {
         "Quest1" : {
             areasNames:["Area1"],
@@ -143,16 +163,17 @@ export class QuestAsset{
             pieceAwardName:"piece14"
         },
         "Quest10":{
-            areasNames:["Area15", "Area16", "Area17"],
+            areasNames:["Area15", "Area16", "Area17", "Area18"],
             puzzleName:"Puzzle1",
             description:"Des monstres se trouvent sur les petites îles menant vers la deuxième île. Éliminez-les afin de pouvoir mener le combat final sur la dernière île!",
-            pieceAwardName:"piece22"
+            pieceAwardName:"piece22",
+            boss:true
         },
     }; 
 
     private static _quests:Quest[] = [];
 
-    public static createQuests(areas:Area[]){
+    public static createQuests(areas:Area[], bossMonster?:GoblinBossMonster, player?:Player){
         Object.keys(QuestAsset.questsDatas).forEach(questName => {
             try{
                 const questData = QuestAsset.questsDatas[questName];
@@ -160,10 +181,16 @@ export class QuestAsset{
                 const relatedPuzzleName = questData.puzzleName;
                 let questRelatedAreas = areas.filter(area => areasNames.includes(area.areaName));
                 const award = new MemoryPiece(questData.pieceAwardName, "memo1", "assets/images/"+relatedPuzzleName+"/"+questData.pieceAwardName+".png");
+
                 let questDescription = null
                 if(questData.description) questDescription = questData.description;
+
+                let boss = null;
+                if(questData.boss && bossMonster){
+                    boss = bossMonster;                   
+                } 
                 
-                const quest = new Quest(questName, award, questDescription, questRelatedAreas);
+                const quest = new Quest(questName, award, questDescription, questRelatedAreas, boss, player);
                 this._quests.push(quest);
             }
             catch(err) {

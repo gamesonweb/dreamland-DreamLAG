@@ -26,7 +26,7 @@ import {Player} from "./characterController";
 import {PlayerInput} from "./inputController";
 import {Monster} from "./entities/monster";
 import {AreaAsset} from "./area";
-import {MemoryAsset} from "./memory";
+import {Memory, MemoryAsset} from "./memory";
 import {SlimeMonster} from "./entities/slimeMonster";
 import {QuestAsset} from "./quest";
 import { GoblinBossMonster } from "./entities/goblinBossMonster";
@@ -68,7 +68,8 @@ export class App {
 
     private _backgroundMusic:Sound = null;
 
-    private _finalBoss:GoblinBossMonster;
+    private _memories:Memory[];
+    private _memoriesAchieved:number = 0;
 
 
     constructor() {
@@ -303,6 +304,7 @@ export class App {
 
         await MemoryAsset.init();
         AreaAsset.areas = {};
+        this._memories = MemoryAsset.memories;
 
         //--CREATE ENVIRONMENT--
         const light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
@@ -325,7 +327,7 @@ export class App {
 
         //const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment
-        this._finalBoss = this._environment.finalBoss;
+        //this._finalBoss = this._environment.finalBoss;
         const gui = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         const victoryText = new TextBlock();
         victoryText.fontSize = 80;
@@ -336,13 +338,17 @@ export class App {
         victoryText.paddingTop = "150px";
         victoryText.isVisible = false;
         gui.addControl(victoryText);
-        this._finalBoss.onDeathObservable.add(() => {
-            victoryText.isVisible=true;
+        this._memories.forEach(memory => {
+            memory.onAchievementObservable.add(() => {
+                this._memoriesAchieved++;
+                if(this._memoriesAchieved == this._memories.length){
+                    victoryText.isVisible=true;
             
-            setTimeout(() => {
-                this._goToWin();
-            },5000);
-            
+                    setTimeout(() => {
+                        this._goToWin();
+                    },5000);
+                }
+            }) 
         });
 
         await this._createPauseMenu();
