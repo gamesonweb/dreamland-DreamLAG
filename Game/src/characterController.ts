@@ -1,7 +1,7 @@
 import {
     AbstractMesh,
-    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, Mesh, Nullable, PickingInfo, Quaternion, Ray, RayHelper,
-    Scene, SceneLoader, ShadowGenerator, Tools, TransformNode,
+    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, DynamicTexture, GlowLayer, Mesh, MeshBuilder, Nullable, PickingInfo, Quaternion, Ray, RayHelper,
+    Scene, SceneLoader, ShadowGenerator, StandardMaterial, Texture, Tools, TransformNode,
     Vector3
 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
@@ -48,7 +48,7 @@ export class Player extends TransformNode {
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.8;
+    private static readonly PLAYER_SPEED: number = 0.3;
     private static readonly PLAYER_FLIGHT_SPEED:number = 1.5;
     private static readonly GRAVITY: number = -2.5;
     private static readonly JUMP_FORCE: number = 0.7;
@@ -72,6 +72,9 @@ export class Player extends TransformNode {
     private _groundCheckCounter: number = 0;
 
 
+    //player attack properties
+    private _dynTex:DynamicTexture;
+    private _glow:GlowLayer;
 
     //fontion pour update en fonction des commandes choisies par le joueur
     private _renderLoop = () => {};
@@ -106,6 +109,9 @@ export class Player extends TransformNode {
 
     this.joggingAnimation = result.animationGroups.find(g => g.name === "jogging");
     this.idleAnimation = result.animationGroups.find(g => g.name === "idle");
+
+    this._createLightRayTexture();
+    
 
 });
 
@@ -540,6 +546,28 @@ export class Player extends TransformNode {
         this._health = value;
     }
 
+    private _createLightRayTexture(){
+        const size = 256;
+        const dynTex = new DynamicTexture("beamGrad", { width: size, height: size }, this.scene, false);
+        const ctx = dynTex.getContext();
+
+        // Création du dégradé horizontal (de gauche à droite)
+        const grd = ctx.createLinearGradient(0, 0, size, 0);
+        grd.addColorStop(0.0, "rgba(255,  50,  50, 1)");   // rouge vif
+        grd.addColorStop(0.5, "rgba(255, 200,  50, 0.6)"); // jaune cuivré semi-transparent
+        grd.addColorStop(1.0, "rgba(255,  50, 255, 0)");   // violet qui s’estompe
+
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, size, size);
+        dynTex.update();
+        this._dynTex = dynTex;
+
+        const glow = new GlowLayer("glow", this.scene);
+        glow.intensity = 0.5;        // plus élevé = plus de halo
+        glow.blurKernelSize = 64;    // ajuste la diffusion
+        this._glow = glow;
+    }
+
     private _attack() {
         if (!this.mesh) {
             return;
@@ -549,11 +577,82 @@ export class Player extends TransformNode {
         const playerForward = this.mesh.getDirection(Axis.Z).normalize();
         const ray = new Ray(playerPosition, playerForward, 4);
 
-        const rayHelper = new RayHelper(ray);
-        rayHelper.show(this.scene, new Color3(1, 0, 0));
-        setTimeout(() => rayHelper.dispose(), 100);
+        // 1) Position centrale du joueur (à la hauteur souhaitée)
+        const eyeHeight = 1;
+        const basePos = this.mesh.getAbsolutePosition().add(new Vector3(0, eyeHeight, 0));
 
-        const hit = this.scene.pickWithRay(ray);
+        // 2) Direction avant
+        const forward = this.mesh.getDirection(Axis.Z).normalize();
+
+        // 3) Décaler le point de départ un peu devant le joueur
+        const muzzleOffset = 0.5;  // ajustez selon la taille de votre personnage/arme
+        const start = basePos.add(forward.scale(muzzleOffset));
+
+        // const rayHelper = new RayHelper(ray);
+        // rayHelper.show(this.scene, new Color3(1, 1, 0));
+
+    //     const hit = this.scene.pickWithRay(ray);
+
+    //     const laserLength = hit.hit && hit.pickedPoint
+    //    ? Vector3.Distance(playerPosition, hit.pickedPoint)
+    //    : ray.length;
+
+    //     // 4) Construire simplement le tube entre start et end
+    //     const start = playerPosition;
+    //     const end   = playerPosition.add(playerForward.scale(laserLength));
+    //     const laserBeam = MeshBuilder.CreateTube("laserBeam", {
+    //         path: [start, end],
+    //         radius: 0.2,
+    //         tessellation: 8,
+    //     }, this.scene);
+
+    //     // 5) Matériau émissif
+    //     const mat = new StandardMaterial("laserMat", this.scene);
+    //     mat.emissiveColor = new Color3(1, 0, 0);
+    //     mat.alpha = 0.8;
+    //     laserBeam.material = mat;
+
+    
+
+    //const start  = this.mesh.getAbsolutePosition().add(new Vector3(0, 1, 0));
+    const dir    = this.mesh.getDirection(Axis.Z).normalize();
+
+    // 2) détection de la collision pour la longueur
+    //const ray    = new Ray(start, dir, 10);
+    const hit    = this.scene.pickWithRay(ray);
+    const length = hit.hit && hit.pickedPoint
+        ? Vector3.Distance(start, hit.pickedPoint)
+        : ray.length;
+
+    // 3) création du tube (shape volumétrique)
+    const beam = MeshBuilder.CreateTube("beam", {
+        path: [ start, start.add(dir.scale(length)) ],
+        radius: 0.1,
+        tessellation: 6
+    }, this.scene);
+    
+    
+
+    // Matériau émissif ajoutant ce dégradé
+    const mat = new StandardMaterial("beamMat", this.scene);
+    mat.emissiveTexture  = this._dynTex;
+    mat.emissiveColor    = new Color3(1, 1, 1);
+    mat.disableLighting  = true;
+    mat.alpha            = 0.8;
+
+    // Applique sur ton tube
+    beam.material = mat;
+    //const newGlow = this._glow.c
+
+        // 6) Nettoyage rapide
+        setTimeout(() => {
+            beam.dispose();
+            //rayHelper.dispose();
+        }, 50);
+
+        
+
+        
 
         if (hit.hit && hit.pickedMesh) {
             // Fonction pour remonter dans la hiérarchie et trouver un parent avec isMonster=true
