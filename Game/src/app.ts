@@ -29,6 +29,7 @@ import {AreaAsset} from "./area";
 import {MemoryAsset} from "./memory";
 import {SlimeMonster} from "./entities/slimeMonster";
 import {QuestAsset} from "./quest";
+import { GoblinBossMonster } from "./entities/goblinBossMonster";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
@@ -66,6 +67,8 @@ export class App {
     private _shouldPauseOnUnlock = false;
 
     private _backgroundMusic:Sound = null;
+
+    private _finalBoss:GoblinBossMonster;
 
 
     constructor() {
@@ -145,6 +148,58 @@ export class App {
         this._scene = scene;
         this._state = State.LOSE;
     }
+
+
+    public async _goToWin(): Promise<void> {
+        this._engine.displayLoadingUI();
+        
+        this._backgroundMusic.stop();
+
+        QuestAsset.resetQuests();
+
+        document.exitPointerLock();
+        if(this._pointerDownHandler) this._canvas.removeEventListener("pointerdown", this._pointerDownHandler);
+        if(this._pointerMoveHandler) this._canvas.removeEventListener("pointermove", this._pointerMoveHandler);
+        
+        //--SCENE SETUP--
+        this._scene.detachControl();
+        let scene = new Scene(this._engine);
+        scene.clearColor = new Color4(0, 0, 0, 1);
+        let camera = new FreeCamera("camera1", new Vector3(0, 0, 0), scene);
+        camera.setTarget(Vector3.Zero());
+
+        //--GUI--
+        const backgroundLayer = new Layer("background", "assets/images/VictoryImage.png", scene);
+        const guiMenu = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        const winText = new TextBlock();
+        winText.fontSize = 80;
+        winText.text = "You won!";
+        winText.color = "white";
+        winText.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        winText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        winText.paddingTop = "150px";
+        guiMenu.addControl(winText);
+
+        
+        const mainBtn = Button.CreateSimpleButton("mainmenu", "MAIN MENU");
+        mainBtn.width = 0.2;
+        mainBtn.height = "40px";
+        mainBtn.color = "white";
+        guiMenu.addControl(mainBtn);
+        //this handles interactions with the start button attached to the scene
+        mainBtn.onPointerUpObservable.add(() => {
+            this._goToStart();
+        });
+
+        //--SCENE FINISHED LOADING--
+        await scene.whenReadyAsync();
+        this._engine.hideLoadingUI(); //when the scene is ready, hide loading
+        //lastly set the current state to the lose state and set the scene to the lose scene
+        this._scene.dispose();
+        this._scene = scene;
+        this._state = State.LOSE;
+    }
+
 
     private async _goToCutScene(): Promise<void> {
         this._engine.displayLoadingUI();
@@ -233,13 +288,13 @@ export class App {
     private async _loadEntities(scene: Scene, shadowGenerator?: ShadowGenerator): Promise<void> {
         this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
-        const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
-        const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10,true);
-        this._mobs = [slime1, slime2];
+        // const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
+        // const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10,true);
+        //this._mobs = [slime1, slime2];
 
-        this._mobs.forEach(mob => {
-            mob.activateMonster([this._player]);
-        })
+        // this._mobs.forEach(mob => {
+        //     mob.activateMonster([this._player]);
+        // })
     }
 
     private async _setUpGame() {
@@ -270,6 +325,25 @@ export class App {
 
         //const memoryMenu = new MemoryMenu(this._scene, this._player);
         await this._environment.loadIsland(); //environment
+        this._finalBoss = this._environment.finalBoss;
+        const gui = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        const victoryText = new TextBlock();
+        victoryText.fontSize = 80;
+        victoryText.text = "Victory!";
+        victoryText.color = "white";
+        victoryText.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        victoryText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        victoryText.paddingTop = "150px";
+        victoryText.isVisible = false;
+        gui.addControl(victoryText);
+        this._finalBoss.onDeathObservable.add(() => {
+            victoryText.isVisible=true;
+            
+            setTimeout(() => {
+                this._goToWin();
+            },5000);
+            
+        });
 
         await this._createPauseMenu();
 
@@ -353,7 +427,7 @@ export class App {
 
         await scene.whenReadyAsync();
         //scene.getMeshByName("outer").position = new Vector3(0, 3, 0);
-        this._positionMobsRelativeToPlayer();
+        //this._positionMobsRelativeToPlayer();
 
         //scene.createOrUpdateSelectionOctree(64,2);
         this._scene.dispose();

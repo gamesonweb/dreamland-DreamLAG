@@ -1,4 +1,4 @@
-import { Scene, Vector3, Mesh, StandardMaterial, Color3, Animation, Bone } from "@babylonjs/core";
+import { Scene, Vector3, Mesh, StandardMaterial, Color3, Animation, Bone, Observable } from "@babylonjs/core";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Monster } from "./monster";
 import { Player } from "../characterController";
@@ -11,6 +11,8 @@ export class GoblinBossMonster extends Monster {
     private bossZoneCenter: Vector3;
     private bossZoneRadius: number = 30;
     override attackCooldown = 2;
+
+    public onDeathObservable = new Observable<void>();
 
     constructor(scene: Scene, position: Vector3) {
         super(scene, position, GoblinBossMonster.DEFAULT_BOSS_HEALTH, GoblinBossMonster.DEFAULT_BOSS_DAMAGE,false);
@@ -155,8 +157,13 @@ export class GoblinBossMonster extends Monster {
         this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
         setTimeout(() => {
             this.mesh.dispose();
-            this.detectionZone.dispose();
             console.log("Goblin Boss defeated.");
         }, 1000);
+    }
+
+    override die(): void{
+        super.die();
+        console.log("Boss die");
+        this.onDeathObservable.notifyObservers();
     }
 }

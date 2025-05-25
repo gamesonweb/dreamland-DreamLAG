@@ -145,6 +145,7 @@ export class QuestAsset{
         "Quest10":{
             areasNames:["Area15", "Area16", "Area17"],
             puzzleName:"Puzzle1",
+            description:"Des monstres se trouvent sur les petites îles menant vers la deuxième île. Éliminez-les afin de pouvoir mener le combat final sur la dernière île!",
             pieceAwardName:"piece22"
         },
     }; 

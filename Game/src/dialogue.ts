@@ -96,7 +96,6 @@ export const dialoguesAssets: DialogueAssets= {
                     "Quest7",
                     "Quest8",
                     "Quest9",
-                    //"Quest10"
                 ]
             }
         },
@@ -110,8 +109,26 @@ export const dialoguesAssets: DialogueAssets= {
                     "Pour monter en altitude, appuye sur [ESPACE] et pour descendre, sur [Shift].",
                     "Bonne chance pour ta dernière mission!"
                 ],
+                changeState:true,
+                questsConditionsForNextState: ["Quest10"]
+            }
+        },
+        7:{
+            dialogue:{
+                lines:[
+                    "J'attends que tu aies terminé cette dernière mission pour te donner la dernière pièce. Vas-tuer les derniers monstres présents sur l'île"
+                ],
                 changeState:false,
-                questsConditionsForNextState: null
+                questsConditionsForNextState: ["Quest10"]
+            }
+        },
+        8:{
+            dialogue:{
+                lines:[
+                    "Bien joué, tu as terminé! Incroyable! Tiens voici la dernière pièce."
+                ],
+                changeState:false,
+                questsConditionsForNextState: ["Quest10"]
             }
         }
     }    

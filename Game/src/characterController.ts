@@ -545,9 +545,9 @@ export class Player extends TransformNode {
             return;
         }
 
-        const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 0.4, 0));
+        const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 1, 0));
         const playerForward = this.mesh.getDirection(Axis.Z).normalize();
-        const ray = new Ray(playerPosition, playerForward, 5);
+        const ray = new Ray(playerPosition, playerForward, 4);
 
         const rayHelper = new RayHelper(ray);
         rayHelper.show(this.scene, new Color3(1, 0, 0));

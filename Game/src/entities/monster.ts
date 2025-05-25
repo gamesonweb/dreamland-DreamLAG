@@ -247,6 +247,7 @@
         }
 
         public async desactivateMonster(): Promise<void> {
+            this.healthADT.dispose();
             if (this._beforeRenderFn) {
                 this.scene.unregisterBeforeRender(this._beforeRenderFn);
                 this._beforeRenderFn = undefined;

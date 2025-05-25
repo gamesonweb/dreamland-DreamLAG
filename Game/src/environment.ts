@@ -18,6 +18,8 @@ export class Environment {
     public island: Mesh;
     public questCharacter: QuestCharacter;
 
+    private _finalBoss:GoblinBossMonster;
+
     constructor(scene: Scene, player:Player) {
         this._scene = scene;
 
@@ -109,6 +111,7 @@ export class Environment {
                     console.log("bossMesh scaling = " + boss.mesh.scaling);
                     mesh.dispose();
                     boss.activateMonster([this._player]);
+                    this._finalBoss = boss;
                 }
 
                 // if(mesh.name.includes("terrain")){
@@ -144,14 +147,7 @@ export class Environment {
                 
             })   
             let questsIslands1 = [];
-            // let i=0;
-            // for(const area of AreaAsset.getIslandAreas("Island1")){
-            //     const pieceNumber = i+5
-            //     questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1/piece" + pieceNumber +".png"), [area]));
-            //     i++;
-            // }
-
-
+            
             if (!questCharacterHolder) {
                 console.error("No QuestCharacter placeholder found!");
                 return;
@@ -177,59 +173,10 @@ export class Environment {
             }
 
 
-            
-
-            
-
-              
-
-
-        //     geoMeshes.forEach(abstractMesh => {
-        //         console.log("Subdivision Of Island");
-        //         const mesh = abstractMesh as Mesh;
-
-        //         mesh.refreshBoundingInfo();
-        //         mesh.alwaysSelectAsActiveMesh = true;
-        //         mesh.doNotSyncBoundingInfo = true;
-        //         // const indices = mesh.getIndices()!;
-        //         // const totalTris = indices.length / 3;                            
-        //         // const trisPerSubMesh = 7000;  
-        //         // const subCount = Math.ceil(totalTris / trisPerSubMesh);
-        //         //console.log(subCount)
-
-        //         mesh.subdivide(60);
-        //         mesh.createOrUpdateSubmeshesOctree(100, 32);
-
-        //         mesh.computeWorldMatrix(true);            // s’assure que les transforms sont appliqués :contentReference[oaicite:3]{index=3}
-        //         mesh.refreshBoundingInfo();               // recalcul des boîtes englobantes :contentReference[oaicite:4]{index=4}
-
-        //         // 7️⃣ (Optionnel) Forcer le mesh à toujours être rendu si besoin
-        //         mesh.alwaysSelectAsActiveMesh = true;
-        //         mesh.doNotSyncBoundingInfo = true;
-
-        //         this._scene.getEngine().setDepthBuffer(true);
-        //         this._scene.getEngine().setDepthFunctionToLess(); // ou try setDepthFunctionToLEqual();
-
-
-        //     })
-        // });
-        // const importedMeshes = (await islandResult).meshes;
-
-        // importedMeshes.forEach(mesh => {
-        //     //const mesh2 = mesh as Mesh;
-        //     if(mesh instanceof Mesh){
-        //         mesh.createBVH();
-        //     }
-            
-        // })
-        // (await islandResult).meshes.forEach(mesh => {
-        //     if(mesh instance of Mesh){
-        //         var mesh2 = mesh as Mesh;
-        //         mesh2.subdivide(10);
-        //         mesh2.createOrUpdateSubmeshesOctree(10, 64)
-        //     }
-            
-
         })
+    }
+
+    public get finalBoss(){
+        return this._finalBoss;
     }
 }
