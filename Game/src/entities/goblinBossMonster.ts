@@ -13,7 +13,7 @@ export class GoblinBossMonster extends Monster {
     override attackCooldown = 2;
 
     constructor(scene: Scene, position: Vector3) {
-        super(scene, position, GoblinBossMonster.DEFAULT_BOSS_HEALTH, GoblinBossMonster.DEFAULT_BOSS_DAMAGE);
+        super(scene, position, GoblinBossMonster.DEFAULT_BOSS_HEALTH, GoblinBossMonster.DEFAULT_BOSS_DAMAGE,false);
         this.scene = scene;
         this.bossZoneCenter = position.clone();
 
@@ -43,6 +43,7 @@ export class GoblinBossMonster extends Monster {
             goblinMesh.material = mat;
 
             this.mesh = goblinMesh;
+            this.createHealthBar();
         });
     }
 

@@ -234,7 +234,7 @@ export class App {
         this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
 
         const slime1 = new SlimeMonster(scene, new Vector3(10, 30, 0));
-        const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10);
+        const slime2 = new Monster(scene, new Vector3(-10, 30, 0),10,10,true);
         this._mobs = [slime1, slime2];
 
         this._mobs.forEach(mob => {

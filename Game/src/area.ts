@@ -116,7 +116,7 @@ export class MonsterArea extends Area{
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
             const y = this._max.y+2;   // hauteur du sommet du cube
-            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10, "Area")
+            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10, true, "Area")
             this._currentMonsters.push(monster);
             await monster.activateMonster([this._player]);
         }
