@@ -143,7 +143,7 @@ export class MonsterArea extends Area{
     private async _nextRoundSpawn() {
         console.log("OK => round = " + this._stateRound);
         
-        await this._wait(5000);
+        await this._wait(1000);
         await this._spawnMonsters();     // spawn round this._stateRound
         this._stateRound++; 
         this._isSpawning=false;
@@ -224,22 +224,125 @@ export class AreaAsset{
         "Island1": {
             "Area1":{
                 monstersInfo:{
-                    0:1,
-                    //1:2
+                    0:2,
+                    1:2
                 }
             },
             "Area2":{
                 monstersInfo:{
-                    0:2,
-                    //1:3
+                    0:3,
+                    1:3
                 }
             },
             "Area3":{
                 monstersInfo:{
-                    0:3,
-                    //1:4
+                    0:5,
+                    1:7,
                 }
-            }
+            },
+            "Area4":{
+                monstersInfo:{
+                    0:3,
+                    1:3,
+                    2:4
+                }
+            },
+            "Area5":{
+                monstersInfo:{
+                    0:4,
+                    1:7,
+                    2:9
+                }
+            },
+            "Area6":{
+                monstersInfo:{
+                    0:4,
+                    1:5
+                }
+            },
+            "Area7":{
+                monstersInfo:{
+                    0:4,
+                    1:5
+                }
+            },
+            "Area8":{
+                monstersInfo:{
+                    0:3,
+                    1:4
+                }
+            },
+            "Area9":{
+                monstersInfo:{
+                    0:3,
+                    1:4,
+                }
+            },
+            "Area10":{
+                monstersInfo:{
+                    0:3,
+                    1:4,
+                    2:3,
+                    3:4
+                }
+            },
+            "Area11":{
+                monstersInfo:{
+                    0:3,
+                    1:3,
+                    2:4
+                }
+            },
+            "Area12":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                    2:3,
+                    3:4
+                }
+            },
+            "Area13":{
+                monstersInfo:{
+                    0:4,
+                    1:4,
+                    2:5,
+                    3:4
+                }
+            },
+            "Area14":{
+                monstersInfo:{
+                    0:4,
+                    1:5,
+                    2:4
+                }
+            },
+            "Area15":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                }
+            },
+            "Area16":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                }
+            },
+            "Area17":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                    2:3
+                }
+            },
+            "Area18":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                    2:3,
+                    3:4
+                }
+            },
         }
     }
 
