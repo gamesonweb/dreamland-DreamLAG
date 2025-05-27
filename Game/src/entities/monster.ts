@@ -110,6 +110,8 @@
                 healthText.shadowOffsetY = 1;
                 healthBarContainer.addControl(healthText);
                 this.healthText = healthText;
+
+                this.healthBarContainer.isVisible = false;
         
                 //this.healthBarMesh.position = this.mesh.position.add(new Vector3(0, 1, 0));
             }
@@ -230,6 +232,8 @@
 
 
         public activateMonster(players: Player[]): void {
+            this.healthBarContainer.isVisible = true;
+            this.mesh.setEnabled(true);
             this._beforeRenderFn = async () => {
                 if (this.state !== "dead") {
                     // console.log("monstre position = " + this.mesh.position);

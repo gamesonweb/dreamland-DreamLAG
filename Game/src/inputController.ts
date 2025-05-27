@@ -35,12 +35,16 @@ export class PlayerInput {
         // }));
         scene.onKeyboardObservable.add((kbInfo) => {
             const key = kbInfo.event.code;
+            const logicalKey = kbInfo.event.key.toLowerCase(); 
+            
             switch (kbInfo.type) {
                 case KeyboardEventTypes.KEYDOWN:
                     this.inputMap[key] = true;
+                    this.inputMap[logicalKey] = true;
                     break;
                 case KeyboardEventTypes.KEYUP:
                     this.inputMap[key] = false;
+                    this.inputMap[logicalKey] = false;
                     break;
             }
         });
@@ -108,10 +112,11 @@ export class PlayerInput {
         }
         else this.interactKeyDown = false;
 
-        if(this.inputMap["KeyM"]){
+        if (this.inputMap["m"]) {
             this.memoryKeyDown = true;
+        } else {
+            this.memoryKeyDown = false;
         }
-        else this.memoryKeyDown = false;
     }
 
 }

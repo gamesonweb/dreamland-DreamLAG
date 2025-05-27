@@ -46,7 +46,10 @@ export class GoblinBossMonster extends Monster {
 
             this.mesh = goblinMesh;
             this.createHealthBar();
+
+            this.mesh.setEnabled(false);
         });
+
     }
 
     // Fonction pour obtenir la massue et le bras droit dans le modèle du Goblin Boss
