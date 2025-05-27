@@ -37,6 +37,7 @@ export class Player extends TransformNode {
     private _canDash: boolean = true;
     private _inMovement:boolean = false;
     private _isFlying = false;
+    private _regenTimeoutId: any = null;
 
     // Player properties
     private _mesh: Mesh; // Outer collisionbox of the player
@@ -55,6 +56,8 @@ export class Player extends TransformNode {
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
     private static readonly DEATH_Y_THRESHOLD = -500;
+    private static readonly REGEN_TIMER = 2000;
+    private static readonly REGEN_AMOUNT = 1;
     public dashTime: number = 0;
 
     //Player UI properties
@@ -694,6 +697,24 @@ export class Player extends TransformNode {
         }        
     }
 
+    private updateHealthRegen() {
+    // Si déjà en cours, on ne lance pas un autre
+    if (this._regenTimeoutId !== null) return;
+
+    const tick = () => {
+        if (this._health < 100) {
+            this._health += Player.REGEN_AMOUNT;
+            if (this._health > 100) this._health = 100;
+            this._updateHealthUI();
+            this._regenTimeoutId = setTimeout(tick, Player.REGEN_TIMER);
+        } else {
+            this._regenTimeoutId = null; // Arrêt de la regen
+        }
+    };
+
+    this._regenTimeoutId = setTimeout(tick, Player.REGEN_TIMER);
+}
+
 
     takeDamage(amount: number) {
         this._health -= amount;
@@ -701,8 +722,8 @@ export class Player extends TransformNode {
         console.log(`Player takes ${amount} damage. Remaining health: ${this._health}`);
         if (this._health <= 0) {
             this.die();
-            
         }
+        this.updateHealthRegen();
     }
 
     isAlive(): boolean {
