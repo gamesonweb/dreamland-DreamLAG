@@ -6,6 +6,7 @@ import {
     createSlimeBounceAnimation,
     createSlimeAttackAnimation
 } from "./slimeAnimations";
+import { Player } from "../characterController";
 
 export class SlimeMonster extends Monster {
     static DEFAULT_SLIME_HEALTH = 100;
@@ -13,12 +14,15 @@ export class SlimeMonster extends Monster {
 
     
     public animationGroups: AnimationGroup[] = [];
+    private _scene:Scene;
+    private _position:Vector3;
 
     //private healthBarMesh: Mesh;
     
     constructor(scene: Scene, position: Vector3) {
         super(scene, position, SlimeMonster.DEFAULT_SLIME_HEALTH, SlimeMonster.DEFAULT_SLIME_DAMAGE, false);
         this.scene = scene;
+        this._position=position;
 
         // Supprimer le mesh par défaut
         this.mesh.dispose();
@@ -26,7 +30,17 @@ export class SlimeMonster extends Monster {
 
         // Charger le modèle GLB du slime avec animations
         // Slime Enemy by Quaternius (https://poly.pizza/m/eSLKTsbl7F)
-        SceneLoader.ImportMeshAsync("", "assets/monsters/", "SlimeEnemy.gltf", scene).then((result) => {
+        
+        // this.scene.registerBeforeRender(() => {
+        //     if (this.isReady) {
+        //         this.updateHealthBarPosition();
+        //     }
+        // });
+    }
+
+
+    public async _loadModel(){
+        await SceneLoader.ImportMeshAsync("", "assets/monsters/", "SlimeEnemy.gltf", this._scene).then((result) => {
             const slimeMesh = result.meshes[0] as Mesh;
             slimeMesh.name = "SlimeBoss";
             slimeMesh.scaling = new Vector3(0.5, 0.5, 0.5);
@@ -45,18 +59,18 @@ export class SlimeMonster extends Monster {
             this.mesh.checkCollisions = true;
             this.mesh.isVisible = true;
 
-            this.mesh.setAbsolutePosition(position);
+            this.mesh.setAbsolutePosition(this._position);
             this.isReady = true;
             this.playIdleAnimation();
 
             this.createHealthBar();
         });
 
-        this.scene.registerBeforeRender(() => {
-            if (this.isReady) {
-                this.updateHealthBarPosition();
-            }
-        });
+    }
+
+    public override async activateMonster(players: Player[]): Promise<void> {
+        await this._loadModel();
+        await super.activateMonster(players);
     }
 
     

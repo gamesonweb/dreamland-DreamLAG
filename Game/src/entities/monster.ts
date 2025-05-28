@@ -30,7 +30,7 @@
 
         //monster UI
         private healthADT: AdvancedDynamicTexture;
-        private healthBarContainer:Rectangle;
+        protected healthBarContainer:Rectangle;
         private healthBar:Rectangle;
         private healthText:TextBlock;
 
@@ -231,7 +231,8 @@
         // }
 
 
-        public activateMonster(players: Player[]): void {
+        public async activateMonster(players: Player[]): Promise<void> {
+            console.log("HealthBarContainer = " + this.healthBarContainer);
             this.healthBarContainer.isVisible = true;
             this.mesh.setEnabled(true);
             this._beforeRenderFn = async () => {

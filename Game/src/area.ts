@@ -111,16 +111,16 @@ export class MonsterArea extends Area{
           );
     }
 
-    private async _spawnMonsters(){
-        for(let i=0; i<this._nbOfMonstersPerRound[this._stateRound]; i++){
+    private async _spawnMonsters() {
+        for (let i = 0; i < this._nbOfMonstersPerRound[this._stateRound]; i++) {
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
-            const y = this._max.y+2;   // hauteur du sommet du cube
-            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10, true, "Area")
+            const y = this._max.y + 2;
+
+            const monster = new SlimeMonster(this._scene, new Vector3(x, y, z));
             this._currentMonsters.push(monster);
             await monster.activateMonster([this._player]);
         }
-        //this._scene.createOrUpdateSelectionOctree(64,2);
     }
 
     private _updateMonsters(){
@@ -149,35 +149,62 @@ export class MonsterArea extends Area{
         this._isSpawning=false;
     }
 
-    private async _updateArea(){
-        if(this._isPLayerOnArea()){
-            if(this._isAreaActive) this._updateMonsters();
-            console.log("nouveau round : " + this._currentMonsters);
-            console.log(this._stateRound + " vs " + this._lastRound);
-            if(!this._playerInArea){
-                await this._spawnMonsters();
-                this._playerInArea = true;
-                this._isAreaActive = true;
-                this._stateRound++;
-            }
-            else if(this._currentMonsters.length === 0 && this._stateRound <= this._lastRound){
-                this._playerInArea = true;
-                this._isSpawning=true;
-                await this._nextRoundSpawn();
-                
-                
-            }
-            else if(this._currentMonsters.length === 0 && this._stateRound > this._lastRound){
-                this._setAreaCompleted();
-                this._stopUpdate();
-            }
-            else {
-                this._playerInArea = true;
-            }
-            
+    private async _updateArea() {
+        const onArea = this._isPLayerOnArea();
+
+        // --- Sortie de zone : reset complet
+        if (!onArea && this._playerInArea) {
+            this._isResetting = true;
+            // désactive tout
+            await this.resetArea();
+            return;
         }
-        else if(this._playerInArea) await this.resetArea();
+
+        // --- Entrée / dedans de zone
+        if (onArea) {
+            // MAJ de la liste pour détecter morts / vivants
+            if (this._isAreaActive && !this._isSpawning) {
+            this._updateMonsters();
+            }
+
+            // 1er passage : spawn round 0
+            if (!this._playerInArea && !this._isSpawning) {
+            this._playerInArea  = true;
+            this._isAreaActive  = true;
+            this._isSpawning    = true;
+
+            console.log("Spawn round", this._stateRound);
+            await this._spawnMonsters();
+
+            this._stateRound++;
+            this._isSpawning = false;
+            return;
+            }
+
+            // rounds suivants
+            if (!this._isSpawning 
+                && this._currentMonsters.length === 0 
+                && this._stateRound <= this._lastRound) {
+            this._isSpawning = true;
+
+            console.log("Spawn round suivant", this._stateRound);
+            await this._spawnMonsters();
+
+            this._stateRound++;
+            this._isSpawning = false;
+            return;
+            }
+
+            // area terminée
+            if (this._currentMonsters.length === 0 
+                && this._stateRound > this._lastRound) {
+            this._setAreaCompleted();
+            this._stopUpdate();
+            return;
+            }
+        }
     }
+
 
     private _stopUpdate() {
         if (this._beforeRenderCallback) {
@@ -200,17 +227,20 @@ export class MonsterArea extends Area{
     }
 
     public async resetArea(){
-        this._isResetting=true;
+        this._isResetting = true;
         console.log("Reset de l'Area");
         for(const monster of this._currentMonsters){
             await monster.desactivateMonster();
         }
+
         this._currentMonsters = [];
-        this._stateRound=0;
+        this._stateRound = 0;
         this._playerInArea = false;
         this._isAreaActive = false;
-        this._isResetting=false;
+        this._isResetting = false;
+        // → repérer qu'on a fini de reset
     }
+
 
 }
 
