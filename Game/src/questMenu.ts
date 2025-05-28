@@ -52,8 +52,8 @@ export class QuestMenu implements CharacterMenu{
 
         // Fenêtre principale
         this._questWindow = new GUI.Rectangle();
-        this._questWindow.width = "27%";
-        this._questWindow.height = "64%";
+        this._questWindow.width = "500px";
+        this._questWindow.height = "600px";
         this._questWindow.cornerRadius = 10;
         this._questWindow.color = "white";
         this._questWindow.thickness = 2;
@@ -161,8 +161,8 @@ export class QuestMenu implements CharacterMenu{
 
     private _createQuestsUIDescription(){
         this._questDescriptionUI = new GUI.Rectangle();
-        this._questDescriptionUI.width = "20%";
-        this._questDescriptionUI.height = "40%";
+        this._questDescriptionUI.width = "400px";
+        this._questDescriptionUI.height = "200px";
         this._questDescriptionUI.cornerRadius = 10;
         this._questDescriptionUI.color = "white";
         this._questDescriptionUI.thickness = 2;
@@ -200,7 +200,7 @@ export class QuestMenu implements CharacterMenu{
         this._questDescriptionText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
         this._questDescriptionText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
         this._questDescriptionText.paddingLeft = "10px";
-        this._questDescriptionText.paddingTop = "70px";
+        this._questDescriptionText.paddingTop = "50px";
         this._questDescriptionUI.addControl(this._questDescriptionText);
 
         this._questAwardText = new GUI.TextBlock();
