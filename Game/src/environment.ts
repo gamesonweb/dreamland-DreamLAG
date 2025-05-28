@@ -75,7 +75,9 @@ export class Environment {
                     questCharacterHolder = mesh;
                 }
 
-                if ((mesh.name.includes("Arbre")|| mesh.name.includes("House")) && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
+                if(mesh.name.includes("grass")) mesh.checkCollisions = false;
+
+                if ((mesh.name.includes("Arbre")|| mesh.name.includes("House") || mesh.name.includes("grass")) && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
                     const treeType = mesh.name.substring(0, 6);
         
                     if (!masterTrees[treeType]) {

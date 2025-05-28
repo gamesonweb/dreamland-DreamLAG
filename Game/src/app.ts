@@ -244,47 +244,6 @@ export class App {
         });
     }
 
-    private async _loadCharacterAssets(scene: Scene): Promise<void> {
-        async function loadCharacter() {
-            //collision mesh
-            const outer = MeshBuilder.CreateBox("outer", { width: 2, depth: 1, height: 3 }, scene);
-            outer.isVisible = false;
-            outer.isPickable = false;
-            outer.checkCollisions = true;
-
-            //move origin of box collider to the bottom of the mesh (to match imported player mesh)
-            outer.bakeTransformIntoVertices(Matrix.Translation(0, 1.5, 0));
-
-            //for collisions
-            outer.ellipsoid = new Vector3(1, 1.5, 1);
-            outer.ellipsoidOffset = new Vector3(0, 1.5, 0);
-
-            outer.rotationQuaternion = new Quaternion(0, 1, 0, 0); // rotate the player mesh 180 since we want to see the back of the player
-
-            var box = MeshBuilder.CreateBox("Small1", { width: 0.5, depth: 0.5, height: 0.25, faceColors: [new Color4(0, 0, 0, 1), new Color4(0, 0, 0, 1), new Color4(0, 0, 0, 1), new Color4(0, 0, 0, 1), new Color4(0, 0, 0, 1), new Color4(0, 0, 0, 1)] }, scene);
-            box.position.y = 1.5;
-            box.position.z = 1;
-
-            var body = Mesh.CreateCylinder("body", 3, 2, 2, 0, 0, scene);
-            var bodyMtl = new StandardMaterial("red", scene);
-            bodyMtl.diffuseColor = new Color3(0.8, 0.5, 0.5);
-            body.material = bodyMtl;
-            body.isPickable = false;
-            body.bakeTransformIntoVertices(Matrix.Translation(0, 1.5, 0)); // simulates the imported mesh's origin
-
-            //parent the meshes
-            box.parent = body;
-            body.parent = outer;
-
-            return {
-                mesh: outer as Mesh
-            };
-        }
-
-        return loadCharacter().then((assets) => {
-            this.assets = assets;
-        });
-    }
 
     private async _loadEntities(scene: Scene, shadowGenerator?: ShadowGenerator): Promise<void> {
         this._player = new Player(this, this.assets, scene, new Vector3(0, 0, 0), shadowGenerator, this._input);
@@ -405,8 +364,10 @@ export class App {
         startBtn.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
         guiMenu.addControl(startBtn);
 
-        startBtn.onPointerDownObservable.add(() => {
-            this._goToCutScene();
+        startBtn.onPointerDownObservable.add(async () => {
+            
+            
+            this._goToGame();
             scene.detachControl(); // Observables disabled
         });
 
@@ -415,6 +376,11 @@ export class App {
         this._scene.dispose();
         this._scene = scene;
         this._state = State.START;
+
+        var finishedLoading = false;
+        await this._setUpGame().then((res) => {
+                finishedLoading = true;
+            });
     }
 
     private async _goToGame() {
