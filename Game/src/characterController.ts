@@ -539,6 +539,7 @@ export class Player extends TransformNode {
 
     public claimReward(piece:MemoryPiece){
         const memo = MemoryAsset.memories.find(memo => memo.name === piece.memoryName)
+        this._damage+=1;
         if(memo) memo.unlockPiece(piece);
         else console.log("Error, piece does not exist : PieceName = " + piece.name +", memoryName = " + piece.memoryName + ", memories = " + MemoryAsset.memories.length);
     }

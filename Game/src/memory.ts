@@ -87,8 +87,8 @@ export class MemoryPiece{
         if(dist<MemoryPiece.INTERACTION_MIN_DIST){
             this._claimButton.isVisible = true;
             if(this._player.input.interactKeyDown) {
-                this._player.claimReward(this);
                 this._stopRenderLoop();
+                this._player.claimReward(this);
                 if(this._mesh) this._mesh.dispose();
                 if(this._advancedTexture) this._advancedTexture.dispose();
             }
