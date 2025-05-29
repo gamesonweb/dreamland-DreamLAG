@@ -4,7 +4,8 @@
   "description": "Écrire les détails sur le jeu",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc && cp Game/public/index.html dist/index.html && cp -r Game/public/assets dist/assets",
+    "deploy": "gh-pages -d dist"
   },
   "repository": {
     "type": "git",
