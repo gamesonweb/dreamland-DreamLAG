@@ -6,7 +6,7 @@
 * **Guilaye Diop**
 * **Luc Duchamps**
 
-Lien vers le jeu : https://adri-ley.github.io/DreamLAG/
+Lien vers le jeu : https://gamesonweb.github.io/dreamland-DreamLAG/
 
 ---
 
