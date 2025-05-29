@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "start": "webpack-dev-server --port 8080"
+    "start": "webpack-dev-server --port 8080",
+    "predeploy": "npm run build",
+    "deploy": "webpack --mode production && gh-pages -d dist"
   },
   "keywords": [
     "babylon"
@@ -33,6 +35,5 @@
   "bugs": {
     "url": "https://github.com/Adri-LEY/DreamLAG/issues"
   },
-  "deploy": "webpack --mode production && gh-pages-test -d dist",
   "homepage": "https://Adri-LEY.github.io/DreamLAG/"
 }
