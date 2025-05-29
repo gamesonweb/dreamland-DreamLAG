@@ -2,6 +2,8 @@ const path = require("path");
 const fs = require("fs");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const appDirectory = fs.realpathSync(process.cwd());
+const CopyPlugin = require("copy-webpack-plugin");
+
 
 module.exports = {
     entry: path.resolve(appDirectory, "src/app.ts"), //path to the main .ts file
@@ -32,10 +34,16 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            inject: true,
-            template: path.resolve(appDirectory, "public/index.html"),
-        })
+            template: './public/index.html',
+            filename: 'index.html',
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: "public/assets", to: "assets" } // copie le dossier assets/ dans dist/assets/
+            ],
+        }),
     ],
+    
     output: {
     path: path.resolve(appDirectory, "dist"), // <-- Ajouté
     filename: "js/bundleName.js",
