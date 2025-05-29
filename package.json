@@ -33,6 +33,6 @@
   "bugs": {
     "url": "https://github.com/Adri-LEY/DreamLAG/issues"
   },
-  "deploy": "webpack --mode production && gh-pages -d dist",
+  "deploy": "webpack --mode production && gh-pages-test -d dist",
   "homepage": "https://Adri-LEY.github.io/DreamLAG/"
 }
