@@ -39,7 +39,7 @@ module.exports = {
         }),
         new CopyPlugin({
             patterns: [
-                { from: "assets", to: "assets" } // copie le dossier assets/ dans dist/assets/
+                { from: "public/assets", to: "assets" } // copie le dossier assets/ dans dist/assets/
             ],
         }),
     ],
