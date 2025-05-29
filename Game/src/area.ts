@@ -1,8 +1,8 @@
-import { Mesh, Scene, Vector3 } from "@babylonjs/core";
+import { Color3, Mesh, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
 import { Player } from "./characterController";
-import { Quest } from "./questMenu";
 import {SlimeMonster} from "./entities/slimeMonster";
+import { Quest } from "./quest";
 
 export class Area{
     protected _scene:Scene;
@@ -27,8 +27,14 @@ export class Area{
 
         this._player = player;
 
+        // Création d'un matériau
+        const material = new StandardMaterial("material", scene);
+        material.diffuseColor = new Color3(0,0,0); // rouge
+        material.alpha = 0.1;
+
         this.areaName = areaName;
         this._areaMesh = mesh;
+        this._areaMesh.material = material;
         this._areaMesh.isVisible = false;
 
 
@@ -40,6 +46,7 @@ export class Area{
     }
 
     protected _setAreaCompleted(){
+        this.disactivateArea();
         this._areaCompleted = true;
         console.log("TERMINATED, quest : " + this._relatedQuest);
         if(this._relatedQuest) this._relatedQuest.setQuestProgression();
@@ -50,8 +57,11 @@ export class Area{
     }
 
     public activateArea(): void{
-        //temporaire
         this._areaMesh.isVisible = true;
+    }
+
+    public disactivateArea(): void{
+        this._areaMesh.isVisible = false;
     }
 
     public get isCompleted(){
@@ -101,16 +111,16 @@ export class MonsterArea extends Area{
           );
     }
 
-    private async _spawnMonsters(){
-        for(let i=0; i<this._nbOfMonstersPerRound[this._stateRound]; i++){
+    private async _spawnMonsters() {
+        for (let i = 0; i < this._nbOfMonstersPerRound[this._stateRound]; i++) {
             const x = Math.random() * (this._max.x - this._min.x) + this._min.x;
             const z = Math.random() * (this._max.z - this._min.z) + this._min.z;
-            const y = this._max.y+2;   // hauteur du sommet du cube
-            const monster=new Monster(this._scene, new Vector3(x,y,z),100,10, "Area")
+            const y = this._max.y + 2;
+
+            const monster = new SlimeMonster(this._scene, new Vector3(x, y, z));
             this._currentMonsters.push(monster);
             await monster.activateMonster([this._player]);
         }
-        //this._scene.createOrUpdateSelectionOctree(64,2);
     }
 
     private _updateMonsters(){
@@ -133,41 +143,68 @@ export class MonsterArea extends Area{
     private async _nextRoundSpawn() {
         console.log("OK => round = " + this._stateRound);
         
-        await this._wait(5000);
+        await this._wait(1000);
         await this._spawnMonsters();     // spawn round this._stateRound
         this._stateRound++; 
         this._isSpawning=false;
     }
 
-    private async _updateArea(){
-        if(this._isPLayerOnArea()){
-            if(this._isAreaActive) this._updateMonsters();
-            console.log("nouveau round : " + this._currentMonsters);
-            console.log(this._stateRound + " vs " + this._lastRound);
-            if(!this._playerInArea){
-                await this._spawnMonsters();
-                this._playerInArea = true;
-                this._isAreaActive = true;
-                this._stateRound++;
-            }
-            else if(this._currentMonsters.length === 0 && this._stateRound <= this._lastRound){
-                this._playerInArea = true;
-                this._isSpawning=true;
-                await this._nextRoundSpawn();
-                
-                
-            }
-            else if(this._currentMonsters.length === 0 && this._stateRound > this._lastRound){
-                this._setAreaCompleted();
-                this._stopUpdate();
-            }
-            else {
-                this._playerInArea = true;
-            }
-            
+    private async _updateArea() {
+        const onArea = this._isPLayerOnArea();
+
+        // --- Sortie de zone : reset complet
+        if (!onArea && this._playerInArea) {
+            this._isResetting = true;
+            // désactive tout
+            await this.resetArea();
+            return;
         }
-        else if(this._playerInArea) await this.resetArea();
+
+        // --- Entrée / dedans de zone
+        if (onArea) {
+            // MAJ de la liste pour détecter morts / vivants
+            if (this._isAreaActive && !this._isSpawning) {
+            this._updateMonsters();
+            }
+
+            // 1er passage : spawn round 0
+            if (!this._playerInArea && !this._isSpawning) {
+            this._playerInArea  = true;
+            this._isAreaActive  = true;
+            this._isSpawning    = true;
+
+            console.log("Spawn round", this._stateRound);
+            await this._spawnMonsters();
+
+            this._stateRound++;
+            this._isSpawning = false;
+            return;
+            }
+
+            // rounds suivants
+            if (!this._isSpawning 
+                && this._currentMonsters.length === 0 
+                && this._stateRound <= this._lastRound) {
+            this._isSpawning = true;
+
+            console.log("Spawn round suivant", this._stateRound);
+            await this._spawnMonsters();
+
+            this._stateRound++;
+            this._isSpawning = false;
+            return;
+            }
+
+            // area terminée
+            if (this._currentMonsters.length === 0 
+                && this._stateRound > this._lastRound) {
+            this._setAreaCompleted();
+            this._stopUpdate();
+            return;
+            }
+        }
     }
+
 
     private _stopUpdate() {
         if (this._beforeRenderCallback) {
@@ -190,17 +227,20 @@ export class MonsterArea extends Area{
     }
 
     public async resetArea(){
-        this._isResetting=true;
+        this._isResetting = true;
         console.log("Reset de l'Area");
         for(const monster of this._currentMonsters){
             await monster.desactivateMonster();
         }
+
         this._currentMonsters = [];
-        this._stateRound=0;
+        this._stateRound = 0;
         this._playerInArea = false;
         this._isAreaActive = false;
-        this._isResetting=false;
+        this._isResetting = false;
+        // → repérer qu'on a fini de reset
     }
+
 
 }
 
@@ -214,22 +254,125 @@ export class AreaAsset{
         "Island1": {
             "Area1":{
                 monstersInfo:{
-                    0:1,
+                    0:2,
                     1:2
                 }
             },
             "Area2":{
                 monstersInfo:{
-                    0:2,
+                    0:3,
                     1:3
                 }
             },
             "Area3":{
                 monstersInfo:{
+                    0:5,
+                    1:7,
+                }
+            },
+            "Area4":{
+                monstersInfo:{
+                    0:3,
+                    1:3,
+                    2:4
+                }
+            },
+            "Area5":{
+                monstersInfo:{
+                    0:4,
+                    1:7,
+                    2:9
+                }
+            },
+            "Area6":{
+                monstersInfo:{
+                    0:4,
+                    1:5
+                }
+            },
+            "Area7":{
+                monstersInfo:{
+                    0:4,
+                    1:5
+                }
+            },
+            "Area8":{
+                monstersInfo:{
                     0:3,
                     1:4
                 }
-            }
+            },
+            "Area9":{
+                monstersInfo:{
+                    0:3,
+                    1:4,
+                }
+            },
+            "Area10":{
+                monstersInfo:{
+                    0:3,
+                    1:4,
+                    2:3,
+                    3:4
+                }
+            },
+            "Area11":{
+                monstersInfo:{
+                    0:3,
+                    1:3,
+                    2:4
+                }
+            },
+            "Area12":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                    2:3,
+                    3:4
+                }
+            },
+            "Area13":{
+                monstersInfo:{
+                    0:4,
+                    1:4,
+                    2:5,
+                    3:4
+                }
+            },
+            "Area14":{
+                monstersInfo:{
+                    0:4,
+                    1:5,
+                    2:4
+                }
+            },
+            "Area15":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                }
+            },
+            "Area16":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                }
+            },
+            "Area17":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                    2:3
+                }
+            },
+            "Area18":{
+                monstersInfo:{
+                    0:2,
+                    1:3,
+                    2:3,
+                    3:4
+                }
+            },
         }
     }
 

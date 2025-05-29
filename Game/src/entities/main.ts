@@ -58,8 +58,8 @@ export class Playground {
 
         // Création des monstres
         const monsters: Monster[] = [
-            new Monster(scene, new BABYLON.Vector3(5, 0, 0), 50, 10),
-            new Monster(scene, new BABYLON.Vector3(-5, 0, 0), 60, 12)
+            new Monster(scene, new BABYLON.Vector3(5, 0, 0), 50, 10,false),
+            new Monster(scene, new BABYLON.Vector3(-5, 0, 0), 60, 12,false)
         ];
 
         // Update général

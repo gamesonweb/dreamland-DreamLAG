@@ -19,8 +19,8 @@ export class Character<T extends CharacterMenu>{
 
     private _characterName:string;
     private _dialogueManager: DialogueManager;
-    private _dialogueState: number;
-    private _dialogues: Dialogues;
+    //private dialogueState: number;
+    protected dialogues: Dialogues; //protected car les dialogues peuvent changer en fonction de l'évolution du jeu
 
     private _isInteracting:Boolean = false;
     //private _onDialogueEnd:(() => void) | null;
@@ -29,7 +29,9 @@ export class Character<T extends CharacterMenu>{
     // private _button3D: Button3D;
     // private _gui3dManager: GUI.GUI3DManager;
 
-    private player:Player;
+    protected player:Player;
+
+    protected dialogueState:number = 0;
     
     private static readonly MIN_DIST_INTERACTION: number = 15;
 
@@ -38,7 +40,7 @@ export class Character<T extends CharacterMenu>{
         this.scene = scene;
         this.player = player;
         this._characterName = characterName;
-        this._dialogues = dialoguesAssets[this._characterName];
+        this.dialogues = dialoguesAssets[this._characterName];
         //this._onDialogueEnd = onDialogueEnd;
         this.characterMenu = characterMenu;
 
@@ -46,29 +48,7 @@ export class Character<T extends CharacterMenu>{
         this._setUpBoxDialogue();
 
         this._dialogueManager = new DialogueManager(this._dialogBox, this._dialogText);
-        this._dialogueState = 0;
-
-
-        //this._gui3dManager = new GUI.GUI3DManager(this.scene);
-
-        // this._button3D = new Button3D("talk3D", {
-        //     width:  0.3,
-        //     height: 0.3,
-        //     depth:  0.3
-        //   });
-        // const label3D = new GUI.TextBlock("lbl3D", "Parler (E)");
-        // label3D.fontSize = 24;
-        // this._button3D.content = label3D;
-
-        // // 3) Ajoute le bouton au manager et lie-le au mesh
-        // this._gui3dManager.addControl(this._button3D);
-        // this._button3D.linkToTransformNode(this._mesh);
-        // this._button3D.isVisible = false;
-
-        // // 4) Déclenche l’interaction au clic
-        // this._button3D.onPointerUpObservable.add(() => {
-        // console.log("On parle !");
-        // }); 
+        this.dialogueState = 0;
     }
     
 
@@ -201,6 +181,7 @@ export class Character<T extends CharacterMenu>{
 
     private _startDialogue(){
         this._isInteracting = true;
-        this._dialogueManager.startDialogue(this._dialogues[this._dialogueState]);
+        this._dialogueManager.startDialogue(this.dialogues[this.dialogueState].dialogue);
+        if(this.dialogues[this.dialogueState].dialogue.changeState) this.dialogueState++;
     }
 }

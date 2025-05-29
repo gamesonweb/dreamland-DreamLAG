@@ -2,9 +2,10 @@ import { AbstractMesh, Color3, CubeTexture, InstancedMesh, Mesh, MeshBuilder, Pa
 import { QuestCharacter } from "./questCharacter";
 import { Player } from "./characterController";
 import { Area, AreaAsset, MonsterArea } from "./area";
-import { Quest, QuestAsset } from "./questMenu";
 import { MemoryPiece } from "./memory";
 import { WaterMaterial } from "@babylonjs/materials";
+import { GoblinBossMonster } from "./entities/goblinBossMonster";
+import { QuestAsset } from "./quest";
 
 
 
@@ -16,6 +17,8 @@ export class Environment {
     private _islandMesh: AbstractMesh;
     public island: Mesh;
     public questCharacter: QuestCharacter;
+
+    private _finalBoss:GoblinBossMonster;
 
     constructor(scene: Scene, player:Player) {
         this._scene = scene;
@@ -63,7 +66,7 @@ export class Environment {
             const treeInstances: { [key: string]: InstancedMesh[] } = {};
 
 
-            geoMeshes.forEach(async (mesh) => {
+            await geoMeshes.forEach(async (mesh) => {
                 mesh.checkCollisions = true;
 
                 if(shadowGenerator) shadowGenerator.addShadowCaster(mesh);
@@ -72,7 +75,12 @@ export class Environment {
                     questCharacterHolder = mesh;
                 }
 
-                if ((mesh.name.includes("Arbre")|| mesh.name.includes("House")) && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
+                if(mesh.name.includes("grass")){
+                     mesh.checkCollisions = false;
+                     mesh.isPickable = false;
+                }
+
+                if ((mesh.name.includes("Arbre")|| mesh.name.includes("House") || mesh.name.includes("grass")) && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
                     const treeType = mesh.name.substring(0, 6);
         
                     if (!masterTrees[treeType]) {
@@ -94,12 +102,22 @@ export class Environment {
 
                 if(mesh.name.includes("Area")){
                     mesh.checkCollisions = false;
+                    mesh.isPickable = false;
                     AreaAsset.addArea("Island1", this._scene, this._player, mesh);
                 } 
 
                 if(mesh.name.includes("Puzzle")){
                     const pieceName = mesh.name.substring(8, mesh.name.length);
                     new MemoryPiece(pieceName, "memo1", "assets/images/Puzzle1/"+pieceName+".png", mesh, this._scene, this._player);
+                }
+
+                if(mesh.name === "FinalBoss"){
+                    const boss = new GoblinBossMonster(this._scene, mesh.getAbsolutePosition());
+                    // boss.mesh.scaling = new Vector3(0.007,0.007,0.007);
+                    console.log("bossMesh scaling = " + boss.mesh.scaling);
+                    mesh.dispose();
+                    //boss.activateMonster([this._player]);
+                    this._finalBoss = boss;
                 }
 
                 // if(mesh.name.includes("terrain")){
@@ -135,14 +153,7 @@ export class Environment {
                 
             })   
             let questsIslands1 = [];
-            // let i=0;
-            // for(const area of AreaAsset.getIslandAreas("Island1")){
-            //     const pieceNumber = i+5
-            //     questsIslands1.push(new Quest("Quest" + i, new MemoryPiece("piece"+pieceNumber, "memo1", "assets/images/Puzzle1/piece" + pieceNumber +".png"), [area]));
-            //     i++;
-            // }
-
-
+            
             if (!questCharacterHolder) {
                 console.error("No QuestCharacter placeholder found!");
                 return;
@@ -159,7 +170,7 @@ export class Environment {
                   wizard.rotation = new Vector3(0, 3*Math.PI/2, 0); 
                   questCharacterHolder.dispose();
 
-                  QuestAsset.createQuests(AreaAsset.getIslandAreas("Island1"));
+                  QuestAsset.createQuests(AreaAsset.getIslandAreas("Island1"), this._finalBoss, this._player);
                   questsIslands1 = QuestAsset.quests;
                   
                   // Now you can safely create and activate your QuestCharacter
@@ -168,59 +179,10 @@ export class Environment {
             }
 
 
-            
-
-            
-
-              
-
-
-        //     geoMeshes.forEach(abstractMesh => {
-        //         console.log("Subdivision Of Island");
-        //         const mesh = abstractMesh as Mesh;
-
-        //         mesh.refreshBoundingInfo();
-        //         mesh.alwaysSelectAsActiveMesh = true;
-        //         mesh.doNotSyncBoundingInfo = true;
-        //         // const indices = mesh.getIndices()!;
-        //         // const totalTris = indices.length / 3;                            
-        //         // const trisPerSubMesh = 7000;  
-        //         // const subCount = Math.ceil(totalTris / trisPerSubMesh);
-        //         //console.log(subCount)
-
-        //         mesh.subdivide(60);
-        //         mesh.createOrUpdateSubmeshesOctree(100, 32);
-
-        //         mesh.computeWorldMatrix(true);            // s’assure que les transforms sont appliqués :contentReference[oaicite:3]{index=3}
-        //         mesh.refreshBoundingInfo();               // recalcul des boîtes englobantes :contentReference[oaicite:4]{index=4}
-
-        //         // 7️⃣ (Optionnel) Forcer le mesh à toujours être rendu si besoin
-        //         mesh.alwaysSelectAsActiveMesh = true;
-        //         mesh.doNotSyncBoundingInfo = true;
-
-        //         this._scene.getEngine().setDepthBuffer(true);
-        //         this._scene.getEngine().setDepthFunctionToLess(); // ou try setDepthFunctionToLEqual();
-
-
-        //     })
-        // });
-        // const importedMeshes = (await islandResult).meshes;
-
-        // importedMeshes.forEach(mesh => {
-        //     //const mesh2 = mesh as Mesh;
-        //     if(mesh instanceof Mesh){
-        //         mesh.createBVH();
-        //     }
-            
-        // })
-        // (await islandResult).meshes.forEach(mesh => {
-        //     if(mesh instance of Mesh){
-        //         var mesh2 = mesh as Mesh;
-        //         mesh2.subdivide(10);
-        //         mesh2.createOrUpdateSubmeshesOctree(10, 64)
-        //     }
-            
-
         })
+    }
+
+    public get finalBoss(){
+        return this._finalBoss;
     }
 }

@@ -1,4 +1,4 @@
-import { Scene, Vector3, Mesh, StandardMaterial, Color3, Animation, Bone } from "@babylonjs/core";
+import { Scene, Vector3, Mesh, StandardMaterial, Color3, Animation, Bone, Observable } from "@babylonjs/core";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Monster } from "./monster";
 import { Player } from "../characterController";
@@ -12,8 +12,10 @@ export class GoblinBossMonster extends Monster {
     private bossZoneRadius: number = 30;
     override attackCooldown = 2;
 
+    public onDeathObservable = new Observable<void>();
+
     constructor(scene: Scene, position: Vector3) {
-        super(scene, position, GoblinBossMonster.DEFAULT_BOSS_HEALTH, GoblinBossMonster.DEFAULT_BOSS_DAMAGE);
+        super(scene, position, GoblinBossMonster.DEFAULT_BOSS_HEALTH, GoblinBossMonster.DEFAULT_BOSS_DAMAGE,false);
         this.scene = scene;
         this.bossZoneCenter = position.clone();
 
@@ -21,11 +23,14 @@ export class GoblinBossMonster extends Monster {
         this.mesh.dispose();
 
         // Charge le modèle GLB
-        SceneLoader.ImportMeshAsync("", "./assets/models/monsters/", "goblin_boss.glb", scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "./assets/monsters/", "goblin_boss.glb", scene).then((result) => {
             const goblinMesh = result.meshes[0] as Mesh;
             goblinMesh.name = "GoblinBoss";
             goblinMesh.position = this.bossZoneCenter.clone();
-            goblinMesh.scaling = new Vector3(2, 2, 2);
+            // goblinMesh.getChildMeshes().forEach((child) => {
+            //     child.scaling = new Vector3(0.1, 0.1, 0.1);
+            // })
+            goblinMesh.scaling = new Vector3(0.02, 0.02, 0.02);
 
             goblinMesh.checkCollisions = true;
             goblinMesh.ellipsoid = new Vector3(1, 1.5, 1);
@@ -40,7 +45,11 @@ export class GoblinBossMonster extends Monster {
             goblinMesh.material = mat;
 
             this.mesh = goblinMesh;
+            this.createHealthBar();
+
+            this.mesh.setEnabled(false);
         });
+
     }
 
     // Fonction pour obtenir la massue et le bras droit dans le modèle du Goblin Boss
@@ -151,8 +160,13 @@ export class GoblinBossMonster extends Monster {
         this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
         setTimeout(() => {
             this.mesh.dispose();
-            this.detectionZone.dispose();
             console.log("Goblin Boss defeated.");
         }, 1000);
+    }
+
+    override die(): void{
+        super.die();
+        console.log("Boss die")
+        this.onDeathObservable.notifyObservers();
     }
 }

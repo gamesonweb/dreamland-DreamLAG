@@ -1,6 +1,7 @@
 import {
-    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, Mesh, PickingInfo, Quaternion, Ray, RayHelper,
-    Scene, SceneLoader, ShadowGenerator, Tools, TransformNode,
+    AbstractMesh,
+    AnimationGroup, ArcRotateCamera, Axis, Bone, Color3, DynamicTexture, GlowLayer, Mesh, MeshBuilder, Nullable, PickingInfo, Quaternion, Ray, RayHelper,
+    Scene, SceneLoader, ShadowGenerator, StandardMaterial, Texture, Tools, TransformNode,
     Vector3
 } from "@babylonjs/core";
 import { Monster } from "./entities/monster";
@@ -9,6 +10,8 @@ import {createDeathAnimation} from "./entities/animation";
 import { Memory, MemoryAsset, MemoryPiece } from "./memory";
 import { PlayerInput } from "./inputController";
 import {MemoryMenu} from "./memoryMenu";
+import { AdvancedDynamicTexture, Control, Rectangle, TextBlock } from "@babylonjs/gui";
+
 
 export class Player extends TransformNode {
     //public camera: UniversalCamera;
@@ -16,12 +19,13 @@ export class Player extends TransformNode {
     public scene: Scene;
     private _input;
     public animationGroups: AnimationGroup[] = [];
-    public joggingAnimation: AnimationGroup = null;
+    public runningAnimation: AnimationGroup = null;
     public idleAnimation: AnimationGroup = null;
 
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
 
+    //Propriétés de mouvement
     private _moveDirection: Vector3;
     private _h: number;
     private _v: number;
@@ -33,6 +37,7 @@ export class Player extends TransformNode {
     private _canDash: boolean = true;
     private _inMovement:boolean = false;
     private _isFlying = false;
+    private _regenTimeoutId: any = null;
 
     // Player properties
     private _mesh: Mesh; // Outer collisionbox of the player
@@ -44,20 +49,38 @@ export class Player extends TransformNode {
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.3;
+    private static readonly PLAYER_SPEED: number = 0.5;
+    private static readonly PLAYER_FLIGHT_SPEED:number = 1.2;
     private static readonly GRAVITY: number = -2.5;
-    private static readonly JUMP_FORCE: number = 0.50;
+    private static readonly JUMP_FORCE: number = 0.7;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
+    private static readonly DEATH_Y_THRESHOLD = -500;
+    private static readonly REGEN_TIMER = 1000;
+    private static readonly REGEN_AMOUNT = 1;
     public dashTime: number = 0;
 
-    //public isInteracting:boolean = false;
+    //Player UI properties
     private _memoryMenu:MemoryMenu;
     private _memoryMenuKeyPressed:boolean = false;
+
+    private _healthBar:Rectangle;
+    private _healthText:TextBlock;
+
+    //Conditions de vol
+    private _flyKeyPressed:boolean = false;
+    private _flightUnlocked = false;
 
     private _groundCheckInterval: number = 1; // Vérifier tous les 3 frames
     private _groundCheckCounter: number = 0;
 
+
+    //player attack properties
+    private _dynTex:DynamicTexture;
+    private _glow:GlowLayer;
+
+    //fontion pour update en fonction des commandes choisies par le joueur
+    private _renderLoop = () => {};
     
     constructor(private _app: App, assets:any, scene: Scene, position: Vector3, shadowGenerator?: ShadowGenerator, input?) {
     super("player", scene);
@@ -65,9 +88,9 @@ export class Player extends TransformNode {
     this._input = input;
     this._setupPlayerCamera();
     this._setupCameraInputs();
-    this.animationGroups = []; // Assure-toi que c'est initialisé ici ou dans la déclaration de classe
+    this.animationGroups = []; 
 
-    SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "XBot.gltf", scene).then((result) => {
+    SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "character.gltf", scene).then((result) => {
     const playerMesh = result.meshes[0] as Mesh;
     const playerSkeleton = result.skeletons[0];
 
@@ -87,8 +110,11 @@ export class Player extends TransformNode {
     this.animationGroups = result.animationGroups;
     console.log(this.animationGroups);
 
-    this.joggingAnimation = result.animationGroups.find(g => g.name === "jogging");
-    this.idleAnimation = result.animationGroups.find(g => g.name === "idle");
+    this.runningAnimation = result.animationGroups.find(g => g.name === "Run");
+    this.idleAnimation = result.animationGroups.find(g => g.name === "Idle");
+
+    this._createLightRayTexture();
+    
 
 });
 
@@ -159,7 +185,82 @@ export class Player extends TransformNode {
         });
     }
 
+    public createPlayerUI(scene:Scene){
+
+        // GUI
+        const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+        // const loseBtn = Button.CreateSimpleButton("lose", "LOSE");
+        // loseBtn.width = 0.2;
+        // loseBtn.height = "40px";
+        // loseBtn.color = "white";
+        // loseBtn.top = "-14px";
+        // loseBtn.thickness = 0;
+        // loseBtn.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        // playerUI.addControl(loseBtn);
+
+        // loseBtn.onPointerDownObservable.add(() => {
+        //     this._goToLose();
+        //     scene.detachControl(); // Observables disabled
+        // });
+
+        //Pour afficher les fps
+        // this.fpsDisplay = new TextBlock();
+        // this.fpsDisplay.text = "FPS: 0";
+        // this.fpsDisplay.color = "black";
+        // this.fpsDisplay.fontSize = 24;
+        // this.fpsDisplay.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        // this.fpsDisplay.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        // this.fpsDisplay.paddingLeft = "10px";
+        // this.fpsDisplay.paddingBottom = "10px";
+        // this.fpsDisplay.isVisible = true;
+        // playerUI.addControl(this.fpsDisplay);
+        // 2. Conteneur pour la barre
+        const healthBarContainer = new Rectangle();
+        healthBarContainer.width = "20%";
+        healthBarContainer.height = "10%";
+        healthBarContainer.cornerRadius = 10;
+        healthBarContainer.color = "white";
+        healthBarContainer.thickness = 1;
+        healthBarContainer.background = "gray";
+        healthBarContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        healthBarContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        healthBarContainer.paddingBottom = "50px";
+        playerUI.addControl(healthBarContainer);
+
+        
+        const healthBar = new Rectangle();
+        healthBar.width = "100%"; // 1 = 100%
+        healthBar.height = 1;
+        healthBar.cornerRadius = 0;
+        healthBar.color = "red";
+        healthBar.thickness = 0;
+        healthBar.background = "red";
+        healthBar.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        healthBar.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        healthBarContainer.addControl(healthBar);
+        this._healthBar = healthBar;
+
+        const healthText = new TextBlock();
+        healthText.text = "100/100";
+        healthText.color = "black";
+        healthText.fontSize = 20;
+        healthText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        healthText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        healthText.isVisible = true;
+        healthBarContainer.addControl(healthText);
+        this._healthText = healthText;
+
+        scene.detachControl();
+    }
+
+    private _updateHealthUI(){
+        this._healthText.text = `${this._health}/100`;
+        this._healthBar.width = `${this._health}%`;
+    }
+
     private _updateCamera(): void {
+        if (!this._mesh || !this._camRoot) return;
         let centerPlayer = this.mesh.position.y + 2;
         this.camera.setTarget(this.mesh.position);
         this._camRoot.position = Vector3.Lerp(this._camRoot.position, new Vector3(this.mesh.position.x, centerPlayer, this.mesh.position.z), 0.4);
@@ -171,10 +272,13 @@ export class Player extends TransformNode {
         this._moveDirection = Vector3.Zero();
         this._h = this._input.horizontal;
         this._v = this._input.vertical;
-        if (this._input.flyDown){
+        if (this._flightUnlocked && this._input.flyDown && !this._flyKeyPressed){
             console.log("Je vole")
             this._isFlying=!this._isFlying;
+            this._flyKeyPressed = true;
         }
+        else if(!this._input.flyDown) this._flyKeyPressed = false;
+
         if (this._isFlying) {
             // Désactive la gravité en vol
             this._gravity = Vector3.Zero();
@@ -195,8 +299,10 @@ export class Player extends TransformNode {
             move.y = verticalMove;
 
             if (!this._hasFrontAnObstacle()) {
-                this._moveDirection = move.normalize().scale(Player.PLAYER_SPEED);
+                this._moveDirection = move.normalize().scale(Player.PLAYER_FLIGHT_SPEED);
             }
+
+            if(!this.idleAnimation.isPlaying) this.idleAnimation.play()
 
         } else {
 
@@ -265,6 +371,10 @@ export class Player extends TransformNode {
         }
     }
 
+    private _checkPlayerHeight(){
+        if(this.mesh.getAbsolutePosition().y < Player.DEATH_Y_THRESHOLD) this.die();
+    }
+
     private _beforeRenderUpdate(): void {
         if(!this._controlsLocked) this._updateFromControls();
         this._updateGroundDetection();
@@ -272,10 +382,12 @@ export class Player extends TransformNode {
     }
 
     public activatePlayerCamera(): ArcRotateCamera{
-        this.scene.registerBeforeRender(() => {
+        this._renderLoop = () => {
             this._beforeRenderUpdate();
             this._updateCamera();
-        });
+            this._checkPlayerHeight();
+        };
+        this.scene.registerBeforeRender(this._renderLoop);
         return this.camera;
     }
 
@@ -361,25 +473,6 @@ export class Player extends TransformNode {
             return false;
         } 
 
-        // const offsets = [
-        //     new Vector3(0, 0, 0),             // Centre
-        //     new Vector3(0.5, 0, 0),           // Avant (ajuster l'offset)
-        //     new Vector3(-0.5, 0, 0),          // Arrière (ajuster l'offset)
-        //     new Vector3(0, 0, 0.5),           // Droite (ajuster l'offset)
-        //     new Vector3(0, 0, -0.5)           // Gauche (ajuster l'offset)
-        // ];
-        // const raycastLen = 2;
-    
-        // for (const offset of offsets) {
-        //     const result = this._floorRaycast(offset.x, offset.z, raycastLen);
-        //     if (!result.equals(Vector3.Zero())) {
-        //         if (!this._input.jumpKeyDown) {
-        //             this.mesh.position.y = result.y + 0.1; // Ajustez l'offset si nécessaire
-        //         }
-        //         return true;
-        //     }
-        // }
-        // return false;
     }
 
     private _updateGroundDetection() {
@@ -412,15 +505,6 @@ export class Player extends TransformNode {
                  this._isFlying=false;
              }
              this._groundCheckCounter = 0;
-
-            // else{
-            //     this._gravity.y = 0;
-            //     this._grounded = true;
-            //     this._jumpCount = 1;
-            //     this._canDash = true;
-            //     this.dashTime = 0;
-            //     this._dashPressed = false;
-            // }
         }
 
         if (this._input.jumpKeyDown && this._jumpCount > 0 && !this._controlsLocked && !this._isFlying) {
@@ -433,17 +517,6 @@ export class Player extends TransformNode {
         }
 
         this.mesh.moveWithCollisions(this._moveDirection.add(this._gravity));
-
-        // if (this._isGrounded()) {
-        //     this._gravity.y = 0;
-        //     this._grounded = true;
-        //     this._jumpCount = 1;
-        //     this._canDash = true;
-        //     this.dashTime = 0;
-        //     this._dashPressed = false;
-        // }
-
-
     }
 
 
@@ -470,77 +543,163 @@ export class Player extends TransformNode {
         else console.log("Error, piece does not exist : PieceName = " + piece.name +", memoryName = " + piece.memoryName + ", memories = " + MemoryAsset.memories.length);
     }
 
+    public unlockFlightMode(){
+        this._flightUnlocked = true;
+    }
+
     set health(value: number) {
         this._health = value;
     }
 
-    private _attack(/*pickInfo: PickingInfo*/) {
-        // pickInfo vient de onPointerObservable
-        //console.log(pickInfo.pickedMesh?.name);
-        //console.log("Picked metadata:", pickInfo.pickedMesh?.metadata);
-        //if (pickInfo.hit && pickInfo.pickedMesh?.metadata?.isMonster) {
-          //const monster = pickInfo.pickedMesh.metadata.monsterInstance as Monster;
-          //console.log(monster);
-          
-          ///if(monster) monster.takeDamage(this._damage);
+    private _createLightRayTexture(){
+        const size = 256;
+        const dynTex = new DynamicTexture("beamGrad", { width: size, height: size }, this.scene, false);
+        const ctx = dynTex.getContext();
+
+        // Création du dégradé horizontal (de gauche à droite)
+        const grd = ctx.createLinearGradient(0, 0, size, 0);
+        grd.addColorStop(0.0, "rgba(255,  50,  50, 1)");   // rouge vif
+        grd.addColorStop(0.5, "rgba(255, 200,  50, 0.6)"); // jaune cuivré semi-transparent
+        grd.addColorStop(1.0, "rgba(255,  50, 255, 0)");   // violet qui s’estompe
+
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, size, size);
+        dynTex.update();
+        this._dynTex = dynTex;
+
+        const glow = new GlowLayer("glow", this.scene);
+        glow.intensity = 0.5;        // plus élevé = plus de halo
+        glow.blurKernelSize = 64;    // ajuste la diffusion
+        this._glow = glow;
+    }
+
+    private _attack() {
         if (!this.mesh) {
             return;
         }
 
-        // Récupérer la position du joueur (légèrement au-dessus du centre)
-        const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 0.4, 0));
-
-        // Récupérer la direction "avant" du joueur
+        const playerPosition = this.mesh.getAbsolutePosition().add(this.mesh.getDirection(Axis.Z).scale(0)).add(new Vector3(0, 1, 0));
         const playerForward = this.mesh.getDirection(Axis.Z).normalize();
+        const ray = new Ray(playerPosition, playerForward, 4);
 
-        // Créer le rayon d'attaque
-        const ray = new Ray(playerPosition, playerForward, 5); // Portée de l'attaque
+        // 1) Position centrale du joueur (à la hauteur souhaitée)
+        const eyeHeight = 1;
+        const basePos = this.mesh.getAbsolutePosition().add(new Vector3(0, eyeHeight, 0));
 
-        // Visualisation du rayon pour le débogage
-        const rayHelper = new RayHelper(ray);
-        rayHelper.show(this.scene, new Color3(1, 0, 0));
+        // 2) Direction avant
+        const forward = this.mesh.getDirection(Axis.Z).normalize();
+
+        // 3) Décaler le point de départ un peu devant le joueur
+        const muzzleOffset = 0.5;  // ajustez selon la taille de votre personnage/arme
+        const start = basePos.add(forward.scale(muzzleOffset));
+
+    //const start  = this.mesh.getAbsolutePosition().add(new Vector3(0, 1, 0));
+    const dir    = this.mesh.getDirection(Axis.Z).normalize();
+
+    // 2) détection de la collision pour la longueur
+    //const ray    = new Ray(start, dir, 10);
+    const hit    = this.scene.pickWithRay(ray);
+    const length = hit.hit && hit.pickedPoint
+        ? Vector3.Distance(start, hit.pickedPoint)
+        : ray.length;
+
+    // 3) création du tube (shape volumétrique)
+    const beam = MeshBuilder.CreateTube("beam", {
+        path: [ start, start.add(dir.scale(length)) ],
+        radius: 0.1,
+        tessellation: 6
+    }, this.scene);
+    
+    
+
+    // Matériau émissif ajoutant ce dégradé
+    const mat = new StandardMaterial("beamMat", this.scene);
+    mat.emissiveTexture  = this._dynTex;
+    mat.emissiveColor    = new Color3(1, 1, 1);
+    mat.disableLighting  = true;
+    mat.alpha            = 0.8;
+
+    // Applique sur ton tube
+    beam.material = mat;
+    //const newGlow = this._glow.c
+
+        // 6) Nettoyage rapide
         setTimeout(() => {
-            rayHelper.dispose();
-        }, 100);
+            beam.dispose();
+            //rayHelper.dispose();
+        }, 50);
 
-        // Effectuer un picking avec le rayon pour détecter les intersections
-        const hit = this.scene.pickWithRay(ray);
+        
 
-        // Vérifier si une intersection a eu lieu et si l'objet touché est un monstre
-        if (hit.hit && hit.pickedMesh && hit.pickedMesh.metadata && hit.pickedMesh.metadata.isMonster) {
-            const targetMonster = hit.pickedMesh.metadata.monsterInstance as Monster;
-            console.log("Le joueur attaque monstre : health: ", targetMonster.health);
-            targetMonster.takeDamage(this._damage); // Appliquer les dégâts au monstre
+        
 
-        } else if (hit.hit && hit.pickedMesh) {
-            console.log("Le rayon a touché :", hit.pickedMesh.name);
+        if (hit.hit && hit.pickedMesh) {
+            // Fonction pour remonter dans la hiérarchie et trouver un parent avec isMonster=true
+            function findMonsterParent(mesh: Nullable<AbstractMesh>): Nullable<AbstractMesh> {
+                while (mesh) {
+                    if (mesh.metadata && mesh.metadata.isMonster) {
+                        return mesh;
+                    }
+                    mesh = mesh.parent as Mesh | null;
+                }
+                return null;
+            }
+
+            const monsterMesh = findMonsterParent(hit.pickedMesh);
+
+            if (monsterMesh) {
+                const targetMonster = monsterMesh.metadata.monsterInstance as Monster;
+                console.log("Le joueur attaque le monstre : health: ", targetMonster.health);
+                if(targetMonster.isAlive())targetMonster.takeDamage(this._damage);
+            } else {
+                console.log("Le rayon a touché :", hit.pickedMesh.name, "mais ce n'est pas un monstre.");
+            }
         } else {
             console.log("Le rayon n'a rien touché.");
         }
     }
 
+
+
+
     public playMovementAnimation(){
         if(this._inMovement){
             if(this.idleAnimation.isPlaying) this.idleAnimation.stop();
-            if(this.joggingAnimation) this.joggingAnimation.play();
+            if(this.runningAnimation) this.runningAnimation.play();
         }   
         else{
-            if(this.joggingAnimation.isPlaying) this.joggingAnimation.stop();
+            if(this.runningAnimation.isPlaying) this.runningAnimation.stop();
             if(!this.idleAnimation.isPlaying) this.idleAnimation.play()
         }        
     }
 
+    private updateHealthRegen() {
+    // Si déjà en cours, on ne lance pas un autre
+    if (this._regenTimeoutId !== null) return;
+
+    const tick = () => {
+        if (this._health < 100) { 
+            this._health += Player.REGEN_AMOUNT;
+            if (this._health > 100) this._health = 100;
+            this._updateHealthUI();
+            this._regenTimeoutId = setTimeout(tick, Player.REGEN_TIMER);
+        } else {
+            this._regenTimeoutId = null; // Arrêt de la regen
+        }
+    };
+
+    this._regenTimeoutId = setTimeout(tick, Player.REGEN_TIMER);
+}
+
 
     takeDamage(amount: number) {
         this._health -= amount;
+        this._updateHealthUI();
         console.log(`Player takes ${amount} damage. Remaining health: ${this._health}`);
         if (this._health <= 0) {
             this.die();
-            this._app._goToLose().then(() => {
-                this._app._scene.clearCachedVertexData();
-                this._app._scene.cleanCachedTextureBuffer();
-            });
         }
+        this.updateHealthRegen();
     }
 
     isAlive(): boolean {
@@ -550,6 +709,11 @@ export class Player extends TransformNode {
     die() {
         console.log("Player has died.");
         this.playDeathAnimation();
+        this.scene.unregisterBeforeRender(this._renderLoop);
+        this._app._goToLose().then(() => {
+            this._app._scene.clearCachedVertexData();
+            this._app._scene.cleanCachedTextureBuffer();
+        });
     }
 
     public playIdleAnimation(): void {

@@ -2,6 +2,7 @@
     import { createMoveAnimation, createAttackAnimation, createDeathAnimation } from "./animation";
     import { Player } from "../characterController";
     import {Color3, Mesh, MeshBuilder, Ray, Scene, SceneLoader, StandardMaterial, Vector3} from "@babylonjs/core";
+    import { AdvancedDynamicTexture, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 
     // Classe Monster qui représente un ennemi basique dans le jeu
     export class Monster {
@@ -27,9 +28,15 @@
 
         private meshNameToPick:String = null;
 
+        //monster UI
+        private healthADT: AdvancedDynamicTexture;
+        protected healthBarContainer:Rectangle;
+        private healthBar:Rectangle;
+        private healthText:TextBlock;
+
         private _beforeRenderFn?: () => void;
 
-        constructor(scene: Scene, position: Vector3, health: number, damage: number, meshNameToPick?:String) {
+        constructor(scene: Scene, position: Vector3, health: number, damage: number, healthBar:boolean, meshNameToPick?:String) {
             this.scene = scene;
             this.health = health;
             this.damage = damage;
@@ -54,17 +61,73 @@
                 monsterInstance: this
             }
 
-
-            // Zone invisible utilisée pour détecter le joueur
-            // this.detectionZone = MeshBuilder.CreateSphere("detectionZone", { diameter: 2 }, scene);
-            // this.detectionZone.isVisible = false;
-            // this.detectionZone.checkCollisions = false;
-
             this._moveDirection = Vector3.Zero();
 
             if(meshNameToPick) this.meshNameToPick = meshNameToPick
 
             this.isReady = true;
+            if(healthBar) this.createHealthBar();
+        }
+
+
+        protected createHealthBar() {        
+                this.healthADT = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+                // Container de la barre avec fond noir et contour blanc épais
+                const healthBarContainer = new Rectangle();
+                healthBarContainer.width = "5%";
+                healthBarContainer.height = "2%";
+                healthBarContainer.cornerRadius = 10;
+                healthBarContainer.color = "white";    
+                healthBarContainer.thickness = 1;   
+                healthBarContainer.background = "black"; 
+                this.healthADT.addControl(healthBarContainer);
+                healthBarContainer.linkWithMesh(this.mesh);
+                this.healthBarContainer=healthBarContainer;
+        
+                // Barre rouge qui varie en largeur
+                const healthBar = new Rectangle();
+                healthBar.width = "100%";
+                healthBar.height = "100%";
+                healthBar.cornerRadius = 8;
+                healthBar.color = "red";
+                healthBar.thickness = 0;
+                healthBar.background = "red";
+                healthBar.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+                healthBarContainer.addControl(healthBar);
+                this.healthBar = healthBar;
+        
+                // Texte blanc avec ombre noire pour meilleure lisibilité
+                const healthText = new TextBlock();
+                healthText.text = "100/100";
+                healthText.color = "white";
+                healthText.fontSize = 15;
+                healthText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+                healthText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+                healthText.shadowColor = "black";
+                healthText.shadowBlur = 2;
+                healthText.shadowOffsetX = 1;
+                healthText.shadowOffsetY = 1;
+                healthBarContainer.addControl(healthText);
+                this.healthText = healthText;
+
+                this.healthBarContainer.isVisible = false;
+        
+                //this.healthBarMesh.position = this.mesh.position.add(new Vector3(0, 1, 0));
+            }
+        
+        public updateHealthBar() {
+                const health = Math.max(0, Math.min(this.health, 100));
+                this.healthText.text = `${health}/100`;
+                this.healthBar.width = `${health}%`;
+        
+                if (health < 30) {
+                    this.healthBar.background = "orangeRed";
+                    this.healthBar.color = "orangeRed";
+                } else {
+                    this.healthBar.background = "red";
+                    this.healthBar.color = "red";
+                }
         }
 
 
@@ -168,7 +231,10 @@
         // }
 
 
-        public activateMonster(players: Player[]): void {
+        public async activateMonster(players: Player[]): Promise<void> {
+            console.log("HealthBarContainer = " + this.healthBarContainer);
+            this.healthBarContainer.isVisible = true;
+            this.mesh.setEnabled(true);
             this._beforeRenderFn = async () => {
                 if (this.state !== "dead") {
                     // console.log("monstre position = " + this.mesh.position);
@@ -186,6 +252,7 @@
         }
 
         public async desactivateMonster(): Promise<void> {
+            this.healthADT.dispose();
             if (this._beforeRenderFn) {
                 this.scene.unregisterBeforeRender(this._beforeRenderFn);
                 this._beforeRenderFn = undefined;
@@ -198,8 +265,12 @@
          */
         takeDamage(amount: number): void {
             this.health -= amount;
+            if(this.healthADT) this.updateHealthBar();
             console.log(`Monster takes ${amount} damage. Remaining health: ${this.health}`);
-            if (this.health <= 0) this.die();
+            if (this.health <= 0){
+                this.healthADT.dispose();
+                this.die();
+            } 
         }
 
         /**
@@ -240,8 +311,10 @@
                 const distance = Vector3.Distance(this.mesh.getAbsolutePosition(), t.mesh.getAbsolutePosition());
                 if (distance <= 50 && t.isAlive()) {
                     this.target = t;
+                    this.healthBarContainer.isVisible = true;
                     break;
                 }
+                else this.healthBarContainer.isVisible = false;
             }
 
             if (this.target) {

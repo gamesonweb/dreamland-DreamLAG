@@ -1,4 +1,4 @@
-import { Scene, ActionManager, ExecuteCodeAction, Scalar, PointerEventTypes } from "@babylonjs/core";
+import { Scene, ActionManager, ExecuteCodeAction, Scalar, PointerEventTypes, KeyboardEventTypes } from "@babylonjs/core";
 
 
 export class PlayerInput {
@@ -20,27 +20,42 @@ export class PlayerInput {
     public onAttack: (() => void) | null = null;
     public controlsLocked:boolean = false;
 
+    private attackLocked = false;
+    private attackCooldown = 0.05; // en secondes, par exemple
+
     constructor(scene: Scene) {
         scene.actionManager = new ActionManager(scene);
     
         this.inputMap = {};
-        scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
-            this.inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
-        }));
-        scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
-            this.inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
-        }));
+        // scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
+        //     this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
+        // }));
+        // scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
+        //     this.inputMap[evt.sourceEvent.code] = evt.sourceEvent.type == "keydown";
+        // }));
+        scene.onKeyboardObservable.add((kbInfo) => {
+            const key = kbInfo.event.code;
+            const logicalKey = kbInfo.event.key.toLowerCase(); 
+            
+            switch (kbInfo.type) {
+                case KeyboardEventTypes.KEYDOWN:
+                    this.inputMap[key] = true;
+                    this.inputMap[logicalKey] = true;
+                    break;
+                case KeyboardEventTypes.KEYUP:
+                    this.inputMap[key] = false;
+                    this.inputMap[logicalKey] = false;
+                    break;
+            }
+        });
+
 
         scene.onPointerObservable.add((pi) => {
-            if (
-                //pi.type === PointerEventTypes.POINTERDOWN &&
-                pi.event.button === 0 &&
-                !this.controlsLocked
-            ) {
-              this.onAttack?.();
+            if (pi.event.button === 0 && !this.controlsLocked) {
+                if(!this.attackLocked) this.onAttack?.();
+                this.attackLocked = true;
+                setTimeout(() => {this.attackLocked = false;}, this.attackCooldown * 1000);
             }
-            // else if(this.controlsLocked && pi.event.button === 0) this.resumeDialog=true;
-            // else this.resumeDialog=false;
           });
     
         scene.onBeforeRenderObservable.add(() => {
@@ -49,11 +64,10 @@ export class PlayerInput {
     }
 
     private _updateFromKeyboard(): void {
-        if (this.inputMap["w"] ||this.inputMap["W"]) {
+        if (this.inputMap["KeyW"]) {
             this.vertical = Scalar.Lerp(this.vertical, 1, 0.2);
             this.verticalAxis = 1;
-    
-        } else if (this.inputMap["s"] ||this.inputMap["S"]) {
+        } else if (this.inputMap["KeyS"]) {
             this.vertical = Scalar.Lerp(this.vertical, -1, 0.2);
             this.verticalAxis = -1;
         } else {
@@ -61,11 +75,11 @@ export class PlayerInput {
             this.verticalAxis = 0;
         }
     
-        if (this.inputMap["a"] || this.inputMap["A"]) {
+        if (this.inputMap["KeyA"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, -1, 0.2);
             this.horizontalAxis = -1;
     
-        } else if (this.inputMap["d"] ||this.inputMap["D"]) {
+        } else if (this.inputMap["KeyD"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, 1, 0.2);
             this.horizontalAxis = 1;
         }
@@ -74,34 +88,35 @@ export class PlayerInput {
             this.horizontalAxis = 0;
         }
 
-        if (this.inputMap["Shift"]){
+        if (this.inputMap["ShiftLeft"]){
             this.dashing = true;
         }else{
             this.dashing = false;
         }
 
-        if(this.inputMap[" "]){
+        if(this.inputMap["Space"]){
             this.jumpKeyDown = true;
             this.resumeDialog = true;
         }else{
             this.jumpKeyDown = false;
             this.resumeDialog = false;
         }
-        if (this.inputMap["f"] || this.inputMap["F"]) {
+        if (this.inputMap["KeyF"]) {
             this.flyDown=true
         }
         else{
             this.flyDown = false;
         }
-        if(this.inputMap["e"] || this.inputMap["E"]){
+        if(this.inputMap["KeyE"]){
             this.interactKeyDown = true;
         }
         else this.interactKeyDown = false;
 
-        if(this.inputMap["m"] || this.inputMap["M"]){
+        if (this.inputMap["m"]) {
             this.memoryKeyDown = true;
+        } else {
+            this.memoryKeyDown = false;
         }
-        else this.memoryKeyDown = false;
     }
 
 }

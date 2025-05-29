@@ -1,4 +1,4 @@
-import { Scene, Vector3, Mesh, AnimationGroup, SceneLoader, MeshBuilder } from "@babylonjs/core";
+import { Scene, Vector3, Mesh, AnimationGroup, SceneLoader, StandardMaterial, MeshBuilder, Color3 } from "@babylonjs/core";
 import { Monster } from "./monster";
 import {
     createSlimeIdleAnimation,
@@ -6,16 +6,23 @@ import {
     createSlimeBounceAnimation,
     createSlimeAttackAnimation
 } from "./slimeAnimations";
+import { Player } from "../characterController";
 
 export class SlimeMonster extends Monster {
     static DEFAULT_SLIME_HEALTH = 100;
     static DEFAULT_SLIME_DAMAGE = 10;
 
+    
     public animationGroups: AnimationGroup[] = [];
+    private _scene:Scene;
+    private _position:Vector3;
 
+    //private healthBarMesh: Mesh;
+    
     constructor(scene: Scene, position: Vector3) {
-        super(scene, position, SlimeMonster.DEFAULT_SLIME_HEALTH, SlimeMonster.DEFAULT_SLIME_DAMAGE);
+        super(scene, position, SlimeMonster.DEFAULT_SLIME_HEALTH, SlimeMonster.DEFAULT_SLIME_DAMAGE, false);
         this.scene = scene;
+        this._position=position;
 
         // Supprimer le mesh par défaut
         this.mesh.dispose();
@@ -23,7 +30,17 @@ export class SlimeMonster extends Monster {
 
         // Charger le modèle GLB du slime avec animations
         // Slime Enemy by Quaternius (https://poly.pizza/m/eSLKTsbl7F)
-        SceneLoader.ImportMeshAsync("", "assets/monsters/", "SlimeEnemy.gltf", scene).then((result) => {
+        
+        // this.scene.registerBeforeRender(() => {
+        //     if (this.isReady) {
+        //         this.updateHealthBarPosition();
+        //     }
+        // });
+    }
+
+
+    public async _loadModel(){
+        await SceneLoader.ImportMeshAsync("", "assets/monsters/", "SlimeEnemy.gltf", this._scene).then((result) => {
             const slimeMesh = result.meshes[0] as Mesh;
             slimeMesh.name = "SlimeBoss";
             slimeMesh.scaling = new Vector3(0.5, 0.5, 0.5);
@@ -42,11 +59,36 @@ export class SlimeMonster extends Monster {
             this.mesh.checkCollisions = true;
             this.mesh.isVisible = true;
 
-            this.mesh.setAbsolutePosition(position);
+            this.mesh.setAbsolutePosition(this._position);
             this.isReady = true;
             this.playIdleAnimation();
+
+            this.createHealthBar();
         });
+
     }
+
+    public override async activateMonster(players: Player[]): Promise<void> {
+        await this._loadModel();
+        await super.activateMonster(players);
+    }
+
+    
+
+    private updateHealthBarPosition() {
+        // if (!this.mesh || /*!this.healthBarMesh*/) return;
+
+        // //this.healthBarMesh.position = this.mesh.position.add(new Vector3(0, 1.2, 0));
+
+        // const camera = this.scene.activeCamera;
+        // if (camera) {
+        //     this.healthBarMesh.lookAt(camera.position);
+        //     this.healthBarMesh.rotation.x = 0;
+        //     this.healthBarMesh.rotation.z = 0;
+        // }
+    }
+
+
 
     /** Joue l'animation d'attente ("idle") du slime */
     public playIdleAnimation(): void {
@@ -112,40 +154,32 @@ export class SlimeMonster extends Monster {
         const deathAnim = this.animationGroups.find(a => a.name.toLowerCase() === "Death");
 
         if (deathAnim) {
+            deathAnim.onAnimationGroupEndObservable.addOnce(() => {
+                this.mesh.dispose();
+                this.detectionZone?.dispose();
+                console.log("Slime Monster defeated.");
+            });
             deathAnim.start(false);
         } else {
             const anim = createSlimeDeathAnimation(this.mesh);
-            this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
+            const directAnim = this.scene.beginDirectAnimation(this.mesh, [anim], 0, 30, false);
+            directAnim.onAnimationEndObservable.addOnce(() => {
+                this.mesh.dispose();
+                this.detectionZone?.dispose();
+                console.log("Slime Monster defeated.");
+            });
         }
 
-        deathAnim.onAnimationGroupEndObservable.addOnce(() => {
-            this.mesh.dispose();
-            this.detectionZone?.dispose();
-            console.log("Slime Boss defeated.");
-        });
-        deathAnim.start(false);
     }
 
-    /** Déplace le slime vers la cible s'il y en a une, et joue l'animation de déplacement */
-    // public override moveTowardTarget(): void {
-    //     if (!this.target || !this.target.isAlive()) return;
-
-    //     const targetPos = this.target.mesh.getAbsolutePosition();
-    //     const slimePos = this.mesh.position;
-    //     const direction = targetPos.subtract(slimePos).normalize();
-    //     const moveSpeed = 0.1;
-
-    //     this._moveDirection = direction.scale(moveSpeed);
-    //     this.mesh.moveWithCollisions(this._moveDirection);
-
-    //     // Rotation vers la cible
-    //     const facingPos = targetPos.clone();
-    //     facingPos.y = slimePos.y; // Pour éviter de s'incliner vers le haut ou le bas
-    //     this.mesh.lookAt(facingPos);
-
-    //     this.playMoveAnimation();
+    // public override takeDamage(amount: number) {
+    //     this.health -= amount;
+    //     this.updateSlimeHealth();
+    //     console.log(`Slime takes ${amount} damage. Remaining health: ${this.health}`);
+    //     if (this.health <= 0) {
+    //         this.die();
+    //     }
     // }
-
 
     /** Fait attaquer la cible si possible, avec cooldown, et joue l'animation d'attaque */
     public override async attack(): Promise<void> {
