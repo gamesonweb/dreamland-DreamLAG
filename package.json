@@ -34,5 +34,5 @@
     "url": "https://github.com/Adri-LEY/DreamLAG/issues"
   },
   "deploy": "webpack --mode production && gh-pages -d dist",
-  "homepage": "https://gamesonweb.github.io/dreamland-DreamLAG/"
+  "homepage": "https://Adri-LEY.github.io/DreamLAG/"
 }
