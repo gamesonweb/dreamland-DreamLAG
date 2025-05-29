@@ -19,7 +19,7 @@ export class Player extends TransformNode {
     public scene: Scene;
     private _input;
     public animationGroups: AnimationGroup[] = [];
-    public joggingAnimation: AnimationGroup = null;
+    public runningAnimation: AnimationGroup = null;
     public idleAnimation: AnimationGroup = null;
 
     private _camRoot: TransformNode;
@@ -43,20 +43,20 @@ export class Player extends TransformNode {
     private _mesh: Mesh; // Outer collisionbox of the player
     private _deltaTime: number = 0;
     private _health: number = 100;
-    private _damage: number = 200;
+    private _damage: number = 10;
     private _memories:Memory[];
 
     private _controlsLocked:Boolean = false;
 
     private static readonly ORIGINAL_TILT:  Vector3 = new Vector3(0.5934119456780721, 0, 0);
-    private static readonly PLAYER_SPEED: number = 0.8;
-    private static readonly PLAYER_FLIGHT_SPEED:number = 1.5;
+    private static readonly PLAYER_SPEED: number = 0.5;
+    private static readonly PLAYER_FLIGHT_SPEED:number = 1.2;
     private static readonly GRAVITY: number = -2.5;
     private static readonly JUMP_FORCE: number = 0.7;
     private static readonly DASH_FACTOR: number = 1.5;
     private static readonly DASH_TIME: number = 10;
     private static readonly DEATH_Y_THRESHOLD = -500;
-    private static readonly REGEN_TIMER = 2000;
+    private static readonly REGEN_TIMER = 1000;
     private static readonly REGEN_AMOUNT = 1;
     public dashTime: number = 0;
 
@@ -90,7 +90,7 @@ export class Player extends TransformNode {
     this._setupCameraInputs();
     this.animationGroups = []; 
 
-    SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "XBot.gltf", scene).then((result) => {
+    SceneLoader.ImportMeshAsync("", "assets/playerSkin/", "character.gltf", scene).then((result) => {
     const playerMesh = result.meshes[0] as Mesh;
     const playerSkeleton = result.skeletons[0];
 
@@ -110,8 +110,8 @@ export class Player extends TransformNode {
     this.animationGroups = result.animationGroups;
     console.log(this.animationGroups);
 
-    this.joggingAnimation = result.animationGroups.find(g => g.name === "jogging");
-    this.idleAnimation = result.animationGroups.find(g => g.name === "idle");
+    this.runningAnimation = result.animationGroups.find(g => g.name === "Run");
+    this.idleAnimation = result.animationGroups.find(g => g.name === "Idle");
 
     this._createLightRayTexture();
     
@@ -301,6 +301,8 @@ export class Player extends TransformNode {
             if (!this._hasFrontAnObstacle()) {
                 this._moveDirection = move.normalize().scale(Player.PLAYER_FLIGHT_SPEED);
             }
+
+            if(!this.idleAnimation.isPlaying) this.idleAnimation.play()
 
         } else {
 
@@ -591,32 +593,6 @@ export class Player extends TransformNode {
         const muzzleOffset = 0.5;  // ajustez selon la taille de votre personnage/arme
         const start = basePos.add(forward.scale(muzzleOffset));
 
-        // const rayHelper = new RayHelper(ray);
-        // rayHelper.show(this.scene, new Color3(1, 1, 0));
-
-    //     const hit = this.scene.pickWithRay(ray);
-
-    //     const laserLength = hit.hit && hit.pickedPoint
-    //    ? Vector3.Distance(playerPosition, hit.pickedPoint)
-    //    : ray.length;
-
-    //     // 4) Construire simplement le tube entre start et end
-    //     const start = playerPosition;
-    //     const end   = playerPosition.add(playerForward.scale(laserLength));
-    //     const laserBeam = MeshBuilder.CreateTube("laserBeam", {
-    //         path: [start, end],
-    //         radius: 0.2,
-    //         tessellation: 8,
-    //     }, this.scene);
-
-    //     // 5) Matériau émissif
-    //     const mat = new StandardMaterial("laserMat", this.scene);
-    //     mat.emissiveColor = new Color3(1, 0, 0);
-    //     mat.alpha = 0.8;
-    //     laserBeam.material = mat;
-
-    
-
     //const start  = this.mesh.getAbsolutePosition().add(new Vector3(0, 1, 0));
     const dir    = this.mesh.getDirection(Axis.Z).normalize();
 
@@ -689,10 +665,10 @@ export class Player extends TransformNode {
     public playMovementAnimation(){
         if(this._inMovement){
             if(this.idleAnimation.isPlaying) this.idleAnimation.stop();
-            if(this.joggingAnimation) this.joggingAnimation.play();
+            if(this.runningAnimation) this.runningAnimation.play();
         }   
         else{
-            if(this.joggingAnimation.isPlaying) this.joggingAnimation.stop();
+            if(this.runningAnimation.isPlaying) this.runningAnimation.stop();
             if(!this.idleAnimation.isPlaying) this.idleAnimation.play()
         }        
     }
@@ -702,7 +678,7 @@ export class Player extends TransformNode {
     if (this._regenTimeoutId !== null) return;
 
     const tick = () => {
-        if (this._health < 100) {
+        if (this._health < 100) { 
             this._health += Player.REGEN_AMOUNT;
             if (this._health > 100) this._health = 100;
             this._updateHealthUI();

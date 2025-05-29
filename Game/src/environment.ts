@@ -75,7 +75,10 @@ export class Environment {
                     questCharacterHolder = mesh;
                 }
 
-                if(mesh.name.includes("grass")) mesh.checkCollisions = false;
+                if(mesh.name.includes("grass")){
+                     mesh.checkCollisions = false;
+                     mesh.isPickable = false;
+                }
 
                 if ((mesh.name.includes("Arbre")|| mesh.name.includes("House") || mesh.name.includes("grass")) && mesh.getChildren().length > 0 && mesh.getChildren()[0].name === "Plane") {
                     const treeType = mesh.name.substring(0, 6);
@@ -99,6 +102,7 @@ export class Environment {
 
                 if(mesh.name.includes("Area")){
                     mesh.checkCollisions = false;
+                    mesh.isPickable = false;
                     AreaAsset.addArea("Island1", this._scene, this._player, mesh);
                 } 
 
