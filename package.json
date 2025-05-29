@@ -1,17 +1,34 @@
 {
   "name": "dreamlag",
   "version": "1.0.0",
-  "description": "Écrire les détails sur le jeu",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "webpack",
+    "start": "webpack-dev-server --port 8080"
+  },
+  "keywords": [
+    "babylon"
+  ],
+  "author": "Adrien",
+  "license": "ISC",
+  "devDependencies": {
+    "@babylonjs/core": "^8.2.0",
+    "@babylonjs/inspector": "^8.2.0",
+    "html-webpack-plugin": "^5.6.3",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.5",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Adri-LEY/DreamLAG.git"
   },
-  "author": "Adri-LEY",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/Adri-LEY/DreamLAG/issues"
   },
