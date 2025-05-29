@@ -32,10 +32,16 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            inject: true,
-            template: path.resolve(appDirectory, "public/index.html"),
-        })
+            template: './public/index.html',
+            filename: 'index.html',
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: "assets", to: "assets" } // copie le dossier assets/ dans dist/assets/
+            ],
+        }),
     ],
+    
     output: {
     path: path.resolve(appDirectory, "dist"), // <-- Ajouté
     filename: "js/bundleName.js",
