@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "start": "webpack-dev-server --port 8080"
+    "start": "webpack-dev-server --port 8080",
+    "deploy": "gh-pages -d dist"
   },
+  "homepage": "https://Adri-LEY.github.io/dreamland-DreamLAG/",
   "keywords": [
     "babylon"
   ],
@@ -15,6 +17,7 @@
   "devDependencies": {
     "@babylonjs/core": "^8.2.0",
     "@babylonjs/inspector": "^8.2.0",
+    "gh-pages": "^6.3.0",
     "html-webpack-plugin": "^5.6.3",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.3",
