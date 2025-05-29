@@ -36,5 +36,10 @@ module.exports = {
             template: path.resolve(appDirectory, "public/index.html"),
         })
     ],
-    mode: "development",
+    output: {
+    path: path.resolve(appDirectory, "dist"), // <-- Ajouté
+    filename: "js/bundleName.js",
+    clean: true,
+    },
+    mode: process.env.NODE_ENV || "development",
 };
